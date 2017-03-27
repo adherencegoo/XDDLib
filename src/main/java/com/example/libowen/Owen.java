@@ -166,6 +166,12 @@ public class Owen {
         (new Exception(result)).printStackTrace();
     }
 
+    public static void printException(final Exception e){ printException(getMethodTag(2), e); }
+    public static void printException(final String tag, final Exception e) {
+        Owen.e(tag, e.toString());
+        e.printStackTrace();
+    }
+
     public static final int DEFAULT_REPEAT_COUNT = 50;
     public static String stringRepeat(final String str){
         return stringRepeat(DEFAULT_REPEAT_COUNT, str);
