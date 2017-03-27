@@ -1,5 +1,6 @@
 package com.example.libowen;
 
+import android.content.pm.ProviderInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -23,6 +24,7 @@ public class Owen {
     private static final String TAG = Owen.class.getSimpleName();
     private static final String TAG_DELIMITER = "->";
     private static final String TAG_END = ": ";
+    private static final int DEFAULT_REPEAT_COUNT = 30;
     private Owen(){}
 
     @SuppressWarnings("all")
@@ -160,24 +162,35 @@ public class Owen {
         return resultBuilder.toString();
     }
 
+
+    public static String getSeparator(final String message, final char separator) {
+        return getSeparator(message, separator, DEFAULT_REPEAT_COUNT);
+    }
+    public static String getSeparator(final String message, final char separator, final int count) {
+        final StringBuilder stringBuilder = new StringBuilder();
+        final String halfSeparator = stringRepeat(count, String.valueOf(separator));
+        stringBuilder.append(halfSeparator);
+        stringBuilder.append(' ');
+        stringBuilder.append(message);
+        stringBuilder.append(' ');
+        stringBuilder.append(halfSeparator);
+        return stringBuilder.toString();
+    }
+
     public static void printStackTrace(final String message){ printStackTrace(getMethodTag(2), message); }
     public static void printStackTrace(final String tag, final String message){
         final String result = TAG + TAG_END + tag + TAG_DELIMITER + message;
         (new Exception(result)).printStackTrace();
     }
 
-    public static void printException(final Exception e){ printException(getMethodTag(2), e); }
+    public static void printException(final Exception e) { printException(getMethodTag(2), e); }
     public static void printException(final String tag, final Exception e) {
         Owen.e(tag, e.toString());
         e.printStackTrace();
     }
 
-    public static final int DEFAULT_REPEAT_COUNT = 50;
-    public static String stringRepeat(final String str){
-        return stringRepeat(DEFAULT_REPEAT_COUNT, str);
-    }
-
-    public static String stringRepeat(final int count, final String str){
+    public static String stringRepeat(final String str) { return stringRepeat(DEFAULT_REPEAT_COUNT, str); }
+    public static String stringRepeat(final int count, final String str) {
         return TextUtils.join("", Collections.nCopies(count, str));
     }
 }
