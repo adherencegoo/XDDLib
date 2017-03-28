@@ -1,10 +1,10 @@
 package com.example.libowen;
 
-import android.content.pm.ProviderInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Environment;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -15,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.Locale;
 
 /**
  * Created by Owen_Chen on 2017/3/15.
@@ -27,28 +28,50 @@ public class Owen {
     private static final int DEFAULT_REPEAT_COUNT = 30;
     private Owen(){}
 
-    @SuppressWarnings("all")
-    public enum LogType { V, D, I, W, E }
+    static public class Lg {
+        private Lg(){}
 
-    public static int v(final String msg) { return v(getMethodTag(2), msg); }
-    public static int d(final String msg) { return d(getMethodTag(2), msg); }
-    public static int i(final String msg) { return i(getMethodTag(2), msg); }
-    public static int w(final String msg) { return w(getMethodTag(2), msg); }
-    public static int e(final String msg) { return e(getMethodTag(2), msg); }
+        @SuppressWarnings("all")
+        public enum Type { V, D, I, W, E }
 
-    public static int v(final String tag, final String msg) { return Log.v(TAG, tag + msg); }
-    public static int d(final String tag, final String msg) { return Log.d(TAG, tag + msg); }
-    public static int i(final String tag, final String msg) { return Log.i(TAG, tag + msg); }
-    public static int w(final String tag, final String msg) { return Log.w(TAG, tag + msg); }
-    public static int e(final String tag, final String msg) { return Log.e(TAG, tag + msg); }
-    public static int log(final LogType type, final String tag, final String msg) {
-        switch (type){
-            case V: return v(tag, msg);
-            case D: return d(tag, msg);
-            case I: return i(tag, msg);
-            case W: return w(tag, msg);
-            case E: return e(tag, msg);
-            default: return -1;
+        /*
+        * Example:
+        * getMethodTag: element[0]: dalvik.system.VMStack.getThreadStackTrace
+        * getMethodTag: element[1]: java.lang.Thread.getStackTrace
+        * getMethodTag: element[2]: com.example.libowen.Owen.getMethodTag
+        * getMethodTag: element[3]: com.example.libowen.Owen.access$000 //unknown after making log function a new static inner class
+        * getMethodTag: element[4]: com.example.libowen.Owen$Lg.d
+        * getMethodTag: element[5]: com.asus.gallery.mapv2.MapActivity$4.onMapLoaded //target
+        * */
+        public static int v(final String msg) { return v(getMethodTag(3), msg); }
+        public static int d(final String msg) { return d(getMethodTag(3), msg); }
+        public static int i(final String msg) { return i(getMethodTag(3), msg); }
+        public static int w(final String msg) { return w(getMethodTag(3), msg); }
+        public static int e(final String msg) { return e(getMethodTag(3), msg); }
+
+        public static int v(final String tag, final String msg) { return v(tag, msg, null); }
+        public static int d(final String tag, final String msg) { return d(tag, msg, null); }
+        public static int i(final String tag, final String msg) { return i(tag, msg, null); }
+        public static int w(final String tag, final String msg) { return w(tag, msg, null); }
+        public static int e(final String tag, final String msg) { return e(tag, msg, null); }
+
+        public static int v(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.V, tag, msg, tr); }
+        public static int d(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.D, tag, msg, tr); }
+        public static int i(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.I, tag, msg, tr); }
+        public static int w(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.W, tag, msg, tr); }
+        public static int e(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.E, tag, msg, tr); }
+
+        //my fundamental log
+        public static int log(final Type type, final String tag, final String msg, @Nullable final Throwable tr) {
+            final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
+            switch (type){
+                case V: return Log.v(TAG, tag + msg + throwableString);
+                case D: return Log.d(TAG, tag + msg + throwableString);
+                case I: return Log.i(TAG, tag + msg + throwableString);
+                case W: return Log.w(TAG, tag + msg + throwableString);
+                case E: return Log.e(TAG, tag + msg + throwableString);
+                default: return -1;
+            }
         }
     }
 
@@ -117,19 +140,30 @@ public class Owen {
 
     @SuppressWarnings("all")
     private static boolean sUseSimpleInstanceName = true;
+    @SuppressWarnings("all")
+    private static boolean sPrintElements = false;//for debugging Owen.java
     private static String getMethodTag(final int depth, final String... messages){
-        final String tag = "owen: " + (new Object(){}.getClass().getEnclosingMethod().getName()) + TAG_END;
+        final String tag = TAG + (new Object(){}.getClass().getEnclosingMethod().getName()) + TAG_END;
         Assert.assertTrue(depth >= 1);
 
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
         Assert.assertTrue(stackTraceElements != null);
         Assert.assertTrue(stackTraceElements.length != 0);
 
+        if (sPrintElements) {
+            Lg.d(tag, getSeparator("start", 'v'));
+            for (int idx=0 ; idx<stackTraceElements.length ; idx++) {
+                StackTraceElement element = stackTraceElements[idx];
+                Lg.d(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
+                        idx, element.getClassName(), element.getMethodName(), element.getFileName(), element.getLineNumber()));
+            }
+        }
+
         StringBuilder resultBuilder = new StringBuilder();
         for (int idx=0 ; idx<stackTraceElements.length ; idx++) {//the former is called earlier
             StackTraceElement anElement = stackTraceElements[idx];
 
-            if (anElement.getFileName().equals(TAG + ".java")){
+            if (anElement.getFileName().equals(TAG + ".java")) {
                 Assert.assertTrue(idx + depth < stackTraceElements.length);
                 StackTraceElement targetElement = stackTraceElements[idx + depth];
 
@@ -159,6 +193,10 @@ public class Owen {
         }
 
         resultBuilder.append(TAG_END);
+        if (sPrintElements) {
+            Lg.d(tag, "result: " + resultBuilder.toString());
+            Lg.d(tag, getSeparator("end", '^'));
+        }
         return resultBuilder.toString();
     }
 
@@ -181,12 +219,6 @@ public class Owen {
     public static void printStackTrace(final String tag, final String message){
         final String result = TAG + TAG_END + tag + TAG_DELIMITER + message;
         (new Exception(result)).printStackTrace();
-    }
-
-    public static void printException(final Exception e) { printException(getMethodTag(2), e); }
-    public static void printException(final String tag, final Exception e) {
-        Owen.e(tag, e.toString());
-        e.printStackTrace();
     }
 
     public static String stringRepeat(final String str) { return stringRepeat(DEFAULT_REPEAT_COUNT, str); }
