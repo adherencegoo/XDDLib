@@ -34,26 +34,23 @@ public class Owen {
         @SuppressWarnings("all")
         public enum Type { V, D, I, W, E }
 
-        /*
-        * Example:
-        * getMethodTag: element[0]: dalvik.system.VMStack.getThreadStackTrace
-        * getMethodTag: element[1]: java.lang.Thread.getStackTrace
-        * getMethodTag: element[2]: com.example.libowen.Owen.getMethodTag
-        * getMethodTag: element[3]: com.example.libowen.Owen.access$000 //unknown after making log function a new static inner class
-        * getMethodTag: element[4]: com.example.libowen.Owen$Lg.d
-        * getMethodTag: element[5]: com.asus.gallery.mapv2.MapActivity$4.onMapLoaded //target
-        * */
-        public static int v(final String msg) { return v(getMethodTag(3), msg); }
-        public static int d(final String msg) { return d(getMethodTag(3), msg); }
-        public static int i(final String msg) { return i(getMethodTag(3), msg); }
-        public static int w(final String msg) { return w(getMethodTag(3), msg); }
-        public static int e(final String msg) { return e(getMethodTag(3), msg); }
+        public static int v(final String msg) { return log(Type.V, getMethodTagWithDepth(3), msg, null); }
+        public static int d(final String msg) { return log(Type.D, getMethodTagWithDepth(3), msg, null); }
+        public static int i(final String msg) { return log(Type.I, getMethodTagWithDepth(3), msg, null); }
+        public static int w(final String msg) { return log(Type.W, getMethodTagWithDepth(3), msg, null); }
+        public static int e(final String msg) { return log(Type.E, getMethodTagWithDepth(3), msg, null); }
 
-        public static int v(final String tag, final String msg) { return v(tag, msg, null); }
-        public static int d(final String tag, final String msg) { return d(tag, msg, null); }
-        public static int i(final String tag, final String msg) { return i(tag, msg, null); }
-        public static int w(final String tag, final String msg) { return w(tag, msg, null); }
-        public static int e(final String tag, final String msg) { return e(tag, msg, null); }
+        public static int v(final String tag, final String msg) { return log(Type.V, tag, msg, null); }
+        public static int d(final String tag, final String msg) { return log(Type.D, tag, msg, null); }
+        public static int i(final String tag, final String msg) { return log(Type.I, tag, msg, null); }
+        public static int w(final String tag, final String msg) { return log(Type.W, tag, msg, null); }
+        public static int e(final String tag, final String msg) { return log(Type.E, tag, msg, null); }
+
+        public static int v(@Nullable final Throwable tr) { return log(Type.V, getMethodTagWithDepth(3), "", tr); }
+        public static int d(@Nullable final Throwable tr) { return log(Type.D, getMethodTagWithDepth(3), "", tr); }
+        public static int i(@Nullable final Throwable tr) { return log(Type.I, getMethodTagWithDepth(3), "", tr); }
+        public static int w(@Nullable final Throwable tr) { return log(Type.W, getMethodTagWithDepth(3), "", tr); }
+        public static int e(@Nullable final Throwable tr) { return log(Type.E, getMethodTagWithDepth(3), "", tr); }
 
         public static int v(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.V, tag, msg, tr); }
         public static int d(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.D, tag, msg, tr); }
@@ -62,8 +59,9 @@ public class Owen {
         public static int e(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.E, tag, msg, tr); }
 
         //my fundamental log
-        public static int log(final Type type, final String tag, final String msg, @Nullable final Throwable tr) {
+        public static int log(final Type type, String tag, final String msg, @Nullable final Throwable tr) {
             final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
+            if (tag == null || tag.equals("")) tag = getMethodTagWithDepth(4);
             switch (type){
                 case V: return Log.v(TAG, tag + msg + throwableString);
                 case D: return Log.d(TAG, tag + msg + throwableString);
@@ -134,16 +132,16 @@ public class Owen {
         }
     }
 
-    public static String getMethodTag(final String... messages){
-        return getMethodTag(2, messages);
+    public static String getMethodTag(final Object... messages){
+        return getMethodTagWithDepth(2, messages);
     }
 
     @SuppressWarnings("all")
-    private static boolean sUseSimpleInstanceName = true;
+    private static boolean sRemovePackageName = true;
     @SuppressWarnings("all")
     private static boolean sPrintElements = false;//for debugging Owen.java
-    private static String getMethodTag(final int depth, final String... messages){
-        final String tag = TAG + (new Object(){}.getClass().getEnclosingMethod().getName()) + TAG_END;
+    private static String getMethodTagWithDepth(final int depth, final Object... messageObjects){
+        final String tag = TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
         Assert.assertTrue(depth >= 1);
 
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
@@ -178,17 +176,20 @@ public class Owen {
         }
 
         // ->[msg]->[msg]->[msg]->[msg]
-        if (messages != null && messages.length != 0){
-            for (final String msg : messages) {
-                resultBuilder.append(TAG_DELIMITER);
-                resultBuilder.append('[');
+        if (messageObjects != null && messageObjects.length != 0){
+            for (final Object msgObj : messageObjects) {
+
+                String targetMessage;
+                if (msgObj instanceof String) targetMessage = (String)msgObj;
+                else targetMessage = msgObj.toString();
+
                 int dotPos;
-                if (sUseSimpleInstanceName && msg.indexOf('@') != -1 && (dotPos = msg.lastIndexOf('.')) != -1) {
-                    resultBuilder.append(msg.substring(dotPos + 1));//OuterClass$InnerClass
-                } else {
-                    resultBuilder.append(msg);//PACKAGE_NAME.OuterClass$InnerClass
+                if (sRemovePackageName && targetMessage.indexOf('@') != -1 && (dotPos = targetMessage.lastIndexOf('.')) != -1) {
+                    targetMessage = targetMessage.substring(dotPos + 1);//OuterClass$InnerClass
                 }
-                resultBuilder.append(']');
+
+                resultBuilder.append(TAG_DELIMITER)
+                        .append('[').append(targetMessage).append(']');
             }
         }
 
@@ -215,7 +216,7 @@ public class Owen {
         return stringBuilder.toString();
     }
 
-    public static void printStackTrace(final String message){ printStackTrace(getMethodTag(2), message); }
+    public static void printStackTrace(final String message){ printStackTrace(getMethodTagWithDepth(2), message); }
     public static void printStackTrace(final String tag, final String message){
         final String result = TAG + TAG_END + tag + TAG_DELIMITER + message;
         (new Exception(result)).printStackTrace();
