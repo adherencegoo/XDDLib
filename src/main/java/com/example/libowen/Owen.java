@@ -34,11 +34,11 @@ public class Owen {
         @SuppressWarnings("all")
         public enum Type { V, D, I, W, E }
 
-        public static int v(final String msg) { return log(Type.V, getMethodTagWithDepth(3), msg, null); }
-        public static int d(final String msg) { return log(Type.D, getMethodTagWithDepth(3), msg, null); }
-        public static int i(final String msg) { return log(Type.I, getMethodTagWithDepth(3), msg, null); }
-        public static int w(final String msg) { return log(Type.W, getMethodTagWithDepth(3), msg, null); }
-        public static int e(final String msg) { return log(Type.E, getMethodTagWithDepth(3), msg, null); }
+        public static int v(final String msg) { return log(Type.V, null, msg, null); }
+        public static int d(final String msg) { return log(Type.D, null, msg, null); }
+        public static int i(final String msg) { return log(Type.I, null, msg, null); }
+        public static int w(final String msg) { return log(Type.W, null, msg, null); }
+        public static int e(final String msg) { return log(Type.E, null, msg, null); }
 
         public static int v(final String tag, final String msg) { return log(Type.V, tag, msg, null); }
         public static int d(final String tag, final String msg) { return log(Type.D, tag, msg, null); }
@@ -46,11 +46,13 @@ public class Owen {
         public static int w(final String tag, final String msg) { return log(Type.W, tag, msg, null); }
         public static int e(final String tag, final String msg) { return log(Type.E, tag, msg, null); }
 
-        public static int v(@Nullable final Throwable tr) { return log(Type.V, getMethodTagWithDepth(3), "", tr); }
-        public static int d(@Nullable final Throwable tr) { return log(Type.D, getMethodTagWithDepth(3), "", tr); }
-        public static int i(@Nullable final Throwable tr) { return log(Type.I, getMethodTagWithDepth(3), "", tr); }
-        public static int w(@Nullable final Throwable tr) { return log(Type.W, getMethodTagWithDepth(3), "", tr); }
-        public static int e(@Nullable final Throwable tr) { return log(Type.E, getMethodTagWithDepth(3), "", tr); }
+        public static int v(@Nullable final Throwable tr) { return log(Type.V, null, "", tr); }
+        public static int d(@Nullable final Throwable tr) { return log(Type.D, null, "", tr); }
+        public static int i(@Nullable final Throwable tr) { return log(Type.I, null, "", tr); }
+        public static int w(@Nullable final Throwable tr) { return log(Type.W, null, "", tr); }
+        public static int e(@Nullable final Throwable tr) { return log(Type.E, null, "", tr); }
+
+        // TODO: 2017/3/29 public static int v(final String tag/msg???, @Nullable final Throwable tr)
 
         public static int v(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.V, tag, msg, tr); }
         public static int d(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.D, tag, msg, tr); }
