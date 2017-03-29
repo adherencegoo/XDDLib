@@ -32,7 +32,14 @@ public class Owen {
         private Lg(){}
 
         @SuppressWarnings("all")
-        public enum Type { V, D, I, W, E }
+        public enum Type {
+            V(Log.VERBOSE), D(Log.DEBUG), I(Log.INFO), W(Log.WARN),  E(Log.ERROR);
+
+            public final int mValue;
+            private Type(final int value) {
+                mValue = value;
+            }
+        }
 
         public static int v(final String msg) { return log(Type.V, null, msg, null); }
         public static int d(final String msg) { return log(Type.D, null, msg, null); }
