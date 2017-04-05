@@ -225,6 +225,7 @@ public class Owen {
         return stringBuilder.toString();
     }
 
+    public static void printStackTrace(){ printStackTrace(getMethodTagWithDepth(2), "~~~~~~~~~"); }
     public static void printStackTrace(final String message){ printStackTrace(getMethodTagWithDepth(2), message); }
     public static void printStackTrace(final String tag, final String message){
         final String result = TAG + TAG_END + tag + TAG_DELIMITER + message;
