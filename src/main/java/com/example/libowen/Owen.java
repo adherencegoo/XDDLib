@@ -68,9 +68,11 @@ public class Owen {
         public static int e(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.E, tag, msg, tr); }
 
         //my fundamental log
-        public static int log(final Type type, String tag, final String msg, @Nullable final Throwable tr) {
+        public static int log(final Type type, String tag, @Nullable String msg, @Nullable final Throwable tr) {
             final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
+            
             if (tag == null || tag.equals("")) tag = getMethodTagWithDepth(4);
+            if (msg == null) msg = "";
             switch (type){
                 case V: return Log.v(TAG, tag + msg + throwableString);
                 case D: return Log.d(TAG, tag + msg + throwableString);
