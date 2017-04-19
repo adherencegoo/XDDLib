@@ -1,9 +1,14 @@
 package com.example.libowen;
 
+import android.content.ContentValues;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -237,5 +242,15 @@ public class Owen {
     public static String stringRepeat(final String str) { return stringRepeat(DEFAULT_REPEAT_COUNT, str); }
     public static String stringRepeat(final int count, final String str) {
         return TextUtils.join("", Collections.nCopies(count, str));
+    }
+
+    public static void dbUpdate(@NonNull final Context context,
+                                @NonNull final Uri uri,
+                                @NonNull final ContentValues values,
+                                final long id){
+        String whereClause = id > 0 ? MediaStore.Video.Media._ID + " = ?" : null;
+        String[] whereContent = id > 0 ? new String[]{Long.toString(id)} : null;
+        int rowCount = context.getContentResolver().update(uri, values, whereClause, whereContent);
+        Owen.Lg.d("updated row count:" + rowCount);
     }
 }
