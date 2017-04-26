@@ -27,7 +27,7 @@ import java.util.Locale;
  */
 
 public class Owen {
-    private static final String TAG = Owen.class.getSimpleName();
+    public static final String TAG = Owen.class.getSimpleName();
     private static final String TAG_DELIMITER = "->";
     private static final String TAG_END = ": ";
     private static final int DEFAULT_REPEAT_COUNT = 30;
