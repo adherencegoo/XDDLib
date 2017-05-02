@@ -77,7 +77,7 @@ public class Owen {
         public static int log(final Type type, @Nullable String tag, @Nullable String msg, @Nullable final Throwable tr) {
             final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
             
-            if (tag == null || tag.equals("")) tag = getMethodTagWithDepth(4);
+            if (tag == null || tag.isEmpty()) tag = getMethodTagWithDepth(4);
             if (msg == null) msg = "";
             switch (type){
                 case V: return Log.v(TAG, tag + msg + throwableString);
@@ -109,7 +109,7 @@ public class Owen {
         canvas.drawLine(0,0,imageWidth, imageHeight, paint);
         canvas.drawLine(0,imageHeight,imageWidth, 0, paint);
         //draw text
-        if (msg != null && !msg.equals("")) {
+        if (msg != null && !msg.isEmpty()) {
             paint.setTextSize(22);
             canvas.drawText(msg, imageWidth / 2, imageHeight / 4, paint);
         }
