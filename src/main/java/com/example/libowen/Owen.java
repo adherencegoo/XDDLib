@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import junit.framework.Assert;
 
@@ -252,5 +253,12 @@ public class Owen {
         String[] whereContent = id > 0 ? new String[]{Long.toString(id)} : null;
         int rowCount = context.getContentResolver().update(uri, values, whereClause, whereContent);
         Owen.Lg.d("updated row count:" + rowCount);
+    }
+
+    public static void showToast(@NonNull final Context context, @NonNull final String message) {
+        showToast(context, getMethodTagWithDepth(2), message);
+    }
+    public static void showToast(@NonNull final Context context, @NonNull final String tag, @NonNull final String message) {
+        Toast.makeText(context, TAG + TAG_END + tag + message, Toast.LENGTH_LONG).show();
     }
 }
