@@ -74,7 +74,7 @@ public class Owen {
         public static int e(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.E, tag, msg, tr); }
 
         //my fundamental log
-        public static int log(final Type type, String tag, @Nullable String msg, @Nullable final Throwable tr) {
+        public static int log(final Type type, @Nullable String tag, @Nullable String msg, @Nullable final Throwable tr) {
             final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
             
             if (tag == null || tag.equals("")) tag = getMethodTagWithDepth(4);
@@ -90,7 +90,8 @@ public class Owen {
         }
     }
 
-    public static Bitmap drawCross(final String outerTag, Bitmap bitmap, final int color, final String msg){
+    //stale: not apply getMethodTag and Lg
+    public static Bitmap drawCross(@Nullable final String outerTag, @Nullable Bitmap bitmap, final int color, @Nullable final String msg){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + TAG_END;
         if (bitmap == null) {
             Log.e(TAG, tag + "null bitmap");
@@ -115,7 +116,8 @@ public class Owen {
         return bitmap;
     }
 
-    public static void saveBitmap(final String outerTag, final Bitmap bitmap, final String fileName){
+    //stale: not apply getMethodTag and Lg
+    public static void saveBitmap(@Nullable final String outerTag, @Nullable final Bitmap bitmap, @NonNull final String fileName){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + TAG_END;
         if (bitmap != null) {
             //produce full path for file
@@ -219,10 +221,10 @@ public class Owen {
     }
 
 
-    public static String getSeparator(final String message, final char separator) {
+    public static String getSeparator(@NonNull final String message, final char separator) {
         return getSeparator(message, separator, DEFAULT_REPEAT_COUNT);
     }
-    public static String getSeparator(final String message, final char separator, final int count) {
+    public static String getSeparator(@NonNull final String message, final char separator, final int count) {
         final StringBuilder stringBuilder = new StringBuilder();
         final String halfSeparator = stringRepeat(count, String.valueOf(separator));
         stringBuilder.append(halfSeparator);
@@ -234,14 +236,14 @@ public class Owen {
     }
 
     public static void printStackTrace(){ printStackTrace(getMethodTagWithDepth(2), "~~~~~~~~~"); }
-    public static void printStackTrace(final String message){ printStackTrace(getMethodTagWithDepth(2), message); }
-    public static void printStackTrace(final String tag, final String message){
+    public static void printStackTrace(@NonNull final String message){ printStackTrace(getMethodTagWithDepth(2), message); }
+    public static void printStackTrace(@NonNull final String tag, @NonNull final String message){
         final String result = TAG + TAG_END + tag + TAG_DELIMITER + message;
         (new Exception(result)).printStackTrace();
     }
 
-    public static String stringRepeat(final String str) { return stringRepeat(DEFAULT_REPEAT_COUNT, str); }
-    public static String stringRepeat(final int count, final String str) {
+    public static String stringRepeat(@NonNull final String str) { return stringRepeat(DEFAULT_REPEAT_COUNT, str); }
+    public static String stringRepeat(final int count, @NonNull final String str) {
         return TextUtils.join("", Collections.nCopies(count, str));
     }
 
