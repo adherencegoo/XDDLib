@@ -156,9 +156,9 @@ public class Owen {
     }
 
     @SuppressWarnings("all")
-    private static boolean sRemovePackageName = true;
+    private static final boolean REMOVE_PACKAGE_NAME = true;
     @SuppressWarnings("all")
-    private static boolean sPrintElements = false;//for debugging Owen.java
+    private static final boolean PRINT_ELEMENTS = false;//for debugging Owen.java
     private static String getMethodTagWithDepth(final int depth, final Object... messageObjects){
         final String tag = TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
         Assert.assertTrue(depth >= 1);
@@ -167,7 +167,7 @@ public class Owen {
         Assert.assertTrue(stackTraceElements != null);
         Assert.assertTrue(stackTraceElements.length != 0);
 
-        if (sPrintElements) {
+        if (PRINT_ELEMENTS) {
             Lg.d(tag, getSeparator("start", 'v'));
             for (int idx=0 ; idx<stackTraceElements.length ; idx++) {
                 StackTraceElement element = stackTraceElements[idx];
@@ -203,7 +203,7 @@ public class Owen {
                 else targetMessage = msgObj.toString();
 
                 int dotPos;
-                if (sRemovePackageName && targetMessage.indexOf('@') != -1 && (dotPos = targetMessage.lastIndexOf('.')) != -1) {
+                if (REMOVE_PACKAGE_NAME && targetMessage.indexOf('@') != -1 && (dotPos = targetMessage.lastIndexOf('.')) != -1) {
                     targetMessage = targetMessage.substring(dotPos + 1);//OuterClass$InnerClass
                 }
 
@@ -213,7 +213,7 @@ public class Owen {
         }
 
         resultBuilder.append(TAG_END);
-        if (sPrintElements) {
+        if (PRINT_ELEMENTS) {
             Lg.d(tag, "result: " + resultBuilder.toString());
             Lg.d(tag, getSeparator("end", '^'));
         }
