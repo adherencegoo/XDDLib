@@ -181,8 +181,16 @@ public class Owen {
             StackTraceElement anElement = stackTraceElements[idx];
 
             if (anElement.getFileName().equals(TAG + ".java")) {
+                anElement = null;//unset it to prevent using it
                 Assert.assertTrue(idx + depth < stackTraceElements.length);
                 StackTraceElement targetElement = stackTraceElements[idx + depth];
+
+                //(FileName:LineNumber)   //no other text allowed
+                resultBuilder.append("(");
+                resultBuilder.append(targetElement.getFileName());
+                resultBuilder.append(":");
+                resultBuilder.append(targetElement.getLineNumber());
+                resultBuilder.append(")");
 
                 String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
                 resultBuilder.append(TAG_DELIMITER);
