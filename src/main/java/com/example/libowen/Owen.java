@@ -74,12 +74,11 @@ public class Owen {
         public static int e(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.E, tag, msg, tr); }
 
         //my fundamental log
-        private static final int DEPTH_FOR_LOG = 4;
         public static int log(final Type type, @Nullable String tag, @Nullable String msg, @Nullable final Throwable tr) {
             final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
             
-            if (tag == null || tag.isEmpty()) tag = getMethodTagWithDepth(DEPTH_FOR_LOG, true);
-            if (!tag.startsWith("(")) tag = getCodeHyperlink(DEPTH_FOR_LOG) + tag;//create hyperlink at the place where Lg.x is called
+            if (tag == null || tag.isEmpty()) tag = _getMethodTag(true);
+            if (!tag.startsWith("(")) tag = getCodeHyperlink() + tag;//create hyperlink at the place where Lg.x is called
             if (msg == null) msg = "";
             switch (type){
                 case V: return Log.v(TAG, tag + msg + throwableString);
@@ -155,46 +154,40 @@ public class Owen {
 
     public static String getMethodTag(final Object... messages){
         //this method is invoked outside the class, and the result is reused, so don't show hyperlink
-        return getMethodTagWithDepth(2, false, messages);
+        return _getMethodTag(false, messages);
     }
 
-    private static String getCodeHyperlink(final int depth) {
-        Assert.assertTrue(depth >= 1);
+    private static StackTraceElement findFirstOuterElement(final StackTraceElement[] elements) {
+        Assert.assertTrue(elements != null && elements.length > 0);
 
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        Assert.assertTrue(stackTraceElements != null);
-        Assert.assertTrue(stackTraceElements.length != 0);
-
-        StringBuilder resultBuilder = new StringBuilder();
-        for (int idx=0 ; idx<stackTraceElements.length ; idx++) {//the former is called earlier
-            if (stackTraceElements[idx].getFileName().equals(TAG + ".java")) {
-                Assert.assertTrue(idx + depth < stackTraceElements.length);
-                StackTraceElement targetElement = stackTraceElements[idx + depth];
-
-                resultBuilder.append("(")
-                        .append(targetElement.getFileName())
-                        .append(":")
-                        .append(targetElement.getLineNumber())
-                        .append(")");
-                break;
+        boolean previousIsInnerElement = false;//inner: Owen.xxx
+        for (StackTraceElement element : elements) {//the former is called earlier
+            boolean currentIsInnerElement = element.getFileName().equals(TAG + ".java");
+            if (previousIsInnerElement && !currentIsInnerElement) {
+                return element;
             }
+            previousIsInnerElement = currentIsInnerElement;
         }
-        return resultBuilder.toString();
+        Assert.fail(TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!!");
+        return null;
+    }
+
+    private static String getCodeHyperlink() {
+        StackTraceElement targetElement = findFirstOuterElement(Thread.currentThread().getStackTrace());
+        Assert.assertNotNull(targetElement);
+        return "(" + targetElement.getFileName() + ":" + targetElement.getLineNumber() + ")";
     }
 
     @SuppressWarnings("all")
     private static final boolean REMOVE_PACKAGE_NAME = true;
     private static final boolean PRINT_ELEMENTS = false;
     private static final boolean SHOW_ELAPSED_TIME = false;
-    private static String getMethodTagWithDepth(final int depth, final boolean showHyperlink, final Object... messageObjects){
+    private static String _getMethodTag(final boolean showHyperlink, final Object... messageObjects){
         long t1;
         if (SHOW_ELAPSED_TIME) t1 = System.currentTimeMillis();
         final String tag = TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
-        Assert.assertTrue(depth >= 1);
 
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        Assert.assertTrue(stackTraceElements != null);
-        Assert.assertTrue(stackTraceElements.length != 0);
+        final StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 
         if (PRINT_ELEMENTS) {
             Lg.d(tag, getSeparator("start", 'v'));
@@ -205,31 +198,24 @@ public class Owen {
             }
         }
 
-        StringBuilder resultBuilder = new StringBuilder();
-        for (int idx=0 ; idx<stackTraceElements.length ; idx++) {//the former is called earlier
-            if (stackTraceElements[idx].getFileName().equals(TAG + ".java")) {
-                Assert.assertTrue(idx + depth < stackTraceElements.length);
-                StackTraceElement targetElement = stackTraceElements[idx + depth];
+        final StringBuilder resultBuilder = new StringBuilder();
+        final StackTraceElement targetElement = findFirstOuterElement(stackTraceElements);
+        Assert.assertNotNull(targetElement);
 
-                if (showHyperlink) {//(FileName:LineNumber)   //no other text allowed
-                    resultBuilder.append("(")
-                            .append(targetElement.getFileName())
-                            .append(":")
-                            .append(targetElement.getLineNumber())
-                            .append(")");
-                }
-
-                //class name
-                String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
-                resultBuilder.append(TAG_DELIMITER)
-                        .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//OuterClass$InnerClass
-                        .append(".");
-
-                //method name
-                resultBuilder.append(targetElement.getMethodName());
-                break;
-            }
+        if (showHyperlink) {//(FileName:LineNumber)   //no other text allowed
+            resultBuilder.append("(")
+                    .append(targetElement.getFileName())
+                    .append(":")
+                    .append(targetElement.getLineNumber())
+                    .append(")");
         }
+        //class name
+        final String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
+        resultBuilder.append(TAG_DELIMITER)
+                .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//OuterClass$InnerClass
+                .append(".");
+        //method name
+        resultBuilder.append(targetElement.getMethodName());
 
         // ->[msg]->[msg]->[msg]->[msg]
         if (messageObjects != null && messageObjects.length != 0){
@@ -279,8 +265,8 @@ public class Owen {
         return stringBuilder.toString();
     }
 
-    public static void printStackTrace(){ printStackTrace(getMethodTagWithDepth(2, true), "~~~~~~~~~"); }
-    public static void printStackTrace(@NonNull final String message){ printStackTrace(getMethodTagWithDepth(2, true), message); }
+    public static void printStackTrace(){ printStackTrace(_getMethodTag(true), "~~~~~~~~~"); }
+    public static void printStackTrace(@NonNull final String message){ printStackTrace(_getMethodTag(true), message); }
     public static void printStackTrace(@NonNull final String tag, @NonNull final String message){
         final String result = TAG + TAG_END + tag + TAG_DELIMITER + message;
         (new Exception(result)).printStackTrace();
@@ -302,7 +288,7 @@ public class Owen {
     }
 
     public static void showToast(@NonNull final Context context, @NonNull final String message) {
-        showToast(context, getMethodTagWithDepth(2, true), message);
+        showToast(context, _getMethodTag(true), message);
     }
     public static void showToast(@NonNull final Context context, @NonNull final String tag, @NonNull final String message) {
         Toast.makeText(context, TAG + TAG_END + tag + message, Toast.LENGTH_LONG).show();
