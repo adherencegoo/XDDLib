@@ -178,10 +178,7 @@ public class Owen {
 
         StringBuilder resultBuilder = new StringBuilder();
         for (int idx=0 ; idx<stackTraceElements.length ; idx++) {//the former is called earlier
-            StackTraceElement anElement = stackTraceElements[idx];
-
-            if (anElement.getFileName().equals(TAG + ".java")) {
-                anElement = null;//unset it to prevent using it
+            if (stackTraceElements[idx].getFileName().equals(TAG + ".java")) {
                 Assert.assertTrue(idx + depth < stackTraceElements.length);
                 StackTraceElement targetElement = stackTraceElements[idx + depth];
 
