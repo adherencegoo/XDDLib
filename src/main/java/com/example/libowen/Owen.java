@@ -157,9 +157,11 @@ public class Owen {
 
     @SuppressWarnings("all")
     private static final boolean REMOVE_PACKAGE_NAME = true;
-    @SuppressWarnings("all")
-    private static final boolean PRINT_ELEMENTS = false;//for debugging Owen.java
+    private static final boolean PRINT_ELEMENTS = false;
+    private static final boolean SHOW_ELAPSED_TIME = false;
     private static String getMethodTagWithDepth(final int depth, final Object... messageObjects){
+        long t1;
+        if (SHOW_ELAPSED_TIME) t1 = System.currentTimeMillis();
         final String tag = TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
         Assert.assertTrue(depth >= 1);
 
@@ -183,17 +185,19 @@ public class Owen {
                 StackTraceElement targetElement = stackTraceElements[idx + depth];
 
                 //(FileName:LineNumber)   //no other text allowed
-                resultBuilder.append("(");
-                resultBuilder.append(targetElement.getFileName());
-                resultBuilder.append(":");
-                resultBuilder.append(targetElement.getLineNumber());
-                resultBuilder.append(")");
+                resultBuilder.append("(")
+                        .append(targetElement.getFileName())
+                        .append(":")
+                        .append(targetElement.getLineNumber())
+                        .append(")");
 
+                //class name
                 String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
-                resultBuilder.append(TAG_DELIMITER);
-                resultBuilder.append(classFullName.substring(classFullName.lastIndexOf('.') +1));//OuterClass$InnerClass
-                resultBuilder.append(".");
+                resultBuilder.append(TAG_DELIMITER)
+                        .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//OuterClass$InnerClass
+                        .append(".");
 
+                //method name
                 resultBuilder.append(targetElement.getMethodName());
                 break;
             }
@@ -213,14 +217,21 @@ public class Owen {
                 }
 
                 resultBuilder.append(TAG_DELIMITER)
-                        .append('[').append(targetMessage).append(']');
+                        .append('[')
+                        .append(targetMessage)
+                        .append(']');
             }
         }
 
         resultBuilder.append(TAG_END);
+
         if (PRINT_ELEMENTS) {
             Lg.d(tag, "result: " + resultBuilder.toString());
             Lg.d(tag, getSeparator("end", '^'));
+        }
+        if (SHOW_ELAPSED_TIME) {
+            long t2 = System.currentTimeMillis();
+            Lg.i(tag, "elapsed time:" + (t2 - t1) + "ms");//about 0~1ms if PRINT_ELEMENTS is false
         }
         return resultBuilder.toString();
     }
