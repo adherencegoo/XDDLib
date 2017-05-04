@@ -77,7 +77,7 @@ public class Owen {
         public static int log(final Type type, @Nullable String tag, @Nullable String msg, @Nullable final Throwable tr) {
             final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
             
-            if (tag == null || tag.isEmpty()) tag = getMethodTagWithDepth(4);
+            if (tag == null || tag.isEmpty()) tag = getMethodTagWithDepth(4, true);
             if (msg == null) msg = "";
             switch (type){
                 case V: return Log.v(TAG, tag + msg + throwableString);
@@ -152,14 +152,15 @@ public class Owen {
     }
 
     public static String getMethodTag(final Object... messages){
-        return getMethodTagWithDepth(2, messages);
+        //this method is invoked outside the class, and the result is reused, so don't show hyperlink
+        return getMethodTagWithDepth(2, false, messages);
     }
 
     @SuppressWarnings("all")
     private static final boolean REMOVE_PACKAGE_NAME = true;
     private static final boolean PRINT_ELEMENTS = false;
     private static final boolean SHOW_ELAPSED_TIME = false;
-    private static String getMethodTagWithDepth(final int depth, final Object... messageObjects){
+    private static String getMethodTagWithDepth(final int depth, final boolean showHyperlink, final Object... messageObjects){
         long t1;
         if (SHOW_ELAPSED_TIME) t1 = System.currentTimeMillis();
         final String tag = TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
@@ -184,12 +185,13 @@ public class Owen {
                 Assert.assertTrue(idx + depth < stackTraceElements.length);
                 StackTraceElement targetElement = stackTraceElements[idx + depth];
 
-                //(FileName:LineNumber)   //no other text allowed
-                resultBuilder.append("(")
-                        .append(targetElement.getFileName())
-                        .append(":")
-                        .append(targetElement.getLineNumber())
-                        .append(")");
+                if (showHyperlink) {//(FileName:LineNumber)   //no other text allowed
+                    resultBuilder.append("(")
+                            .append(targetElement.getFileName())
+                            .append(":")
+                            .append(targetElement.getLineNumber())
+                            .append(")");
+                }
 
                 //class name
                 String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
@@ -251,8 +253,8 @@ public class Owen {
         return stringBuilder.toString();
     }
 
-    public static void printStackTrace(){ printStackTrace(getMethodTagWithDepth(2), "~~~~~~~~~"); }
-    public static void printStackTrace(@NonNull final String message){ printStackTrace(getMethodTagWithDepth(2), message); }
+    public static void printStackTrace(){ printStackTrace(getMethodTagWithDepth(2, true), "~~~~~~~~~"); }
+    public static void printStackTrace(@NonNull final String message){ printStackTrace(getMethodTagWithDepth(2, true), message); }
     public static void printStackTrace(@NonNull final String tag, @NonNull final String message){
         final String result = TAG + TAG_END + tag + TAG_DELIMITER + message;
         (new Exception(result)).printStackTrace();
@@ -274,7 +276,7 @@ public class Owen {
     }
 
     public static void showToast(@NonNull final Context context, @NonNull final String message) {
-        showToast(context, getMethodTagWithDepth(2), message);
+        showToast(context, getMethodTagWithDepth(2, true), message);
     }
     public static void showToast(@NonNull final Context context, @NonNull final String tag, @NonNull final String message) {
         Toast.makeText(context, TAG + TAG_END + tag + message, Toast.LENGTH_LONG).show();
