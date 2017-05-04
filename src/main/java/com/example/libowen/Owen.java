@@ -74,10 +74,12 @@ public class Owen {
         public static int e(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.E, tag, msg, tr); }
 
         //my fundamental log
+        private static final int DEPTH_FOR_LOG = 4;
         public static int log(final Type type, @Nullable String tag, @Nullable String msg, @Nullable final Throwable tr) {
             final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
             
-            if (tag == null || tag.isEmpty()) tag = getMethodTagWithDepth(4, true);
+            if (tag == null || tag.isEmpty()) tag = getMethodTagWithDepth(DEPTH_FOR_LOG, true);
+            if (!tag.startsWith("(")) tag = getCodeHyperlink(DEPTH_FOR_LOG) + tag;//create hyperlink at the place where Lg.x is called
             if (msg == null) msg = "";
             switch (type){
                 case V: return Log.v(TAG, tag + msg + throwableString);
@@ -154,6 +156,30 @@ public class Owen {
     public static String getMethodTag(final Object... messages){
         //this method is invoked outside the class, and the result is reused, so don't show hyperlink
         return getMethodTagWithDepth(2, false, messages);
+    }
+
+    private static String getCodeHyperlink(final int depth) {
+        Assert.assertTrue(depth >= 1);
+
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        Assert.assertTrue(stackTraceElements != null);
+        Assert.assertTrue(stackTraceElements.length != 0);
+
+        StringBuilder resultBuilder = new StringBuilder();
+        for (int idx=0 ; idx<stackTraceElements.length ; idx++) {//the former is called earlier
+            if (stackTraceElements[idx].getFileName().equals(TAG + ".java")) {
+                Assert.assertTrue(idx + depth < stackTraceElements.length);
+                StackTraceElement targetElement = stackTraceElements[idx + depth];
+
+                resultBuilder.append("(")
+                        .append(targetElement.getFileName())
+                        .append(":")
+                        .append(targetElement.getLineNumber())
+                        .append(")");
+                break;
+            }
+        }
+        return resultBuilder.toString();
     }
 
     @SuppressWarnings("all")
