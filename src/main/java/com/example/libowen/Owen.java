@@ -267,5 +267,6 @@ public class Owen {
     }
     public static void showToast(@NonNull final Context context, @NonNull final String tag, @NonNull final String message) {
         Toast.makeText(context, TAG + TAG_END + tag + message, Toast.LENGTH_LONG).show();
+        Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + tag, message);
     }
 }
