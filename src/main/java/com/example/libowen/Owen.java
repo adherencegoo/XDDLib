@@ -251,16 +251,18 @@ public class Owen {
     }
 
 
-    public static String getSeparator(@NonNull final String message, final char separator) {
+    public static String getSeparator(@Nullable final String message, final char separator) {
         return getSeparator(message, separator, DEFAULT_REPEAT_COUNT);
     }
-    public static String getSeparator(@NonNull final String message, final char separator, final int count) {
+    public static String getSeparator(@Nullable final String message, final char separator, final int count) {
         final StringBuilder stringBuilder = new StringBuilder();
         final String halfSeparator = stringRepeat(count, String.valueOf(separator));
         stringBuilder.append(halfSeparator);
-        stringBuilder.append(' ');
-        stringBuilder.append(message);
-        stringBuilder.append(' ');
+        if (message != null && !message.isEmpty()) {
+            stringBuilder.append(' ');
+            stringBuilder.append(message);
+            stringBuilder.append(' ');
+        }
         stringBuilder.append(halfSeparator);
         return stringBuilder.toString();
     }
