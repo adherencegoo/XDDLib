@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Created by Owen_Chen on 2017/3/15.
@@ -32,6 +33,7 @@ public class Owen {
     private static final String TAG_DELIMITER = "->";
     private static final String TAG_END = ": ";
     private static final int DEFAULT_REPEAT_COUNT = 30;
+    private static final Pattern CODE_HYPERLINK_PATTERN = Pattern.compile("^[(].*[.](java:)[0-9]+[)].*");//(ANYTHING.java:NUMBER)ANYTHING
     private Owen(){}
 
     static public class Lg {
@@ -159,10 +161,11 @@ public class Owen {
 
     private static StackTraceElement findFirstOuterElement(final StackTraceElement[] elements) {
         Assert.assertTrue(elements != null && elements.length > 0);
+        final String interestingFileName = TAG + ".java";
 
         boolean previousIsInnerElement = false;//inner: Owen.xxx
         for (StackTraceElement element : elements) {//the former is called earlier
-            boolean currentIsInnerElement = element.getFileName().equals(TAG + ".java");
+            boolean currentIsInnerElement = element.getFileName().equals(interestingFileName);
             if (previousIsInnerElement && !currentIsInnerElement) {
                 return element;
             }
@@ -173,7 +176,7 @@ public class Owen {
     }
 
     private static String getTagWithCodeHyperlink(@NonNull final String origTag) {
-        if (origTag.startsWith("(")) {
+        if (CODE_HYPERLINK_PATTERN.matcher(origTag).matches()) {
             return origTag;
         } else {
             final StackTraceElement targetElement = findFirstOuterElement(Thread.currentThread().getStackTrace());
