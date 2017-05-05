@@ -78,7 +78,7 @@ public class Owen {
             final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
             
             if (tag == null || tag.isEmpty()) tag = _getMethodTag(true);
-            if (!tag.startsWith("(")) tag = getCodeHyperlink() + tag;//create hyperlink at the place where Lg.x is called
+            else tag = getTagWithCodeHyperlink(tag);//create hyperlink at the place where Lg.x is called if needed
             if (msg == null) msg = "";
             switch (type){
                 case V: return Log.v(TAG, tag + msg + throwableString);
@@ -172,10 +172,14 @@ public class Owen {
         return null;
     }
 
-    private static String getCodeHyperlink() {
-        StackTraceElement targetElement = findFirstOuterElement(Thread.currentThread().getStackTrace());
-        Assert.assertNotNull(targetElement);
-        return "(" + targetElement.getFileName() + ":" + targetElement.getLineNumber() + ")";
+    private static String getTagWithCodeHyperlink(@NonNull final String origTag) {
+        if (origTag.startsWith("(")) {
+            return origTag;
+        } else {
+            final StackTraceElement targetElement = findFirstOuterElement(Thread.currentThread().getStackTrace());
+            Assert.assertNotNull(targetElement);
+            return "(" + targetElement.getFileName() + ":" + targetElement.getLineNumber() + ")" + origTag;
+        }
     }
 
     @SuppressWarnings("all")
@@ -270,7 +274,7 @@ public class Owen {
     public static void printStackTrace(){ printStackTrace(_getMethodTag(true), "~~~~~~~~~"); }
     public static void printStackTrace(@NonNull final String message){ printStackTrace(_getMethodTag(true), message); }
     public static void printStackTrace(@NonNull final String tag, @NonNull final String message){
-        final String result = TAG + TAG_END + tag + TAG_DELIMITER + message;
+        final String result = TAG + TAG_END + getTagWithCodeHyperlink(tag) + TAG_DELIMITER + message;
         (new Exception(result)).printStackTrace();
     }
 
@@ -292,7 +296,8 @@ public class Owen {
     public static void showToast(@NonNull final Context context, @NonNull final String message) {
         showToast(context, _getMethodTag(true), message);
     }
-    public static void showToast(@NonNull final Context context, @NonNull final String tag, @NonNull final String message) {
+    public static void showToast(@NonNull final Context context, @NonNull String tag, @NonNull final String message) {
+        tag = getTagWithCodeHyperlink(tag);
         Toast.makeText(context, TAG + TAG_END + tag + message, Toast.LENGTH_LONG).show();
         Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + tag, message);
     }
