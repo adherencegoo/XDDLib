@@ -1,4 +1,4 @@
-package com.example.libowen;
+package com.example.xddlib;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -28,13 +28,13 @@ import java.util.regex.Pattern;
  * Created by Owen_Chen on 2017/3/15.
  */
 
-public class Owen {
-    public static final String TAG = Owen.class.getSimpleName();
+public class XDD {
+    public static final String TAG = XDD.class.getSimpleName();
     private static final String TAG_DELIMITER = "->";
     private static final String TAG_END = ": ";
     private static final int DEFAULT_REPEAT_COUNT = 30;
     private static final Pattern CODE_HYPERLINK_PATTERN = Pattern.compile("^[(].*[.](java:)[0-9]+[)].*");//(ANYTHING.java:NUMBER)ANYTHING
-    private Owen(){}
+    private XDD(){}
 
     static public class Lg {
         private Lg(){}
@@ -163,7 +163,7 @@ public class Owen {
         Assert.assertTrue(elements != null && elements.length > 0);
         final String interestingFileName = TAG + ".java";
 
-        boolean previousIsInnerElement = false;//inner: Owen.xxx
+        boolean previousIsInnerElement = false;//inner: XDD.xxx
         for (StackTraceElement element : elements) {//the former is called earlier
             boolean currentIsInnerElement = element.getFileName().equals(interestingFileName);
             if (previousIsInnerElement && !currentIsInnerElement) {
@@ -293,7 +293,7 @@ public class Owen {
         String whereClause = id > 0 ? MediaStore.Video.Media._ID + " = ?" : null;
         String[] whereContent = id > 0 ? new String[]{Long.toString(id)} : null;
         int rowCount = context.getContentResolver().update(uri, values, whereClause, whereContent);
-        Owen.Lg.d("updated row count:" + rowCount);
+        XDD.Lg.d("updated row count:" + rowCount);
     }
 
     public static void showToast(@NonNull final Context context, @NonNull final String message) {
