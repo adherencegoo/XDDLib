@@ -29,9 +29,12 @@ import java.util.regex.Pattern;
  */
 
 public class XDD {
-    public static final String TAG = XDD.class.getSimpleName();
-    private static final String TAG_DELIMITER = "->";
-    private static final String TAG_END = ": ";
+    public static final String XDD_TAG = XDD.class.getSimpleName();
+    private static final String TAG_END = ": ";//for both tag: XDD_TAG and method tag
+    private static final String METHOD_TAG_DELIMITER = "->";
+    private static final Pattern METHOD_TAG_PATTERN = Pattern.compile(".*(" + METHOD_TAG_DELIMITER + ").*(" + TAG_END + ").*");//XXX->XXX: XXX
+
+    private static final String STRING_DELIMITER = ", ";
     private static final int DEFAULT_REPEAT_COUNT = 30;
     private static final Pattern CODE_HYPERLINK_PATTERN = Pattern.compile("^[(].*[.](java:)[0-9]+[)].*");//(ANYTHING.java:NUMBER)ANYTHING
     private XDD(){}
@@ -49,45 +52,21 @@ public class XDD {
             }
         }
 
-        public static int v(final String msg) { return log(Type.V, null, msg, null); }
-        public static int d(final String msg) { return log(Type.D, null, msg, null); }
-        public static int i(final String msg) { return log(Type.I, null, msg, null); }
-        public static int w(final String msg) { return log(Type.W, null, msg, null); }
-        public static int e(final String msg) { return log(Type.E, null, msg, null); }
-
-        public static int v(final String tag, final String msg) { return log(Type.V, tag, msg, null); }
-        public static int d(final String tag, final String msg) { return log(Type.D, tag, msg, null); }
-        public static int i(final String tag, final String msg) { return log(Type.I, tag, msg, null); }
-        public static int w(final String tag, final String msg) { return log(Type.W, tag, msg, null); }
-        public static int e(final String tag, final String msg) { return log(Type.E, tag, msg, null); }
-
-        public static int v(@Nullable final Throwable tr) { return log(Type.V, null, "", tr); }
-        public static int d(@Nullable final Throwable tr) { return log(Type.D, null, "", tr); }
-        public static int i(@Nullable final Throwable tr) { return log(Type.I, null, "", tr); }
-        public static int w(@Nullable final Throwable tr) { return log(Type.W, null, "", tr); }
-        public static int e(@Nullable final Throwable tr) { return log(Type.E, null, "", tr); }
-
-        // TODO: 2017/3/29 public static int v(final String tag/msg???, @Nullable final Throwable tr)
-
-        public static int v(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.V, tag, msg, tr); }
-        public static int d(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.D, tag, msg, tr); }
-        public static int i(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.I, tag, msg, tr); }
-        public static int w(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.W, tag, msg, tr); }
-        public static int e(final String tag, final String msg, @Nullable final Throwable tr) { return log(Type.E, tag, msg, tr); }
+        public static int v(@Nullable final Object... objects) { return log(Type.V, objects); }
+        public static int d(@Nullable final Object... objects) { return log(Type.D, objects); }
+        public static int i(@Nullable final Object... objects) { return log(Type.I, objects); }
+        public static int w(@Nullable final Object... objects) { return log(Type.W, objects); }
+        public static int e(@Nullable final Object... objects) { return log(Type.E, objects); }
 
         //my fundamental log
-        public static int log(final Type type, @Nullable String tag, @Nullable String msg, @Nullable final Throwable tr) {
-            final String throwableString = (tr == null ? "" : "\n") + Log.getStackTraceString(tr);
-            
-            if (tag == null || tag.isEmpty()) tag = _getMethodTag(true);
-            else tag = getTagWithCodeHyperlink(tag);//create hyperlink at the place where Lg.x is called if needed
-            if (msg == null) msg = "";
+        public static int log(final Type type, @Nullable final Object... objects) {
+            final String message = getMessageByParsingObjects(objects);
             switch (type){
-                case V: return Log.v(TAG, tag + msg + throwableString);
-                case D: return Log.d(TAG, tag + msg + throwableString);
-                case I: return Log.i(TAG, tag + msg + throwableString);
-                case W: return Log.w(TAG, tag + msg + throwableString);
-                case E: return Log.e(TAG, tag + msg + throwableString);
+                case V: return Log.v(XDD_TAG, message);
+                case D: return Log.d(XDD_TAG, message);
+                case I: return Log.i(XDD_TAG, message);
+                case W: return Log.w(XDD_TAG, message);
+                case E: return Log.e(XDD_TAG, message);
                 default: return -1;
             }
         }
@@ -97,7 +76,7 @@ public class XDD {
     public static Bitmap drawCross(@Nullable final String outerTag, @Nullable Bitmap bitmap, final int color, @Nullable final String msg){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + TAG_END;
         if (bitmap == null) {
-            Log.e(TAG, tag + "null bitmap");
+            Log.e(XDD_TAG, tag + "null bitmap");
             return null;
         }
 
@@ -144,13 +123,13 @@ public class XDD {
             try {
                 os = new FileOutputStream(fileFullPath);
             } catch (FileNotFoundException e) {
-                Log.e(TAG, tag + "FileNotFoundException: filePath:" + fileFullPath);
+                Log.e(XDD_TAG, tag + "FileNotFoundException: filePath:" + fileFullPath);
                 e.printStackTrace();
             }
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
-            Log.i(TAG, tag + "bitmap saved:" + fileFullPath);
+            Log.i(XDD_TAG, tag + "bitmap saved:" + fileFullPath);
         } else {
-            Log.e(TAG, tag + "bitmap==null");
+            Log.e(XDD_TAG, tag + "bitmap==null");
         }
     }
 
@@ -159,9 +138,42 @@ public class XDD {
         return _getMethodTag(false, messages);
     }
 
+    private static String getMessageByParsingObjects(@Nullable final Object... objects) {
+        final StringBuilder messageBuilder = new StringBuilder();
+        String tag = null;
+        Throwable tr = null;
+        if (objects != null) {
+            for (final Object obj : objects) {
+                if (tag == null && obj instanceof CharSequence
+                        && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
+                    tag = (String) obj;
+                } else if (tr == null && obj instanceof Throwable) {
+                    tr = (Throwable) obj;
+                } else {
+                    messageBuilder.append(obj);
+                    messageBuilder.append(STRING_DELIMITER);
+                }
+            }
+        }
+
+        //modify tag if needed
+        if (tag == null || tag.isEmpty()) tag = _getMethodTag(true);
+        else tag = getTagWithCodeHyperlink(tag);//create hyperlink at the place where Lg.x is called if needed
+
+        //tr must be at the end
+        if (tr != null) {
+            messageBuilder.append('\n');
+            messageBuilder.append(Log.getStackTraceString(tr));
+        }
+
+        //tag must be at the beginning
+        return tag + messageBuilder.toString();
+    }
+
+
     private static StackTraceElement findFirstOuterElement(final StackTraceElement[] elements) {
         Assert.assertTrue(elements != null && elements.length > 0);
-        final String interestingFileName = TAG + ".java";
+        final String interestingFileName = XDD_TAG + ".java";
 
         boolean previousIsInnerElement = false;//inner: XDD.xxx
         for (StackTraceElement element : elements) {//the former is called earlier
@@ -171,7 +183,7 @@ public class XDD {
             }
             previousIsInnerElement = currentIsInnerElement;
         }
-        Assert.fail(TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!!");
+        Assert.fail(XDD_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!!");
         return null;
     }
 
@@ -192,7 +204,7 @@ public class XDD {
     private static String _getMethodTag(final boolean showHyperlink, final Object... messageObjects){
         long t1;
         if (SHOW_ELAPSED_TIME) t1 = System.currentTimeMillis();
-        final String tag = TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
+        final String tag = XDD_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
 
         final StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 
@@ -218,7 +230,7 @@ public class XDD {
         }
         //class name
         final String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
-        resultBuilder.append(TAG_DELIMITER)
+        resultBuilder.append(METHOD_TAG_DELIMITER)
                 .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//OuterClass$InnerClass
                 .append(".");
         //method name
@@ -237,7 +249,7 @@ public class XDD {
                     targetMessage = targetMessage.substring(dotPos + 1);//OuterClass$InnerClass
                 }
 
-                resultBuilder.append(TAG_DELIMITER)
+                resultBuilder.append(METHOD_TAG_DELIMITER)
                         .append('[')
                         .append(targetMessage)
                         .append(']');
@@ -274,10 +286,8 @@ public class XDD {
         return stringBuilder.toString();
     }
 
-    public static void printStackTrace(){ printStackTrace(_getMethodTag(true), "~~~~~~~~~"); }
-    public static void printStackTrace(@NonNull final String message){ printStackTrace(_getMethodTag(true), message); }
-    public static void printStackTrace(@NonNull final String tag, @NonNull final String message){
-        final String result = TAG + TAG_END + getTagWithCodeHyperlink(tag) + TAG_DELIMITER + message;
+    public static void printStackTrace(@Nullable final Object... objects){
+        final String result = XDD_TAG + TAG_END + getMessageByParsingObjects(objects);
         (new Exception(result)).printStackTrace();
     }
 
@@ -296,12 +306,9 @@ public class XDD {
         XDD.Lg.d("updated row count:" + rowCount);
     }
 
-    public static void showToast(@NonNull final Context context, @NonNull final String message) {
-        showToast(context, _getMethodTag(true), message);
-    }
-    public static void showToast(@NonNull final Context context, @NonNull String tag, @NonNull final String message) {
-        tag = getTagWithCodeHyperlink(tag);
-        Toast.makeText(context, TAG + TAG_END + tag + message, Toast.LENGTH_LONG).show();
-        Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + tag, message);
+    public static void showToast(@NonNull final Context context, @Nullable final Object... objects) {
+        final String message = getMessageByParsingObjects(objects);
+        Toast.makeText(context, XDD_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
+        Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
     }
 }
