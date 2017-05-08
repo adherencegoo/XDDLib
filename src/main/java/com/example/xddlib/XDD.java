@@ -6,7 +6,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -309,5 +311,13 @@ public class XDD {
         final String message = getMessageByParsingObjects(objects);
         Toast.makeText(context, CLASS_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
         Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
+    }
+
+    public static boolean isMainThread(){
+        if (Build.VERSION.SDK_INT >= 23) {
+            return Looper.getMainLooper().isCurrentThread();
+        } else {
+            return Looper.getMainLooper() == Looper.myLooper();
+        }
     }
 }
