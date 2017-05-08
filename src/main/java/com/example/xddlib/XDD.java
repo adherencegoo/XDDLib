@@ -29,8 +29,8 @@ import java.util.regex.Pattern;
  */
 
 public class XDD {
-    public static final String XDD_TAG = XDD.class.getSimpleName();
-    private static final String TAG_END = ": ";//for both tag: XDD_TAG and method tag
+    public static final String CLASS_TAG = XDD.class.getSimpleName();
+    private static final String TAG_END = ": ";//for both tag: CLASS_TAG and method tag
     private static final String METHOD_TAG_DELIMITER = "->";
     private static final Pattern METHOD_TAG_PATTERN = Pattern.compile(".*(" + METHOD_TAG_DELIMITER + ").*(" + TAG_END + ").*");//XXX->XXX: XXX
 
@@ -62,11 +62,11 @@ public class XDD {
         public static int log(final Type type, @Nullable final Object... objects) {
             final String message = getMessageByParsingObjects(objects);
             switch (type){
-                case V: return Log.v(XDD_TAG, message);
-                case D: return Log.d(XDD_TAG, message);
-                case I: return Log.i(XDD_TAG, message);
-                case W: return Log.w(XDD_TAG, message);
-                case E: return Log.e(XDD_TAG, message);
+                case V: return Log.v(CLASS_TAG, message);
+                case D: return Log.d(CLASS_TAG, message);
+                case I: return Log.i(CLASS_TAG, message);
+                case W: return Log.w(CLASS_TAG, message);
+                case E: return Log.e(CLASS_TAG, message);
                 default: return -1;
             }
         }
@@ -76,7 +76,7 @@ public class XDD {
     public static Bitmap drawCross(@Nullable final String outerTag, @Nullable Bitmap bitmap, final int color, @Nullable final String msg){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + TAG_END;
         if (bitmap == null) {
-            Log.e(XDD_TAG, tag + "null bitmap");
+            Log.e(CLASS_TAG, tag + "null bitmap");
             return null;
         }
 
@@ -123,13 +123,13 @@ public class XDD {
             try {
                 os = new FileOutputStream(fileFullPath);
             } catch (FileNotFoundException e) {
-                Log.e(XDD_TAG, tag + "FileNotFoundException: filePath:" + fileFullPath);
+                Log.e(CLASS_TAG, tag + "FileNotFoundException: filePath:" + fileFullPath);
                 e.printStackTrace();
             }
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
-            Log.i(XDD_TAG, tag + "bitmap saved:" + fileFullPath);
+            Log.i(CLASS_TAG, tag + "bitmap saved:" + fileFullPath);
         } else {
-            Log.e(XDD_TAG, tag + "bitmap==null");
+            Log.e(CLASS_TAG, tag + "bitmap==null");
         }
     }
 
@@ -158,7 +158,7 @@ public class XDD {
 
         //modify tag if needed
         if (tag == null || tag.isEmpty()) tag = _getMethodTag(true);
-        else tag = getTagWithCodeHyperlink(tag);//create hyperlink at the place where Lg.x is called if needed
+        else tag = insertCodeHyperlinkIfNeeded(tag);//create hyperlink at the place where Lg.x is called if needed
 
         //tr must be at the end
         if (tr != null) {
@@ -171,9 +171,9 @@ public class XDD {
     }
 
 
-    private static StackTraceElement findFirstOuterElement(final StackTraceElement[] elements) {
-        Assert.assertTrue(elements != null && elements.length > 0);
-        final String interestingFileName = XDD_TAG + ".java";
+    private static StackTraceElement findFirstOuterElement() {
+        final String interestingFileName = CLASS_TAG + ".java";
+        final StackTraceElement[] elements = Thread.currentThread().getStackTrace();
 
         boolean previousIsInnerElement = false;//inner: XDD.xxx
         for (StackTraceElement element : elements) {//the former is called earlier
@@ -183,15 +183,15 @@ public class XDD {
             }
             previousIsInnerElement = currentIsInnerElement;
         }
-        Assert.fail(XDD_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!!");
+        Assert.fail(CLASS_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!!");
         return null;
     }
 
-    private static String getTagWithCodeHyperlink(@NonNull final String origTag) {
+    private static String insertCodeHyperlinkIfNeeded(@NonNull final String origTag) {
         if (CODE_HYPERLINK_PATTERN.matcher(origTag).matches()) {
             return origTag;
         } else {
-            final StackTraceElement targetElement = findFirstOuterElement(Thread.currentThread().getStackTrace());
+            final StackTraceElement targetElement = findFirstOuterElement();
             Assert.assertNotNull(targetElement);
             return "(" + targetElement.getFileName() + ":" + targetElement.getLineNumber() + ")" + origTag;
         }
@@ -200,15 +200,12 @@ public class XDD {
     @SuppressWarnings("all")
     private static final boolean REMOVE_PACKAGE_NAME = true;
     private static final boolean PRINT_ELEMENTS = false;
-    private static final boolean SHOW_ELAPSED_TIME = false;
     private static String _getMethodTag(final boolean showHyperlink, final Object... messageObjects){
-        long t1;
-        if (SHOW_ELAPSED_TIME) t1 = System.currentTimeMillis();
-        final String tag = XDD_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
-
-        final StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        String tag = null;
 
         if (PRINT_ELEMENTS) {
+            tag = CLASS_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
+            final StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
             Lg.d(tag, getSeparator("start", 'v'));
             for (int idx=0 ; idx<stackTraceElements.length ; idx++) {
                 StackTraceElement element = stackTraceElements[idx];
@@ -218,7 +215,7 @@ public class XDD {
         }
 
         final StringBuilder resultBuilder = new StringBuilder();
-        final StackTraceElement targetElement = findFirstOuterElement(stackTraceElements);
+        final StackTraceElement targetElement = findFirstOuterElement();
         Assert.assertNotNull(targetElement);
 
         if (showHyperlink) {//(FileName:LineNumber)   //no other text allowed
@@ -262,10 +259,6 @@ public class XDD {
             Lg.d(tag, "result: " + resultBuilder.toString());
             Lg.d(tag, getSeparator("end", '^'));
         }
-        if (SHOW_ELAPSED_TIME) {
-            long t2 = System.currentTimeMillis();
-            Lg.i(tag, "elapsed time:" + (t2 - t1) + "ms");//about 0~1ms if PRINT_ELEMENTS is false
-        }
         return resultBuilder.toString();
     }
 
@@ -287,7 +280,7 @@ public class XDD {
     }
 
     public static void printStackTrace(@Nullable final Object... objects){
-        final String result = XDD_TAG + TAG_END + getMessageByParsingObjects(objects);
+        final String result = CLASS_TAG + TAG_END + getMessageByParsingObjects(objects);
         (new Exception(result)).printStackTrace();
     }
 
@@ -308,7 +301,7 @@ public class XDD {
 
     public static void showToast(@NonNull final Context context, @Nullable final Object... objects) {
         final String message = getMessageByParsingObjects(objects);
-        Toast.makeText(context, XDD_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
+        Toast.makeText(context, CLASS_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
         Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
     }
 }
