@@ -142,8 +142,14 @@ public class XDD {
         final StringBuilder messageBuilder = new StringBuilder();
         String tag = null;
         Throwable tr = null;
+        boolean needStringDelimiter = false;
         if (objects != null) {
             for (final Object obj : objects) {
+                if (needStringDelimiter) {
+                    messageBuilder.append(STRING_DELIMITER);
+                    needStringDelimiter = false;
+                }
+
                 if (tag == null && obj instanceof CharSequence
                         && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
                     tag = (String) obj;
@@ -151,7 +157,7 @@ public class XDD {
                     tr = (Throwable) obj;
                 } else {
                     messageBuilder.append(obj);
-                    messageBuilder.append(STRING_DELIMITER);
+                    needStringDelimiter = true;
                 }
             }
         }
