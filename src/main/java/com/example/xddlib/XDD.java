@@ -31,7 +31,8 @@ import java.util.regex.Pattern;
  */
 
 public class XDD {
-    public static final String CLASS_TAG = XDD.class.getSimpleName();
+    private static final String THIS_FILE_NAME = XDD.class.getSimpleName() + ".java";//immutable
+    public static final String CLASS_TAG = XDD.class.getSimpleName() + "D";//mutable
     private static final String TAG_END = ": ";//for both tag: CLASS_TAG and method tag
     private static final String METHOD_TAG_DELIMITER = "->";
     private static final Pattern METHOD_TAG_PATTERN = Pattern.compile(".*(" + METHOD_TAG_DELIMITER + ").*(" + TAG_END + ").*");//XXX->XXX: XXX
@@ -180,18 +181,18 @@ public class XDD {
 
 
     private static StackTraceElement findFirstOuterElement() {
-        final String interestingFileName = CLASS_TAG + ".java";
         final StackTraceElement[] elements = Thread.currentThread().getStackTrace();
 
         boolean previousIsInnerElement = false;//inner: XDD.xxx
         for (StackTraceElement element : elements) {//the former is called earlier
-            boolean currentIsInnerElement = element.getFileName().equals(interestingFileName);
+            boolean currentIsInnerElement = element.getFileName().equals(THIS_FILE_NAME);
             if (previousIsInnerElement && !currentIsInnerElement) {
                 return element;
             }
             previousIsInnerElement = currentIsInnerElement;
         }
-        Assert.fail(CLASS_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!!");
+        printStackTraceElements(elements);
+        Assert.fail(CLASS_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!! firstOuterElement not found");
         return null;
     }
 
@@ -212,14 +213,7 @@ public class XDD {
         String tag = null;
 
         if (PRINT_ELEMENTS) {
-            tag = CLASS_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
-            final StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-            Lg.d(tag, getSeparator("start", 'v'));
-            for (int idx=0 ; idx<stackTraceElements.length ; idx++) {
-                StackTraceElement element = stackTraceElements[idx];
-                Lg.d(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
-                        idx, element.getClassName(), element.getMethodName(), element.getFileName(), element.getLineNumber()));
-            }
+            printStackTraceElements(Thread.currentThread().getStackTrace());
         }
 
         final StringBuilder resultBuilder = new StringBuilder();
@@ -318,6 +312,16 @@ public class XDD {
             return Looper.getMainLooper().isCurrentThread();
         } else {
             return Looper.getMainLooper() == Looper.myLooper();
+        }
+    }
+
+    private static void printStackTraceElements(@NonNull final StackTraceElement[] elements) {
+        final String tag = CLASS_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
+        Lg.d(tag, getSeparator("start", 'v'));
+        for (int idx=0 ; idx<elements.length ; idx++) {
+            StackTraceElement element = elements[idx];
+            Lg.d(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
+                    idx, element.getClassName(), element.getMethodName(), element.getFileName(), element.getLineNumber()));
         }
     }
 }
