@@ -32,8 +32,8 @@ import java.util.regex.Pattern;
 
 public class XDD {
     private static final String THIS_FILE_NAME = XDD.class.getSimpleName() + ".java";//immutable
-    public static final String CLASS_TAG = XDD.class.getSimpleName() + "D";//mutable
-    private static final String TAG_END = ": ";//for both tag: CLASS_TAG and method tag
+    public static final String PRIMITIVE_LOG_TAG = XDD.class.getSimpleName() + "D";//mutable
+    private static final String TAG_END = ": ";//for both tag: PRIMITIVE_LOG_TAG and method tag
     private static final String METHOD_TAG_DELIMITER = "->";
     private static final Pattern METHOD_TAG_PATTERN = Pattern.compile(".*(" + METHOD_TAG_DELIMITER + ").*(" + TAG_END + ").*");//XXX->XXX: XXX
 
@@ -65,11 +65,11 @@ public class XDD {
         public static int log(final Type type, @Nullable final Object... objects) {
             final String message = getMessageByParsingObjects(objects);
             switch (type){
-                case V: return Log.v(CLASS_TAG, message);
-                case D: return Log.d(CLASS_TAG, message);
-                case I: return Log.i(CLASS_TAG, message);
-                case W: return Log.w(CLASS_TAG, message);
-                case E: return Log.e(CLASS_TAG, message);
+                case V: return Log.v(PRIMITIVE_LOG_TAG, message);
+                case D: return Log.d(PRIMITIVE_LOG_TAG, message);
+                case I: return Log.i(PRIMITIVE_LOG_TAG, message);
+                case W: return Log.w(PRIMITIVE_LOG_TAG, message);
+                case E: return Log.e(PRIMITIVE_LOG_TAG, message);
                 default: return -1;
             }
         }
@@ -79,7 +79,7 @@ public class XDD {
     public static Bitmap drawCross(@Nullable final String outerTag, @Nullable Bitmap bitmap, final int color, @Nullable final String msg){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + TAG_END;
         if (bitmap == null) {
-            Log.e(CLASS_TAG, tag + "null bitmap");
+            Log.e(PRIMITIVE_LOG_TAG, tag + "null bitmap");
             return null;
         }
 
@@ -126,13 +126,13 @@ public class XDD {
             try {
                 os = new FileOutputStream(fileFullPath);
             } catch (FileNotFoundException e) {
-                Log.e(CLASS_TAG, tag + "FileNotFoundException: filePath:" + fileFullPath);
+                Log.e(PRIMITIVE_LOG_TAG, tag + "FileNotFoundException: filePath:" + fileFullPath);
                 e.printStackTrace();
             }
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
-            Log.i(CLASS_TAG, tag + "bitmap saved:" + fileFullPath);
+            Log.i(PRIMITIVE_LOG_TAG, tag + "bitmap saved:" + fileFullPath);
         } else {
-            Log.e(CLASS_TAG, tag + "bitmap==null");
+            Log.e(PRIMITIVE_LOG_TAG, tag + "bitmap==null");
         }
     }
 
@@ -192,7 +192,7 @@ public class XDD {
             previousIsInnerElement = currentIsInnerElement;
         }
         printStackTraceElements(elements);
-        Assert.fail(CLASS_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!! firstOuterElement not found");
+        Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!! firstOuterElement not found");
         return null;
     }
 
@@ -282,7 +282,7 @@ public class XDD {
     }
 
     public static void printStackTrace(@Nullable final Object... objects){
-        final String result = CLASS_TAG + TAG_END + getMessageByParsingObjects(objects);
+        final String result = PRIMITIVE_LOG_TAG + TAG_END + getMessageByParsingObjects(objects);
         (new Exception(result)).printStackTrace();
     }
 
@@ -303,7 +303,7 @@ public class XDD {
 
     public static void showToast(@NonNull final Context context, @Nullable final Object... objects) {
         final String message = getMessageByParsingObjects(objects);
-        Toast.makeText(context, CLASS_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
+        Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
         Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
     }
 
@@ -316,7 +316,7 @@ public class XDD {
     }
 
     private static void printStackTraceElements(@NonNull final StackTraceElement[] elements) {
-        final String tag = CLASS_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
+        final String tag = PRIMITIVE_LOG_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
         Lg.d(tag, getSeparator("start", 'v'));
         for (int idx=0 ; idx<elements.length ; idx++) {
             StackTraceElement element = elements[idx];
