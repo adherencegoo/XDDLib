@@ -57,14 +57,14 @@ public class XDD {
             }
         }
 
-        public static int v(@Nullable final Object... objects) { return log(Type.V, objects); }
-        public static int d(@Nullable final Object... objects) { return log(Type.D, objects); }
-        public static int i(@Nullable final Object... objects) { return log(Type.I, objects); }
-        public static int w(@Nullable final Object... objects) { return log(Type.W, objects); }
-        public static int e(@Nullable final Object... objects) { return log(Type.E, objects); }
+        public static int v(@NonNull final Object... objects) { return log(Type.V, objects); }
+        public static int d(@NonNull final Object... objects) { return log(Type.D, objects); }
+        public static int i(@NonNull final Object... objects) { return log(Type.I, objects); }
+        public static int w(@NonNull final Object... objects) { return log(Type.W, objects); }
+        public static int e(@NonNull final Object... objects) { return log(Type.E, objects); }
 
         //my fundamental log
-        public static int log(final Type type, @Nullable final Object... objects) {
+        public static int log(final Type type, @NonNull final Object... objects) {
             final String message = getMessageByParsingObjects(objects);
             switch (type){
                 case V: return Log.v(PRIMITIVE_LOG_TAG, message);
@@ -138,17 +138,17 @@ public class XDD {
         }
     }
 
-    public static String getMethodTag(final Object... messages){
+    public static String getMethodTag(@NonNull final Object... messages){
         //this method is invoked outside the class, and the result is reused, so don't show hyperlink
         return _getMethodTag(false, messages);
     }
 
-    private static String getMessageByParsingObjects(@Nullable final Object... objects) {
+    private static String getMessageByParsingObjects(@NonNull final Object... objects) {
         final StringBuilder messageBuilder = new StringBuilder();
         String tag = null;
         Throwable tr = null;
         boolean needStringDelimiter = false;
-        if (objects != null) {
+        if (objects.length != 0) {
             for (final Object obj : objects) {
                 if (needStringDelimiter) {
                     messageBuilder.append(STRING_DELIMITER);
@@ -211,7 +211,7 @@ public class XDD {
     @SuppressWarnings("all")
     private static final boolean REMOVE_PACKAGE_NAME = true;
     private static final boolean PRINT_ELEMENTS = false;
-    private static String _getMethodTag(final boolean showHyperlink, final Object... messageObjects){
+    private static String _getMethodTag(final boolean showHyperlink, @NonNull final Object... messageObjects){
         String tag = null;
 
         if (PRINT_ELEMENTS) {
@@ -283,7 +283,7 @@ public class XDD {
         return stringBuilder.toString();
     }
 
-    public static void printStackTrace(@Nullable final Object... objects){
+    public static void printStackTrace(@NonNull final Object... objects){
         final String result = PRIMITIVE_LOG_TAG + TAG_END + getMessageByParsingObjects(objects);
         (new Exception(result)).printStackTrace();
     }
@@ -303,7 +303,7 @@ public class XDD {
         XDD.Lg.d("updated row count:" + rowCount);
     }
 
-    public static void showToast(@NonNull final Context context, @Nullable final Object... objects) {
+    public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
         final String message = getMessageByParsingObjects(objects);
         Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
         Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
