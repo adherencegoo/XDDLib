@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -323,5 +325,21 @@ public class XDD {
             Lg.d(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
                     idx, element.getClassName(), element.getMethodName(), element.getFileName(), element.getLineNumber()));
         }
+    }
+
+    public static void sleep(final long ms, @NonNull final Object... objects) {
+        final long timestamp = System.currentTimeMillis();
+
+        final String timeStampString = "timestamp:"+ timestamp;
+        final String commonMessage = objects.length == 0 ?
+                timeStampString : getMessageByParsingObjects(timeStampString, objects);
+
+        Lg.d(commonMessage, "go to sleep " + ms + "ms~");
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Lg.e(e);
+        }
+        Lg.d(commonMessage, "wake up");
     }
 }
