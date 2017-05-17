@@ -35,13 +35,20 @@ import java.util.regex.Pattern;
 public class XDD {
     private static final String THIS_FILE_NAME = XDD.class.getSimpleName() + ".java";//immutable
     public static final String PRIMITIVE_LOG_TAG = XDD.class.getSimpleName() + "D";//mutable
+
+    private static final Pattern CODE_HYPERLINK_PATTERN_KERNEL
+            = Pattern.compile("[(].*[.](java:)[0-9]+[)]");//(ANYTHING.java:NUMBER)
+
     private static final String TAG_END = ": ";//for both tag: PRIMITIVE_LOG_TAG and method tag
     private static final String METHOD_TAG_DELIMITER = "->";
-    private static final Pattern METHOD_TAG_PATTERN = Pattern.compile(".*(" + METHOD_TAG_DELIMITER + ").*(" + TAG_END + ").*");//XXX->XXX: XXX
+    private static final Pattern METHOD_TAG_PATTERN
+            = Pattern.compile("^(" + CODE_HYPERLINK_PATTERN_KERNEL.pattern() + ")?" //start with (ANYTHING.java:NUMBER) or nothing
+            + "(" + METHOD_TAG_DELIMITER + ").*(" + TAG_END + ").*");//->XXX: XXX
 
     private static final String STRING_DELIMITER = ", ";
     private static final int DEFAULT_REPEAT_COUNT = 30;
-    private static final Pattern CODE_HYPERLINK_PATTERN = Pattern.compile("^[(].*[.](java:)[0-9]+[)].*");//(ANYTHING.java:NUMBER)ANYTHING
+    private static final Pattern CODE_HYPERLINK_PATTERN
+            = Pattern.compile("^" + CODE_HYPERLINK_PATTERN_KERNEL.pattern() + ".*");//(ANYTHING.java:NUMBER)ANYTHING
     private XDD(){}
 
     static public class Lg {
