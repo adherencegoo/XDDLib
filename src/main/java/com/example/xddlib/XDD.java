@@ -238,7 +238,7 @@ public class XDD {
         resultBuilder.append(targetElement.getMethodName());
 
         // ->[msg]->[msg]->[msg]->[msg]
-        if (messageObjects != null && messageObjects.length != 0){
+        if (messageObjects.length != 0){
             for (final Object msgObj : messageObjects) {
 
                 String targetMessage;
@@ -284,7 +284,9 @@ public class XDD {
     }
 
     public static void printStackTrace(@NonNull final Object... objects){
-        final String result = PRIMITIVE_LOG_TAG + TAG_END + getMessageByParsingObjects(objects);
+        final String result = PRIMITIVE_LOG_TAG + TAG_END
+                + "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") "
+                + getMessageByParsingObjects(objects);
         (new Exception(result)).printStackTrace();
     }
 
