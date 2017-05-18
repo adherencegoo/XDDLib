@@ -26,28 +26,28 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/**
- * Created by Owen_Chen on 2017/3/15.
- */
+/** Created by Owen_Chen on 2017/3/15. */
 
 public class XDD {
+    private XDD(){}
     private static final String THIS_FILE_NAME = XDD.class.getSimpleName() + ".java";//immutable
     public static final String PRIMITIVE_LOG_TAG = XDD.class.getSimpleName() + "D";//mutable
 
+    private static final int DEFAULT_REPEAT_COUNT = 30;
+    private static final boolean DEBUG_PRINT_ELEMENTS = false;
     private static final Pattern CODE_HYPERLINK_PATTERN_KERNEL
             = Pattern.compile("[(].*[.](java:)[0-9]+[)]");//(ANYTHING.java:NUMBER)
 
-    private static final String TAG_END = ": ";//for both tag: PRIMITIVE_LOG_TAG and method tag
+    private static final String TAG_END = ": ";
     private static final String METHOD_TAG_DELIMITER = "->";
     private static final Pattern METHOD_TAG_PATTERN
             = Pattern.compile("^(" + CODE_HYPERLINK_PATTERN_KERNEL.pattern() + ")?" //start with (ANYTHING.java:NUMBER) or nothing
             + "(" + METHOD_TAG_DELIMITER + ").*(" + TAG_END + ").*");//->XXX: XXX
 
-    private static final String STRING_DELIMITER = ", ";
-    private static final int DEFAULT_REPEAT_COUNT = 30;
     private static final Pattern CODE_HYPERLINK_PATTERN
             = Pattern.compile("^" + CODE_HYPERLINK_PATTERN_KERNEL.pattern() + ".*");//(ANYTHING.java:NUMBER)ANYTHING
-    private XDD(){}
+
+    private static final String MESSAGE_CONTENT_DELIMITER = ", ";
 
     private enum BracketType {
         NONE("", ""),
@@ -83,7 +83,10 @@ public class XDD {
         }
     }
 
-
+    /**
+     * Log.d(PRIMITIVE_LOG_TAG, MESSAGE);
+     * MESSAGE = METHOD_TAG(including CODE_HYPERLINK) + MESSAGE_CONTENT
+     * */
     static public class Lg {
         private Lg(){}
 
@@ -105,7 +108,7 @@ public class XDD {
 
         //my fundamental log
         public static int log(final Type type, @NonNull final Object... objects) {
-            final String message = getMessageByParsingObjects(objects);
+            final String message = parseObjects(objects);
             switch (type){
                 case V: return Log.v(PRIMITIVE_LOG_TAG, message);
                 case D: return Log.d(PRIMITIVE_LOG_TAG, message);
@@ -183,7 +186,7 @@ public class XDD {
         return _getMethodTag(false, messages);
     }
 
-    private static String getMessageByParsingObjects(@NonNull final Object... objects) {
+    private static String parseObjects(@NonNull final Object... objects) {
         final StringBuilder messageBuilder = new StringBuilder();
         String tag = null;
         Throwable tr = null;
@@ -191,7 +194,7 @@ public class XDD {
         if (objects.length != 0) {
             for (final Object obj : objects) {
                 if (needStringDelimiter) {
-                    messageBuilder.append(STRING_DELIMITER);
+                    messageBuilder.append(MESSAGE_CONTENT_DELIMITER);
                     needStringDelimiter = false;
                 }
 
@@ -248,13 +251,10 @@ public class XDD {
         }
     }
 
-    @SuppressWarnings("all")
-    private static final boolean REMOVE_PACKAGE_NAME = true;
-    private static final boolean PRINT_ELEMENTS = false;
     private static String _getMethodTag(final boolean showHyperlink, @NonNull final Object... messageObjects){
         String tag = null;
 
-        if (PRINT_ELEMENTS) {
+        if (DEBUG_PRINT_ELEMENTS) {
             printStackTraceElements(Thread.currentThread().getStackTrace());
         }
 
@@ -286,7 +286,7 @@ public class XDD {
                 else targetMessage = msgObj.toString();
 
                 int dotPos;
-                if (REMOVE_PACKAGE_NAME && targetMessage.indexOf('@') != -1 && (dotPos = targetMessage.lastIndexOf('.')) != -1) {
+                if (targetMessage.indexOf('@') != -1 && (dotPos = targetMessage.lastIndexOf('.')) != -1) {
                     targetMessage = targetMessage.substring(dotPos + 1);//OuterClass$InnerClass
                 }
 
@@ -299,7 +299,7 @@ public class XDD {
 
         resultBuilder.append(TAG_END);
 
-        if (PRINT_ELEMENTS) {
+        if (DEBUG_PRINT_ELEMENTS) {
             Lg.d(tag, "result: " + resultBuilder.toString());
             Lg.d(tag, getSeparator("end", '^'));
         }
@@ -326,7 +326,7 @@ public class XDD {
     public static void printStackTrace(@NonNull final Object... objects){
         final String result = PRIMITIVE_LOG_TAG + TAG_END
                 + "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") "
-                + getMessageByParsingObjects(objects);
+                + parseObjects(objects);
         (new Exception(result)).printStackTrace();
     }
 
@@ -346,7 +346,7 @@ public class XDD {
     }
 
     public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
-        final String message = getMessageByParsingObjects(objects);
+        final String message = parseObjects(objects);
         Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
         Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
     }
@@ -374,7 +374,7 @@ public class XDD {
 
         final String timeStampString = "timestamp:"+ timestamp;
         final String commonMessage = objects.length == 0 ?
-                timeStampString : getMessageByParsingObjects(timeStampString, objects);
+                timeStampString : parseObjects(timeStampString, objects);
 
         Lg.d(commonMessage, "go to sleep " + ms + "ms~");
         try {
