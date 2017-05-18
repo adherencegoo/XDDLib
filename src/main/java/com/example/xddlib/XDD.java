@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -50,6 +48,41 @@ public class XDD {
     private static final Pattern CODE_HYPERLINK_PATTERN
             = Pattern.compile("^" + CODE_HYPERLINK_PATTERN_KERNEL.pattern() + ".*");//(ANYTHING.java:NUMBER)ANYTHING
     private XDD(){}
+
+    private enum BracketType {
+        NONE("", ""),
+        ROUND("(", ")"),
+        BRACKET("[", "]"),
+        CURLY("{", "}"),
+        ANGLE("<", ">");
+
+        public final String mLeft;
+        public final String mRight;
+        BracketType(final String left, final String right) {
+            mLeft = left;
+            mRight = right;
+        }
+    }
+
+    private enum CtrlKey {
+        TEST;
+
+        private Object mValue;
+
+        /**@return the enum itself */
+        CtrlKey setValue(@Nullable final Object value) {
+            mValue = value;
+            return this;
+        }
+
+        /** Reset the value after invoking getter */
+        Object getValue() {
+            final Object returned = mValue;
+            mValue = null;
+            return returned;
+        }
+    }
+
 
     static public class Lg {
         private Lg(){}
