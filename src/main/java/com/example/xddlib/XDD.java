@@ -122,10 +122,12 @@ public class XDD {
             //others =====================================================
             private boolean mIsParsed = false;
 
+            /** ->[a]->[b]->[c] */
             private static VarArgParser newMethodTagParser() {
                 return new VarArgParser(false, METHOD_TAG_DELIMITER, true, BracketType.BRACKET);
             }
 
+            /** a, b, c */
             private static VarArgParser newMessageParser() {
                 return new VarArgParser(true, MESSAGE_CONTENT_DELIMITER, false, BracketType.NONE);
             }
@@ -250,24 +252,8 @@ public class XDD {
             //method name
             resultBuilder.append(targetElement.getMethodName());
 
-            // ->[msg]->[msg]->[msg]->[msg]
             if (messageObjects.length != 0){
-                for (final Object msgObj : messageObjects) {
-
-                    String targetMessage;
-                    if (msgObj instanceof String) targetMessage = (String)msgObj;
-                    else targetMessage = msgObj.toString();
-
-                    int dotPos;
-                    if (targetMessage.indexOf('@') != -1 && (dotPos = targetMessage.lastIndexOf('.')) != -1) {
-                        targetMessage = targetMessage.substring(dotPos + 1);//OuterClass$InnerClass
-                    }
-
-                    resultBuilder.append(METHOD_TAG_DELIMITER)
-                            .append('[')
-                            .append(targetMessage)
-                            .append(']');
-                }
+                resultBuilder.append(VarArgParser.newMethodTagParser().parse(messageObjects));
             }
 
             resultBuilder.append(TAG_END);
