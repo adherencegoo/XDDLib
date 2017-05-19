@@ -62,7 +62,7 @@ public class XDD {
         }
 
         /** Reset the value after invoking getter */
-        Object getValue() {
+        private Object getValue() {
             final Object returned = mValue;
             mValue = null;
             return returned;
@@ -107,9 +107,108 @@ public class XDD {
         public static int w(@NonNull final Object... objects) { return log(Type.W, objects); }
         public static int e(@NonNull final Object... objects) { return log(Type.E, objects); }
 
+        private static class VarArgParser {
+            //settings =====================================================
+            private final boolean mNeedMethodTag;
+            private final String mDelimiter;
+            private final boolean mInsertFirstDelimiter;
+            private final BracketType mBracket;
+
+            //parsed results =====================================================
+            private String mMethodTag = null;
+            private Throwable mTr = null;
+            private final StringBuilder mStringBuilder = new StringBuilder();
+
+            //others =====================================================
+            private boolean mIsParsed = false;
+
+            private static VarArgParser newMethodTagParser() {
+                return new VarArgParser(false, METHOD_TAG_DELIMITER, true, BracketType.BRACKET);
+            }
+
+            private static VarArgParser newMessageParser() {
+                return new VarArgParser(true, MESSAGE_CONTENT_DELIMITER, false, BracketType.NONE);
+            }
+
+            private VarArgParser(final boolean needMethodTag,
+                         @NonNull final String delimiter,
+                         final boolean insertFirstDelimiter,
+                         @NonNull final BracketType bracket) {
+                mNeedMethodTag = needMethodTag;
+                mDelimiter = delimiter;
+                mInsertFirstDelimiter = insertFirstDelimiter;
+                mBracket = bracket;
+            }
+
+            private VarArgParser reset() {
+                mMethodTag = null;
+                mTr = null;
+                mStringBuilder.setLength(0);
+                mIsParsed = false;
+                return this;
+            }
+
+            private VarArgParser parse(@NonNull final Object... objects) {
+                reset();
+
+                boolean needStringDelimiter = mInsertFirstDelimiter;
+                for (final Object obj : objects) {
+                    if (mNeedMethodTag
+                            && mMethodTag == null && obj instanceof CharSequence
+                            && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
+                        mMethodTag = (String) obj;
+                    } else if (mTr == null && obj instanceof Throwable) {
+                        mTr = (Throwable) obj;
+                    } else if (!(obj instanceof CtrlKey)){//Don't append CtrlKey
+                        if (needStringDelimiter) {
+                            mStringBuilder.append(mDelimiter);
+                        }
+
+                        mStringBuilder.append(mBracket.mLeft);
+
+                        String objStr;
+                        if (obj instanceof String) objStr = (String) obj;
+                        else objStr = obj.toString();
+
+                        int dotPos;
+                        if (objStr.indexOf('@') != -1 && (dotPos = objStr.lastIndexOf('.')) != -1) {
+                            objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
+                        }
+                        mStringBuilder.append(objStr);
+
+                        mStringBuilder.append(mBracket.mRight);
+                        needStringDelimiter = true;
+                    }
+                }
+
+                mIsParsed = true;
+                return this;
+            }
+
+            @Override
+            public String toString() {
+                Assert.assertTrue(mIsParsed);
+
+                if (mNeedMethodTag) {
+                    //modify tag if needed
+                    if (mMethodTag == null || mMethodTag.isEmpty()) mMethodTag = _getMethodTag(true);
+                    else mMethodTag = insertCodeHyperlinkIfNeeded(mMethodTag);//create hyperlink at the place where Lg.x is called if needed
+                }
+
+                //tr must be at the end
+                if (mTr != null) {
+                    mStringBuilder.append('\n');
+                    mStringBuilder.append(Log.getStackTraceString(mTr));
+                }
+
+                //tag must be at the beginning
+                return mNeedMethodTag ? mMethodTag + mStringBuilder.toString() : mStringBuilder.toString();
+            }
+        }
+
         //my fundamental log
         public static int log(final Type type, @NonNull final Object... objects) {
-            final String message = parseObjects(objects);
+            final String message = VarArgParser.newMessageParser().parse(objects).toString();
             switch (type){
                 case V: return Log.v(PRIMITIVE_LOG_TAG, message);
                 case D: return Log.d(PRIMITIVE_LOG_TAG, message);
@@ -174,8 +273,8 @@ public class XDD {
             resultBuilder.append(TAG_END);
 
             if (DEBUG_PRINT_ELEMENTS) {
-                Lg.d(tag, "result: " + resultBuilder.toString());
-                Lg.d(tag, getSeparator("end", '^'));
+                d(tag, "result: " + resultBuilder.toString());
+                d(tag, getSeparator("end", '^'));
             }
             return resultBuilder.toString();
         }
@@ -183,14 +282,14 @@ public class XDD {
         public static void printStackTrace(@NonNull final Object... objects){
             final String result = PRIMITIVE_LOG_TAG + TAG_END
                     + "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") "
-                    + parseObjects(objects);
+                    + VarArgParser.newMessageParser().parse(objects).toString();
             (new Exception(result)).printStackTrace();
         }
 
         public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
-            final String message = parseObjects(objects);
+            final String message = VarArgParser.newMessageParser().parse(objects).toString();
             Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
-            Lg.d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
+            d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
         }
 
         private static StackTraceElement findFirstOuterElement() {
@@ -219,56 +318,19 @@ public class XDD {
             }
         }
 
-        private static String parseObjects(@NonNull final Object... objects) {
-            final StringBuilder messageBuilder = new StringBuilder();
-            String tag = null;
-            Throwable tr = null;
-            boolean needStringDelimiter = false;
-            if (objects.length != 0) {
-                for (final Object obj : objects) {
-                    if (needStringDelimiter) {
-                        messageBuilder.append(MESSAGE_CONTENT_DELIMITER);
-                        needStringDelimiter = false;
-                    }
-
-                    if (tag == null && obj instanceof CharSequence
-                            && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
-                        tag = (String) obj;
-                    } else if (tr == null && obj instanceof Throwable) {
-                        tr = (Throwable) obj;
-                    } else {
-                        messageBuilder.append(obj);
-                        needStringDelimiter = true;
-                    }
-                }
-            }
-
-            //modify tag if needed
-            if (tag == null || tag.isEmpty()) tag = _getMethodTag(true);
-            else tag = insertCodeHyperlinkIfNeeded(tag);//create hyperlink at the place where Lg.x is called if needed
-
-            //tr must be at the end
-            if (tr != null) {
-                messageBuilder.append('\n');
-                messageBuilder.append(Log.getStackTraceString(tr));
-            }
-
-            //tag must be at the beginning
-            return tag + messageBuilder.toString();
-        }
-
         private static void printStackTraceElements(@NonNull final StackTraceElement[] elements) {
             final String tag = PRIMITIVE_LOG_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
-            Lg.d(tag, getSeparator("start", 'v'));
+            d(tag, getSeparator("start", 'v'));
             for (int idx=0 ; idx<elements.length ; idx++) {
                 StackTraceElement element = elements[idx];
-                Lg.d(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
+                d(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
                         idx, element.getClassName(), element.getMethodName(), element.getFileName(), element.getLineNumber()));
             }
         }
     }
 
-    //stale: not apply getMethodTag and Lg
+
+    // TODO: 2017/5/19 stale: not apply getMethodTag and Lg
     public static Bitmap drawCross(@Nullable final String outerTag, @Nullable Bitmap bitmap, final int color, @Nullable final String msg){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + Lg.TAG_END;
         if (bitmap == null) {
@@ -294,7 +356,7 @@ public class XDD {
         return bitmap;
     }
 
-    //stale: not apply getMethodTag and Lg
+    // TODO: 2017/5/19 stale: not apply getMethodTag and Lg
     public static void saveBitmap(@Nullable final String outerTag, @Nullable final Bitmap bitmap, @NonNull final String fileName){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + Lg.TAG_END;
         if (bitmap != null) {
@@ -357,7 +419,7 @@ public class XDD {
         String whereClause = id > 0 ? MediaStore.Video.Media._ID + " = ?" : null;
         String[] whereContent = id > 0 ? new String[]{Long.toString(id)} : null;
         int rowCount = context.getContentResolver().update(uri, values, whereClause, whereContent);
-        XDD.Lg.d("updated row count:" + rowCount);
+        Lg.d("updated row count:" + rowCount);
     }
 
     public static boolean isMainThread(){
@@ -373,7 +435,7 @@ public class XDD {
 
         final String timeStampString = "timestamp:"+ timestamp;
         final String commonMessage = objects.length == 0 ?
-                timeStampString : Lg.parseObjects(timeStampString, objects);
+                timeStampString : Lg.VarArgParser.newMessageParser().parse(timeStampString, objects).toString();
 
         Lg.d(commonMessage, "go to sleep " + ms + "ms~");
         try {
