@@ -235,7 +235,6 @@ public class XDD {
 
             final StringBuilder resultBuilder = new StringBuilder();
             final StackTraceElement targetElement = findFirstOuterElement();
-            Assert.assertNotNull(targetElement);
 
             if (showHyperlink) {//(FileName:LineNumber)   //no other text allowed
                 resultBuilder.append("(")
@@ -244,13 +243,9 @@ public class XDD {
                         .append(targetElement.getLineNumber())
                         .append(")");
             }
-            //class name
-            final String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
+            //OuterClass$InnerClass.MethodName
             resultBuilder.append(METHOD_TAG_DELIMITER)
-                    .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//OuterClass$InnerClass
-                    .append(".");
-            //method name
-            resultBuilder.append(targetElement.getMethodName());
+                    .append(getMethodNameWithClassWithoutPackage(targetElement));
 
             if (messageObjects.length != 0){
                 resultBuilder.append(VarArgParser.newMethodTagParser().parse(messageObjects));
@@ -263,6 +258,11 @@ public class XDD {
                 d(tag, getSeparator("end", '^'));
             }
             return resultBuilder.toString();
+        }
+
+        private static String getMethodNameWithClassWithoutPackage(@NonNull final StackTraceElement element) {
+            final String classFullName = element.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
+            return classFullName.substring(classFullName.lastIndexOf('.') +1) + "." + element.getMethodName();
         }
 
         public static void printStackTrace(@NonNull final Object... objects){
@@ -291,7 +291,7 @@ public class XDD {
             }
             printStackTraceElements(elements);
             Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!! firstOuterElement not found");
-            return null;
+            return elements[0];//unreachable
         }
 
         private static String insertCodeHyperlinkIfNeeded(@NonNull final String origTag) {
@@ -299,7 +299,6 @@ public class XDD {
                 return origTag;
             } else {
                 final StackTraceElement targetElement = findFirstOuterElement();
-                Assert.assertNotNull(targetElement);
                 return "(" + targetElement.getFileName() + ":" + targetElement.getLineNumber() + ")" + origTag;
             }
         }
