@@ -159,9 +159,24 @@ public class XDD {
                             && mMethodTag == null && obj instanceof CharSequence
                             && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
                         mMethodTag = (String) obj;
+                        needStringDelimiter = true;
                     } else if (mTr == null && obj instanceof Throwable) {
                         mTr = (Throwable) obj;
-                    } else if (!(obj instanceof CtrlKey)){//Don't append CtrlKey
+                    } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[]
+                        final Object[] objArray = (Object[]) obj;
+                        if (objArray.length != 0) {
+                            mStringBuilder.append((new VarArgParser(false, mDelimiter, needStringDelimiter, mBracket))
+                                    .parse(objArray).toString());
+                            needStringDelimiter = true;
+                        }
+                    } else if (obj.getClass().isArray()) {//native array
+                        // TODO: 2017/5/22  how to correctly parse native array in Object[]
+                        Log.w(PRIMITIVE_LOG_TAG, "XDD.Lg.VarArgParser.parse(): can't parse native array yet");
+                    } else if (!(obj instanceof CtrlKey)) {
+                        //transform obj into string
+                        //ArrayList is acceptable
+                        //Can't be Object[] and native array
+
                         if (needStringDelimiter) {
                             mStringBuilder.append(mDelimiter);
                         }
@@ -268,7 +283,8 @@ public class XDD {
         public static void printStackTrace(@NonNull final Object... objects){
             final String result = PRIMITIVE_LOG_TAG + TAG_END
                     + "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") "
-                    + VarArgParser.newMessageParser().parse(objects).toString();
+                    + VarArgParser.newMessageParser().parse("immediate invoker: "
+                    + getMethodNameWithClassWithoutPackage(findOuterElementWithDepth(1)), objects).toString();
             (new Exception(result)).printStackTrace();
         }
 
@@ -279,13 +295,17 @@ public class XDD {
         }
 
         private static StackTraceElement findFirstOuterElement() {
+            return findOuterElementWithDepth(0);
+        }
+
+        private static StackTraceElement findOuterElementWithDepth(final int offset) {
             final StackTraceElement[] elements = Thread.currentThread().getStackTrace();
 
             boolean previousIsInnerElement = false;//inner: XDD.xxx
-            for (StackTraceElement element : elements) {//the former is called earlier
-                boolean currentIsInnerElement = element.getFileName().equals(THIS_FILE_NAME);
+            for (int idx=0 ; idx<elements.length ; idx++){//the former is called earlier
+                boolean currentIsInnerElement = elements[idx].getFileName().equals(THIS_FILE_NAME);
                 if (previousIsInnerElement && !currentIsInnerElement) {
-                    return element;
+                    return elements[idx + offset];
                 }
                 previousIsInnerElement = currentIsInnerElement;
             }
@@ -419,8 +439,7 @@ public class XDD {
         final long timestamp = System.currentTimeMillis();
 
         final String timeStampString = "timestamp:"+ timestamp;
-        final String commonMessage = objects.length == 0 ?
-                timeStampString : Lg.VarArgParser.newMessageParser().parse(timeStampString, objects).toString();
+        final String commonMessage = Lg.VarArgParser.newMessageParser().parse(timeStampString, objects).toString();
 
         Lg.d(commonMessage, "go to sleep " + ms + "ms~");
         try {
