@@ -160,7 +160,8 @@ public class XDD {
                             && mMethodTag == null && obj instanceof CharSequence
                             && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
                         mMethodTag = (String) obj;
-                        mInsertFirstDelimiter = true;
+                        if (!((String) obj).endsWith(TAG_END))
+                            mInsertFirstDelimiter = true;
                     } else if (mTr == null && obj instanceof Throwable) {
                         mTr = (Throwable) obj;
                     } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[]
