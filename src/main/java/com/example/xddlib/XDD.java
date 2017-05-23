@@ -73,6 +73,7 @@ public class XDD {
     /**
      * Log.d(PRIMITIVE_LOG_TAG, MESSAGE);
      * MESSAGE = METHOD_TAG(including CODE_HYPERLINK) + MESSAGE_CONTENT
+     * About 0.65ms per Lg.x (20 times slower than primitive Log.x)
      * */
     static public class Lg {
         private Lg(){}
@@ -112,7 +113,7 @@ public class XDD {
             //settings =====================================================
             private final boolean mNeedMethodTag;
             private final String mDelimiter;
-            private final boolean mInsertFirstDelimiter;
+            private boolean mInsertFirstDelimiter;
             private final BracketType mBracket;
 
             //parsed results =====================================================
@@ -154,21 +155,20 @@ public class XDD {
             private VarArgParser parse(@NonNull final Object... objects) {
                 reset();
 
-                boolean needStringDelimiter = mInsertFirstDelimiter;
                 for (final Object obj : objects) {
                     if (mNeedMethodTag
                             && mMethodTag == null && obj instanceof CharSequence
                             && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
                         mMethodTag = (String) obj;
-                        needStringDelimiter = true;
+                        mInsertFirstDelimiter = true;
                     } else if (mTr == null && obj instanceof Throwable) {
                         mTr = (Throwable) obj;
                     } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[]
                         final Object[] objArray = (Object[]) obj;
                         if (objArray.length != 0) {
-                            mStringBuilder.append((new VarArgParser(false, mDelimiter, needStringDelimiter, mBracket))
-                                    .parse(objArray).toString());
-                            needStringDelimiter = true;
+                            final VarArgParser innerParser = new VarArgParser(false, mDelimiter, mInsertFirstDelimiter, mBracket);
+                            mStringBuilder.append(innerParser.parse(objArray).toString());
+                            mInsertFirstDelimiter = innerParser.mInsertFirstDelimiter;
                         }
                     } else if (obj.getClass().isArray()) {//native array
                         // TODO: 2017/5/22  how to correctly parse native array in Object[]
@@ -178,7 +178,7 @@ public class XDD {
                         //ArrayList is acceptable
                         //Can't be Object[] and native array
 
-                        if (needStringDelimiter) {
+                        if (mInsertFirstDelimiter) {
                             mStringBuilder.append(mDelimiter);
                         }
 
@@ -195,7 +195,7 @@ public class XDD {
                         mStringBuilder.append(objStr);
 
                         mStringBuilder.append(mBracket.mRight);
-                        needStringDelimiter = true;
+                        mInsertFirstDelimiter = true;
                     }
                 }
 
