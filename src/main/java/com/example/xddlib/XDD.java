@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.AbstractCollection;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -188,7 +189,7 @@ public class XDD {
                         else objStr = obj.toString();
 
                         int dotPos;
-                        if (objStr.indexOf('@') != -1 && (dotPos = objStr.lastIndexOf('.')) != -1) {
+                        if (Lg.isToStringFromObjectClass(obj) && (dotPos = objStr.lastIndexOf('.')) != -1) {
                             objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
                         }
                         mStringBuilder.append(objStr);
@@ -235,6 +236,22 @@ public class XDD {
                 default: return -1;
             }
         }
+
+        /** @return true if toString method of the object is not ever overridden */
+        private static boolean isToStringFromObjectClass(@NonNull final Object object) {
+            try {
+                return //add some common cases to avoid the last condition
+                        !(object instanceof CharSequence) //including String
+                                && !(object instanceof Throwable) //including Exception
+                                && !(object instanceof AbstractCollection) //including ArrayList, LinkedList ...
+                                && object.getClass().getMethod("toString").getDeclaringClass()
+                                .getCanonicalName().equals(Object.class.getCanonicalName());
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+            return true;
+        }
+
 
         public static String getMethodTag(@NonNull final Object... messages){
             //this method is invoked outside the class, and the result is reused, so don't show hyperlink
