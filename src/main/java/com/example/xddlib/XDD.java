@@ -259,7 +259,14 @@ public class XDD {
             return _getMethodTag(false, messages);
         }
 
-        private static String _getMethodTag(final boolean showHyperlink, @NonNull final Object... messageObjects){
+        private static String _getMethodTag(final boolean showHyperlink,
+                                            @NonNull final Object... messageObjects){
+            return _getMethodTag(showHyperlink, findFirstOuterElement(), messageObjects);
+        }
+
+        private static String _getMethodTag(final boolean showHyperlink,
+                                            @NonNull final StackTraceElement targetElement,
+                                            @NonNull final Object... messageObjects){
             String tag = null;
 
             if (DEBUG_PRINT_ELEMENTS) {
@@ -267,7 +274,6 @@ public class XDD {
             }
 
             final StringBuilder resultBuilder = new StringBuilder();
-            final StackTraceElement targetElement = findFirstOuterElement();
 
             if (showHyperlink) {//(FileName:LineNumber)   //no other text allowed
                 resultBuilder.append("(")
@@ -276,9 +282,13 @@ public class XDD {
                         .append(targetElement.getLineNumber())
                         .append(")");
             }
+
             //OuterClass$InnerClass.MethodName
+            final String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
             resultBuilder.append(METHOD_TAG_DELIMITER)
-                    .append(getMethodNameWithClassWithoutPackage(targetElement));
+                    .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//remove package name
+                    .append(".")
+                    .append(targetElement.getMethodName());
 
             if (messageObjects.length != 0){
                 resultBuilder.append(VarArgParser.newMethodTagParser().parse(messageObjects));
@@ -293,16 +303,13 @@ public class XDD {
             return resultBuilder.toString();
         }
 
-        private static String getMethodNameWithClassWithoutPackage(@NonNull final StackTraceElement element) {
-            final String classFullName = element.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
-            return classFullName.substring(classFullName.lastIndexOf('.') +1) + "." + element.getMethodName();
-        }
-
         public static void printStackTrace(@NonNull final Object... objects){
             final String result = PRIMITIVE_LOG_TAG + TAG_END
-                    + "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") "
-                    + VarArgParser.newMessageParser().parse("immediate invoker: "
-                    + getMethodNameWithClassWithoutPackage(findOuterElementWithDepth(1)), objects).toString();
+//                    + "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") "
+                    + VarArgParser.newMessageParser().parse(objects,
+                            "\n\t" + PRIMITIVE_LOG_TAG + TAG_END + "immediate invoker: "
+                                    + _getMethodTag(true, findOuterElementWithDepth(1)))
+                    .toString();
             (new Exception(result)).printStackTrace();
         }
 
