@@ -351,6 +351,57 @@ public class XDD {
         }
     }
 
+    public static class Tm {
+        private Tm() {}
+
+        private static long sStartTime = 0;
+        private static long sEndTime = 0;
+        private static String sStartMessage = null;
+        private static String sEndMessage = null;
+
+        public static void start(@NonNull final Object... objects) {
+            sStartMessage = Lg.getMethodTag(objects);
+            Lg.d(sStartMessage, "start timer~");
+
+            sStartTime = System.currentTimeMillis();
+        }
+
+        public static void end(@NonNull final Object... objects) {
+            sEndTime = System.currentTimeMillis();
+
+            sEndMessage = Lg.getMethodTag(objects);
+            Lg.d(sEndMessage, "end timer~");
+
+            elapsed();
+        }
+
+        public static void elapsed(@NonNull final Object... objects) {
+            Lg.d("Elapsed time:" + (sEndTime - sStartTime) + "ms",
+                    "from {" + sStartMessage + "} to {" + sEndMessage + "}",
+                    objects);
+
+            sStartTime = 0;
+            sEndTime = 0;
+            sStartMessage = null;
+            sEndMessage = null;
+        }
+
+        public static void sleep(final long ms, @NonNull final Object... objects) {
+            final long timestamp = System.currentTimeMillis();
+
+            final String timeStampString = "timestamp:"+ timestamp;
+            final String commonMessage = Lg.VarArgParser.newMessageParser().parse(timeStampString, objects).toString();
+
+            Lg.d(commonMessage, "go to sleep " + ms + "ms~");
+            try {
+                Thread.sleep(ms);
+            } catch (InterruptedException e) {
+                Lg.e(e);
+            }
+            Lg.d(commonMessage, "wake up");
+        }
+    }
+
 
     // TODO: 2017/5/19 stale: not apply getMethodTag and Lg
     public static Bitmap drawCross(@Nullable final String outerTag, @Nullable Bitmap bitmap, final int color, @Nullable final String msg){
@@ -450,20 +501,5 @@ public class XDD {
         } else {
             return Looper.getMainLooper() == Looper.myLooper();
         }
-    }
-
-    public static void sleep(final long ms, @NonNull final Object... objects) {
-        final long timestamp = System.currentTimeMillis();
-
-        final String timeStampString = "timestamp:"+ timestamp;
-        final String commonMessage = Lg.VarArgParser.newMessageParser().parse(timeStampString, objects).toString();
-
-        Lg.d(commonMessage, "go to sleep " + ms + "ms~");
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            Lg.e(e);
-        }
-        Lg.d(commonMessage, "wake up");
     }
 }
