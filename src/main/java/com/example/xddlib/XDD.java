@@ -23,6 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.AbstractCollection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -165,38 +167,81 @@ public class XDD {
                             mInsertFirstDelimiter = true;
                     } else if (mTr == null && obj instanceof Throwable) {
                         mTr = (Throwable) obj;
-                    } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[]
+                    } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[], including native with any class type
                         final Object[] objArray = (Object[]) obj;
                         if (objArray.length != 0) {
                             final ObjectArrayParser innerParser = new ObjectArrayParser(false, mDelimiter, mInsertFirstDelimiter, mBracket);
                             mStringBuilder.append(innerParser.parse(objArray).toString());
                             mInsertFirstDelimiter = innerParser.mInsertFirstDelimiter;
                         }
-                    } else if (obj.getClass().isArray()) {//native array
-                        // TODO: 2017/5/22  how to correctly parse native array in Object[]
-                        Log.w(PRIMITIVE_LOG_TAG, "XDD.Lg.ObjectArrayParser.parse(): can't parse native array yet");
                     } else if (!(obj instanceof CtrlKey)) {
                         //transform obj into string
                         //ArrayList is acceptable
                         //Can't be Object[] and native array
+                        boolean removePackageName = true;
+                        String objStr;
+                        if (obj instanceof String) {
+                            objStr = (String) obj;
+                        } else if (obj.getClass().isArray()) {//array with primitive type (array with class type has been processed in advance)
+                            removePackageName = false;
 
+                            final Class componentType = obj.getClass().getComponentType();
+                            final ArrayList arrayList = new ArrayList<>();//Note: [NotWork] arrayList = new ArrayList(Arrays.asList((int[])obj));
+                            switch (componentType.toString()) {
+                                case "byte":
+                                    for (byte a: (byte[])obj) arrayList.add(a);
+                                    break;
+                                case "short":
+                                    for (short a: (short[])obj) arrayList.add(a);
+                                    break;
+                                case "int":
+                                    for (int a: (int[])obj) arrayList.add(a);
+                                    break;
+                                case "long":
+                                    for (long a: (long[])obj) arrayList.add(a);
+                                    break;
+                                case "float":
+                                    for (float a: (float[])obj) arrayList.add(a);
+                                    break;
+                                case "double":
+                                    for (double a: (double[])obj) arrayList.add(a);
+                                    break;
+                                case "char":
+                                    for (char a: (char[])obj) arrayList.add(a);
+                                    break;
+                                case "boolean":
+                                    for (boolean a: (boolean[])obj) arrayList.add(a);
+                                    break;
+                                default:
+                                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END
+                                            + this.getClass().getCanonicalName()
+                                            + "." + new Object(){}.getClass().getEnclosingMethod().getName()
+                                            + "(): can't parse native array with primitive type yet: "
+                                            + componentType + "[]");
+                            }
+                            objStr = arrayList.toString();
+                        } else {
+                            objStr = obj.toString();
+                        }
+
+                        //remove package name if present
+                        int dotPos;
+                        if (removePackageName && Lg.isToStringFromObjectClass(obj) && (dotPos = objStr.lastIndexOf('.')) != -1) {
+                            objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
+                        }
+
+                        if (objStr.isEmpty()) {
+                            continue;
+                        }
+
+                        //output the result
                         if (mInsertFirstDelimiter) {
                             mStringBuilder.append(mDelimiter);
                         }
-
                         mStringBuilder.append(mBracket.mLeft);
-
-                        String objStr;
-                        if (obj instanceof String) objStr = (String) obj;
-                        else objStr = obj.toString();
-
-                        int dotPos;
-                        if (Lg.isToStringFromObjectClass(obj) && (dotPos = objStr.lastIndexOf('.')) != -1) {
-                            objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
-                        }
                         mStringBuilder.append(objStr);
-
                         mStringBuilder.append(mBracket.mRight);
+
                         mInsertFirstDelimiter = true;
                     }
                 }
