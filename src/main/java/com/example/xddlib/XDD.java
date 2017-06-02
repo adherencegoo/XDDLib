@@ -71,8 +71,9 @@ public class XDD {
     }
 
     /**
+     * Abbreviation of Log,
      * Log.d(PRIMITIVE_LOG_TAG, MESSAGE);
-     * MESSAGE = METHOD_TAG(including CODE_HYPERLINK) + MESSAGE_CONTENT
+     * MESSAGE = METHOD_TAG(including CODE_HYPERLINK) + MESSAGE_CONTENT;
      * About 0.65ms per Lg.x (20 times slower than primitive Log.x)
      * */
     static public class Lg {
@@ -95,7 +96,7 @@ public class XDD {
 
         @SuppressWarnings("all")
         public enum Type {
-            V(Log.VERBOSE), D(Log.DEBUG), I(Log.INFO), W(Log.WARN),  E(Log.ERROR);
+            V(Log.VERBOSE), D(Log.DEBUG), I(Log.INFO), W(Log.WARN), E(Log.ERROR);
 
             public final int mValue;
             private Type(final int value) {
@@ -109,7 +110,7 @@ public class XDD {
         public static int w(@NonNull final Object... objects) { return log(Type.W, objects); }
         public static int e(@NonNull final Object... objects) { return log(Type.E, objects); }
 
-        private static class VarArgParser {
+        private static class ObjectArrayParser {
             //settings =====================================================
             private final boolean mNeedMethodTag;
             private final String mDelimiter;
@@ -125,26 +126,26 @@ public class XDD {
             private boolean mIsParsed = false;
 
             /** ->[a]->[b]->[c] */
-            private static VarArgParser newMethodTagParser() {
-                return new VarArgParser(false, METHOD_TAG_DELIMITER, true, BracketType.BRACKET);
+            private static ObjectArrayParser newMethodTagParser() {
+                return new ObjectArrayParser(false, METHOD_TAG_DELIMITER, true, BracketType.BRACKET);
             }
 
             /** a, b, c */
-            private static VarArgParser newMessageParser() {
-                return new VarArgParser(true, MESSAGE_CONTENT_DELIMITER, false, BracketType.NONE);
+            private static ObjectArrayParser newMessageParser() {
+                return new ObjectArrayParser(true, MESSAGE_CONTENT_DELIMITER, false, BracketType.NONE);
             }
 
-            private VarArgParser(final boolean needMethodTag,
-                         @NonNull final String delimiter,
-                         final boolean insertFirstDelimiter,
-                         @NonNull final BracketType bracket) {
+            private ObjectArrayParser(final boolean needMethodTag,
+                                      @NonNull final String delimiter,
+                                      final boolean insertFirstDelimiter,
+                                      @NonNull final BracketType bracket) {
                 mNeedMethodTag = needMethodTag;
                 mDelimiter = delimiter;
                 mInsertFirstDelimiter = insertFirstDelimiter;
                 mBracket = bracket;
             }
 
-            private VarArgParser reset() {
+            private ObjectArrayParser reset() {
                 mMethodTag = null;
                 mTr = null;
                 mStringBuilder.setLength(0);
@@ -152,7 +153,7 @@ public class XDD {
                 return this;
             }
 
-            private VarArgParser parse(@NonNull final Object... objects) {
+            private ObjectArrayParser parse(@NonNull final Object... objects) {
                 reset();
 
                 for (final Object obj : objects) {
@@ -167,13 +168,13 @@ public class XDD {
                     } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[]
                         final Object[] objArray = (Object[]) obj;
                         if (objArray.length != 0) {
-                            final VarArgParser innerParser = new VarArgParser(false, mDelimiter, mInsertFirstDelimiter, mBracket);
+                            final ObjectArrayParser innerParser = new ObjectArrayParser(false, mDelimiter, mInsertFirstDelimiter, mBracket);
                             mStringBuilder.append(innerParser.parse(objArray).toString());
                             mInsertFirstDelimiter = innerParser.mInsertFirstDelimiter;
                         }
                     } else if (obj.getClass().isArray()) {//native array
                         // TODO: 2017/5/22  how to correctly parse native array in Object[]
-                        Log.w(PRIMITIVE_LOG_TAG, "XDD.Lg.VarArgParser.parse(): can't parse native array yet");
+                        Log.w(PRIMITIVE_LOG_TAG, "XDD.Lg.ObjectArrayParser.parse(): can't parse native array yet");
                     } else if (!(obj instanceof CtrlKey)) {
                         //transform obj into string
                         //ArrayList is acceptable
@@ -227,7 +228,7 @@ public class XDD {
 
         //my fundamental log
         public static int log(final Type type, @NonNull final Object... objects) {
-            final String message = VarArgParser.newMessageParser().parse(objects).toString();
+            final String message = ObjectArrayParser.newMessageParser().parse(objects).toString();
             switch (type){
                 case V: return Log.v(PRIMITIVE_LOG_TAG, message);
                 case D: return Log.d(PRIMITIVE_LOG_TAG, message);
@@ -291,7 +292,7 @@ public class XDD {
                     .append(targetElement.getMethodName());
 
             if (messageObjects.length != 0){
-                resultBuilder.append(VarArgParser.newMethodTagParser().parse(messageObjects));
+                resultBuilder.append(ObjectArrayParser.newMethodTagParser().parse(messageObjects));
             }
 
             resultBuilder.append(TAG_END);
@@ -306,15 +307,15 @@ public class XDD {
         public static void printStackTrace(@NonNull final Object... objects){
             final String result = PRIMITIVE_LOG_TAG + TAG_END
 //                    + "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") "
-                    + VarArgParser.newMessageParser().parse(objects,
-                            "\n\t" + PRIMITIVE_LOG_TAG + TAG_END + "immediate invoker: "
+                    + ObjectArrayParser.newMessageParser().parse(objects,
+                            "\n\t" + PRIMITIVE_LOG_TAG + TAG_END + "direct invoker: "
                                     + _getMethodTag(true, findOuterElementWithDepth(1)))
                     .toString();
             (new Exception(result)).printStackTrace();
         }
 
         public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
-            final String message = VarArgParser.newMessageParser().parse(objects).toString();
+            final String message = ObjectArrayParser.newMessageParser().parse(objects).toString();
             Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
             d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
         }
@@ -359,6 +360,7 @@ public class XDD {
         }
     }
 
+    /** Abbreviation of Time*/
     public static class Tm {
         private Tm() {}
 
@@ -383,7 +385,7 @@ public class XDD {
             elapsed();
         }
 
-        public static void elapsed(@NonNull final Object... objects) {
+        private static void elapsed(@NonNull final Object... objects) {
             Lg.d("Elapsed time:" + (sEndTime - sStartTime) + "ms",
                     "from {" + sStartMessage + "} to {" + sEndMessage + "}",
                     objects);
@@ -398,7 +400,7 @@ public class XDD {
             final long timestamp = System.currentTimeMillis();
 
             final String timeStampString = "timestamp:"+ timestamp;
-            final String commonMessage = Lg.VarArgParser.newMessageParser().parse(timeStampString, objects).toString();
+            final String commonMessage = Lg.ObjectArrayParser.newMessageParser().parse(timeStampString, objects).toString();
 
             Lg.d(commonMessage, "go to sleep " + ms + "ms~");
             try {
