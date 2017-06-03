@@ -186,32 +186,16 @@ public class XDD {
                             removePackageName = false;
 
                             final Class componentType = obj.getClass().getComponentType();
-                            final ArrayList arrayList = new ArrayList<>();//Note: [NotWork] arrayList = new ArrayList(Arrays.asList((int[])obj));
+                            final ArrayList<Object> arrayList = new ArrayList<>();//Note: [NotWork] arrayList = new ArrayList(Arrays.asList((int[])obj));
                             switch (componentType.toString()) {
-                                case "byte":
-                                    for (byte a: (byte[])obj) arrayList.add(a);
-                                    break;
-                                case "short":
-                                    for (short a: (short[])obj) arrayList.add(a);
-                                    break;
-                                case "int":
-                                    for (int a: (int[])obj) arrayList.add(a);
-                                    break;
-                                case "long":
-                                    for (long a: (long[])obj) arrayList.add(a);
-                                    break;
-                                case "float":
-                                    for (float a: (float[])obj) arrayList.add(a);
-                                    break;
-                                case "double":
-                                    for (double a: (double[])obj) arrayList.add(a);
-                                    break;
-                                case "char":
-                                    for (char a: (char[])obj) arrayList.add(a);
-                                    break;
-                                case "boolean":
-                                    for (boolean a: (boolean[])obj) arrayList.add(a);
-                                    break;
+                                case "byte":    for (byte a: (byte[])obj) arrayList.add(a);         break;
+                                case "short":   for (short a: (short[])obj) arrayList.add(a);       break;
+                                case "int":     for (int a: (int[])obj) arrayList.add(a);           break;
+                                case "long":    for (long a: (long[])obj) arrayList.add(a);         break;
+                                case "float":   for (float a: (float[])obj) arrayList.add(a);       break;
+                                case "double":  for (double a: (double[])obj) arrayList.add(a);     break;
+                                case "char":    for (char a: (char[])obj) arrayList.add(a);         break;
+                                case "boolean": for (boolean a: (boolean[])obj) arrayList.add(a);   break;
                                 default:
                                     Assert.fail(PRIMITIVE_LOG_TAG + TAG_END
                                             + this.getClass().getCanonicalName()
