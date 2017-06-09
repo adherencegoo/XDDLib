@@ -98,7 +98,7 @@ public class XDD {
 
         @SuppressWarnings("all")
         public enum Type {
-            V(Log.VERBOSE), D(Log.DEBUG), I(Log.INFO), W(Log.WARN), E(Log.ERROR);
+            V(Log.VERBOSE), D(Log.DEBUG), I(Log.INFO), W(Log.WARN), E(Log.ERROR), X(-1);
 
             public final int mValue;
             private Type(final int value) {
@@ -106,11 +106,13 @@ public class XDD {
             }
         }
 
-        public static int v(@NonNull final Object... objects) { return log(Type.V, objects); }
-        public static int d(@NonNull final Object... objects) { return log(Type.D, objects); }
-        public static int i(@NonNull final Object... objects) { return log(Type.I, objects); }
-        public static int w(@NonNull final Object... objects) { return log(Type.W, objects); }
-        public static int e(@NonNull final Object... objects) { return log(Type.E, objects); }
+        public static int v(@NonNull final Object... objects) { return _log(Type.V, objects); }
+        public static int d(@NonNull final Object... objects) { return _log(Type.D, objects); }
+        public static int i(@NonNull final Object... objects) { return _log(Type.I, objects); }
+        public static int w(@NonNull final Object... objects) { return _log(Type.W, objects); }
+        public static int e(@NonNull final Object... objects) { return _log(Type.E, objects); }
+        /** @param objects: must contain Lg.Type*/
+        public static int log(@NonNull final Object... objects) { return _log(Type.X, objects); }
 
         private static class ObjectArrayParser {
             //settings =====================================================
@@ -120,9 +122,10 @@ public class XDD {
             private final BracketType mBracket;
 
             //parsed results =====================================================
-            private String mMethodTag = null;
-            private Throwable mTr = null;
+            private String mMethodTag = null;//cache the first found one
+            private Throwable mTr = null;//cache the first found one
             private final StringBuilder mStringBuilder = new StringBuilder();
+            private Type mLgType = Type.X;//cache the LAST found one
 
             //others =====================================================
             private boolean mIsParsed = false;
@@ -151,6 +154,8 @@ public class XDD {
                 mMethodTag = null;
                 mTr = null;
                 mStringBuilder.setLength(0);
+                mLgType = Type.X;
+
                 mIsParsed = false;
                 return this;
             }
@@ -159,6 +164,7 @@ public class XDD {
                 reset();
 
                 for (final Object obj : objects) {
+                    //cache some info--------------------------------------
                     if (mNeedMethodTag
                             && mMethodTag == null && obj instanceof CharSequence
                             && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
@@ -167,12 +173,13 @@ public class XDD {
                             mInsertFirstDelimiter = true;
                     } else if (mTr == null && obj instanceof Throwable) {
                         mTr = (Throwable) obj;
-                    } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[], including native with any class type
+                    } else if (obj instanceof Type) {
+                        mLgType = (Type) obj;
+                    } //process the obj---------------------------------------------------------------
+                    else if (obj instanceof Object[]) {//recursively parse Object[] in Object[], including native with any class type
                         final Object[] objArray = (Object[]) obj;
                         if (objArray.length != 0) {
-                            final ObjectArrayParser innerParser = new ObjectArrayParser(false, mDelimiter, mInsertFirstDelimiter, mBracket);
-                            mStringBuilder.append(innerParser.parse(objArray).toString());
-                            mInsertFirstDelimiter = innerParser.mInsertFirstDelimiter;
+                            this.parse(objArray);
                         }
                     } else if (!(obj instanceof CtrlKey)) {
                         //transform obj into string
@@ -184,33 +191,14 @@ public class XDD {
                             objStr = (String) obj;
                         } else if (obj.getClass().isArray()) {//array with primitive type (array with class type has been processed in advance)
                             removePackageName = false;
-
-                            final Class componentType = obj.getClass().getComponentType();
-                            final ArrayList<Object> arrayList = new ArrayList<>();//Note: [NotWork] arrayList = new ArrayList(Arrays.asList((int[])obj));
-                            switch (componentType.toString()) {
-                                case "byte":    for (byte a: (byte[])obj) arrayList.add(a);         break;
-                                case "short":   for (short a: (short[])obj) arrayList.add(a);       break;
-                                case "int":     for (int a: (int[])obj) arrayList.add(a);           break;
-                                case "long":    for (long a: (long[])obj) arrayList.add(a);         break;
-                                case "float":   for (float a: (float[])obj) arrayList.add(a);       break;
-                                case "double":  for (double a: (double[])obj) arrayList.add(a);     break;
-                                case "char":    for (char a: (char[])obj) arrayList.add(a);         break;
-                                case "boolean": for (boolean a: (boolean[])obj) arrayList.add(a);   break;
-                                default:
-                                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END
-                                            + this.getClass().getCanonicalName()
-                                            + "." + new Object(){}.getClass().getEnclosingMethod().getName()
-                                            + "(): can't parse native array with primitive type yet: "
-                                            + componentType + "[]");
-                            }
-                            objStr = arrayList.toString();
+                            objStr = primitiveTypeArrayToString(obj);
                         } else {
                             objStr = obj.toString();
                         }
 
                         //remove package name if present
                         int dotPos;
-                        if (removePackageName && Lg.isToStringFromObjectClass(obj) && (dotPos = objStr.lastIndexOf('.')) != -1) {
+                        if (removePackageName && isToStringFromObjectClass(obj) && (dotPos = objStr.lastIndexOf('.')) != -1) {
                             objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
                         }
 
@@ -255,16 +243,19 @@ public class XDD {
             }
         }
 
-        //my fundamental log
-        public static int log(final Type type, @NonNull final Object... objects) {
-            final String message = ObjectArrayParser.newMessageParser().parse(objects).toString();
-            switch (type){
-                case V: return Log.v(PRIMITIVE_LOG_TAG, message);
-                case D: return Log.d(PRIMITIVE_LOG_TAG, message);
-                case I: return Log.i(PRIMITIVE_LOG_TAG, message);
-                case W: return Log.w(PRIMITIVE_LOG_TAG, message);
-                case E: return Log.e(PRIMITIVE_LOG_TAG, message);
-                default: return -1;
+        /**@param type: if unknown, use the result parsed from objects; if still unknown, assertion fails */
+        private static int _log(@NonNull final Type type, @NonNull final Object... objects) {
+            final ObjectArrayParser parser = ObjectArrayParser.newMessageParser().parse(objects);
+            final Type finalType = type == Type.X ? parser.mLgType : type;
+            switch (finalType){
+                case V: return Log.v(PRIMITIVE_LOG_TAG, parser.toString());
+                case D: return Log.d(PRIMITIVE_LOG_TAG, parser.toString());
+                case I: return Log.i(PRIMITIVE_LOG_TAG, parser.toString());
+                case W: return Log.w(PRIMITIVE_LOG_TAG, parser.toString());
+                case E: return Log.e(PRIMITIVE_LOG_TAG, parser.toString());
+                default:
+                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + "[UsageError] Unknown Lg.Type");
+                    return -1;
             }
         }
 
@@ -283,6 +274,28 @@ public class XDD {
             return true;
         }
 
+        private static String primitiveTypeArrayToString(@NonNull final Object obj) {
+            Assert.assertTrue(obj.getClass().isArray());
+            final Class componentType = obj.getClass().getComponentType();
+            final ArrayList<Object> arrayList = new ArrayList<>();//Note: [NotWork] arrayList = new ArrayList(Arrays.asList((int[])obj));
+            switch (componentType.toString()) {
+                case "byte":    for (byte a: (byte[])obj) arrayList.add(a);         break;
+                case "short":   for (short a: (short[])obj) arrayList.add(a);       break;
+                case "int":     for (int a: (int[])obj) arrayList.add(a);           break;
+                case "long":    for (long a: (long[])obj) arrayList.add(a);         break;
+                case "float":   for (float a: (float[])obj) arrayList.add(a);       break;
+                case "double":  for (double a: (double[])obj) arrayList.add(a);     break;
+                case "char":    for (char a: (char[])obj) arrayList.add(a);         break;
+                case "boolean": for (boolean a: (boolean[])obj) arrayList.add(a);   break;
+                default:
+                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END
+                            + ObjectArrayParser.class.getCanonicalName()
+                            + "." + new Object(){}.getClass().getEnclosingMethod().getName()
+                            + "(): can't parse native array with primitive type yet: "
+                            + componentType + "[]");
+            }
+            return arrayList.toString();
+        }
 
         public static String getMethodTag(@NonNull final Object... messages){
             //this method is invoked outside the class, and the result is reused, so don't show hyperlink
@@ -429,15 +442,16 @@ public class XDD {
             final long timestamp = System.currentTimeMillis();
 
             final String timeStampString = "timestamp:"+ timestamp;
-            final String commonMessage = Lg.ObjectArrayParser.newMessageParser().parse(timeStampString, objects).toString();
+            final Lg.ObjectArrayParser parser = Lg.ObjectArrayParser.newMessageParser().parse(Lg.Type.D, timeStampString, objects);
+            final String parsedString = parser.toString();
 
-            Lg.d(commonMessage, "go to sleep " + ms + "ms~");
+            Lg.log(parser.mLgType, parsedString, "go to sleep " + ms + "ms~");
             try {
                 Thread.sleep(ms);
             } catch (InterruptedException e) {
                 Lg.e(e);
             }
-            Lg.d(commonMessage, "wake up");
+            Lg.log(parser.mLgType, parsedString, "wake up");
         }
     }
 
