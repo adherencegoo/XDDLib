@@ -24,8 +24,8 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -123,7 +123,7 @@ public class XDD {
 
             //parsed results =====================================================
             private String mMethodTag = null;//cache the first found one
-            private Throwable mTr = null;//cache the first found one
+            private ArrayList<Throwable> mTrArray = null;
             private final StringBuilder mStringBuilder = new StringBuilder();
             private Type mLgType = Type.X;//cache the LAST found one
 
@@ -152,7 +152,7 @@ public class XDD {
 
             private ObjectArrayParser reset() {
                 mMethodTag = null;
-                mTr = null;
+                if (mTrArray != null) mTrArray.clear();
                 mStringBuilder.setLength(0);
                 mLgType = Type.X;
 
@@ -171,8 +171,13 @@ public class XDD {
                         mMethodTag = (String) obj;
                         if (!((String) obj).endsWith(TAG_END))
                             mInsertFirstDelimiter = true;
-                    } else if (mTr == null && obj instanceof Throwable) {
-                        mTr = (Throwable) obj;
+                    } else if (obj instanceof Throwable) {
+                        if (mTrArray == null) mTrArray = new ArrayList<>();
+                        mTrArray.add((Throwable) obj);
+                    } else if (obj instanceof List<?>
+                            && ((List)obj).size() > 0
+                            && ((List)obj).get(0) instanceof Throwable) {//List<Throwable>
+                        this.parse(((List)obj).toArray());
                     } else if (obj instanceof Type) {
                         mLgType = (Type) obj;
                     } //process the obj---------------------------------------------------------------
@@ -233,9 +238,14 @@ public class XDD {
                 }
 
                 //tr must be at the end
-                if (mTr != null) {
+                if (mTrArray != null && mTrArray.size() != 0) {
+                    final String dashSeparator = getSeparator("", '-');
                     mStringBuilder.append('\n');
-                    mStringBuilder.append(Log.getStackTraceString(mTr));
+                    for (final Throwable tr : mTrArray) {
+                        mStringBuilder.append(dashSeparator).append('\n');
+                        mStringBuilder.append(Log.getStackTraceString(tr));
+                    }
+                    mStringBuilder.append(getSeparator("Throwable end", '='));
                 }
 
                 //tag must be at the beginning
