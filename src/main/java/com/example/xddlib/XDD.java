@@ -163,6 +163,7 @@ public class XDD {
             private ObjectArrayParser parse(@NonNull final Object... objects) {
 
                 for (final Object obj : objects) {
+                    if (obj == null) continue;
                     //cache some info--------------------------------------
                     if (mNeedMethodTag
                             && mMethodTag == null && obj instanceof CharSequence
