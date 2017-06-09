@@ -161,7 +161,6 @@ public class XDD {
             }
 
             private ObjectArrayParser parse(@NonNull final Object... objects) {
-                reset();
 
                 for (final Object obj : objects) {
                     //cache some info--------------------------------------
