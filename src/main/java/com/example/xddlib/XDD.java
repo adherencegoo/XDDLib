@@ -116,7 +116,7 @@ public class XDD {
 
         private static class ObjectArrayParser {
             //settings =====================================================
-            private final boolean mNeedMethodTag;
+            private boolean mNeedMethodTag;
             private final String mDelimiter;
             private boolean mInsertFirstDelimiter;
             private final BracketType mBracket;
@@ -160,6 +160,19 @@ public class XDD {
                 return this;
             }
 
+            /** Ignore mMethodTag of another*/
+            private ObjectArrayParser parseAnotherParser(@NonNull final ObjectArrayParser another) {
+                //Don't get method tag from another parser
+                final boolean origNeedMethodTag = mNeedMethodTag;
+                mNeedMethodTag = false;
+                parse(//another.mMethodTag,
+                        another.mTrArray == null ? null : another.mTrArray.toArray(),
+                        another.mStringBuilder,
+                        another.mLgType);
+                mNeedMethodTag = origNeedMethodTag;
+                return this;
+            }
+
             private ObjectArrayParser parse(@NonNull final Object... objects) {
 
                 for (final Object obj : objects) {
@@ -180,12 +193,13 @@ public class XDD {
                         this.parse(((List)obj).toArray());
                     } else if (obj instanceof Type) {
                         mLgType = (Type) obj;
-                    } //process the obj---------------------------------------------------------------
-                    else if (obj instanceof Object[]) {//recursively parse Object[] in Object[], including native with any class type
+
+                        //process the data======================================================
+                    } else if (obj instanceof ObjectArrayParser) {
+                        parseAnotherParser((ObjectArrayParser) obj);
+                    } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[], including native with any class type
                         final Object[] objArray = (Object[]) obj;
-                        if (objArray.length != 0) {
-                            this.parse(objArray);
-                        }
+                        if (objArray.length != 0) this.parse(objArray);
                     } else if (!(obj instanceof CtrlKey)) {
                         //transform obj into string
                         //ArrayList is acceptable
@@ -451,17 +465,16 @@ public class XDD {
         public static void sleep(final long ms, @NonNull final Object... objects) {
             final long timestamp = System.currentTimeMillis();
 
-            final String timeStampString = "timestamp:"+ timestamp;
-            final Lg.ObjectArrayParser parser = Lg.ObjectArrayParser.newMessageParser().parse(Lg.Type.D, timeStampString, objects);
-            final String parsedString = parser.toString();
+            final Lg.ObjectArrayParser parser =
+                    Lg.ObjectArrayParser.newMessageParser().parse(Lg.Type.D, "timestamp:"+ timestamp, objects);
 
-            Lg.log(parser.mLgType, parsedString, "go to sleep " + ms + "ms~");
+            Lg.log(parser, "go to sleep " + ms + "ms~");
             try {
                 Thread.sleep(ms);
             } catch (InterruptedException e) {
                 Lg.e(e);
             }
-            Lg.log(parser.mLgType, parsedString, "wake up");
+            Lg.log(parser, "wake up");
         }
     }
 
