@@ -31,12 +31,12 @@ import java.util.regex.Pattern;
 
 /** Created by Owen_Chen on 2017/3/15. */
 
-public class XDD {
+//@SuppressWarnings("unused")
+@SuppressWarnings("WeakerAccess")
+public final class XDD {
     private XDD(){}
     private static final String THIS_FILE_NAME = XDD.class.getSimpleName() + ".java";//immutable
-
     private static final int DEFAULT_REPEAT_COUNT = 30;
-    private static final boolean DEBUG_PRINT_ELEMENTS = false;
 
     private enum BracketType {
         NONE("", ""),
@@ -74,27 +74,15 @@ public class XDD {
 
     /**
      * Abbreviation of Log,
-     * Log.d(PRIMITIVE_LOG_TAG, MESSAGE);
-     * MESSAGE = METHOD_TAG(including CODE_HYPERLINK) + MESSAGE_CONTENT;
-     * About 0.65ms per Lg.x (20 times slower than primitive Log.x)
+     * FinalMsg: (Abc.java:123)->testMethod->[abc]->[def]: ABC, DEF
+     *      MethodTag(including CodeHyperlink): (Abc.java:123)->testMethod
+     *      PrioritizedMsg(excluding “: ”) : ->[abc]->[def]
      * */
-    static public class Lg {
+    public static final class Lg {
         private Lg(){}
         public static final String PRIMITIVE_LOG_TAG = XDD.class.getSimpleName() + "D";//mutable
         private static final String TAG_END = ": ";
-
-        private static final Pattern CODE_HYPERLINK_PATTERN_KERNEL
-                = Pattern.compile("[(].*[.](java:)[0-9]+[)]");//(ANYTHING.java:NUMBER)
-
-        private static final String METHOD_TAG_DELIMITER = "->";
-        private static final Pattern METHOD_TAG_PATTERN
-                = Pattern.compile("^(" + CODE_HYPERLINK_PATTERN_KERNEL.pattern() + ")?" //start with (ANYTHING.java:NUMBER) or nothing
-                + "(" + METHOD_TAG_DELIMITER + ").*(" + TAG_END + ").*");//->XXX: XXX
-
-        private static final Pattern CODE_HYPERLINK_PATTERN
-                = Pattern.compile("^" + CODE_HYPERLINK_PATTERN_KERNEL.pattern() + ".*");//(ANYTHING.java:NUMBER)ANYTHING
-
-        private static final String MESSAGE_CONTENT_DELIMITER = ", ";
+        private static final Pattern PRIORITIZED_MSG_PATTERN = Pattern.compile("^->\\[.+\\]$");//->[ANYTHING]
 
         @SuppressWarnings("all")
         public enum Type {
@@ -106,68 +94,82 @@ public class XDD {
             }
         }
 
-        public static int v(@NonNull final Object... objects) { return _log(Type.V, objects); }
-        public static int d(@NonNull final Object... objects) { return _log(Type.D, objects); }
-        public static int i(@NonNull final Object... objects) { return _log(Type.I, objects); }
-        public static int w(@NonNull final Object... objects) { return _log(Type.W, objects); }
-        public static int e(@NonNull final Object... objects) { return _log(Type.E, objects); }
+        public static ObjectArrayParser v(@NonNull final Object... objects) { return _log(Type.V, objects); }
+        public static ObjectArrayParser d(@NonNull final Object... objects) { return _log(Type.D, objects); }
+        public static ObjectArrayParser i(@NonNull final Object... objects) { return _log(Type.I, objects); }
+        public static ObjectArrayParser w(@NonNull final Object... objects) { return _log(Type.W, objects); }
+        public static ObjectArrayParser e(@NonNull final Object... objects) { return _log(Type.E, objects); }
         /** @param objects: must contain Lg.Type*/
-        public static int log(@NonNull final Object... objects) { return _log(Type.X, objects); }
+        public static ObjectArrayParser log(@NonNull final Object... objects) { return _log(Type.X, objects); }
 
-        private static class ObjectArrayParser {
+        public static class ObjectArrayParser {
+            private enum Settings {
+                /** ->[a]->[b]->[c] */
+                PrioritizedMsg(false, true, false, "->", BracketType.BRACKET),
+                /** ->[a]->[b]->[c]: a, b, c */
+                FinalMsg(true, false, true, ", ", BracketType.NONE);
+
+                private final boolean mNeedMethodTag;
+                private final boolean mInsertFirstMainMsgDelimiter;
+                private final boolean mNeedTagEnd;
+                private final String mDelimiter;
+                private final BracketType mBracket;
+
+                Settings(final boolean needMethodTag,
+                         final boolean insertFirstDelimiter,
+                         final boolean needTagEnd,
+                         @NonNull final String delimiter,
+                         @NonNull final BracketType bracket){
+                    mNeedMethodTag = needMethodTag;
+                    mInsertFirstMainMsgDelimiter = insertFirstDelimiter;
+                    mNeedTagEnd = needTagEnd;
+
+                    mDelimiter = delimiter;
+                    mBracket = bracket;
+                }
+            }
+
+
             //settings =====================================================
+            private final Settings mSettings;
             private boolean mNeedMethodTag;
-            private final String mDelimiter;
-            private boolean mInsertFirstDelimiter;
-            private final BracketType mBracket;
+            private boolean mInsertMainMsgDelimiter;
 
             //parsed results =====================================================
-            private String mMethodTag = null;//cache the first found one
+            private StackTraceElement mMethodTagSource = null;//cache the first found StackTraceElement
             private ArrayList<Throwable> mTrArray = null;
-            private final StringBuilder mStringBuilder = new StringBuilder();
+            private StringBuilder mPrioritizedMsgBuilder = null;
+            private StringBuilder mMainMsgBuilder = null;
             private Type mLgType = Type.X;//cache the LAST found one
 
             //others =====================================================
             private boolean mIsParsed = false;
+            private int mPrimitiveLogReturn = -1;
 
-            /** ->[a]->[b]->[c] */
-            private static ObjectArrayParser newMethodTagParser() {
-                return new ObjectArrayParser(false, METHOD_TAG_DELIMITER, true, BracketType.BRACKET);
-            }
-
-            /** a, b, c */
-            private static ObjectArrayParser newMessageParser() {
-                return new ObjectArrayParser(true, MESSAGE_CONTENT_DELIMITER, false, BracketType.NONE);
-            }
-
-            private ObjectArrayParser(final boolean needMethodTag,
-                                      @NonNull final String delimiter,
-                                      final boolean insertFirstDelimiter,
-                                      @NonNull final BracketType bracket) {
-                mNeedMethodTag = needMethodTag;
-                mDelimiter = delimiter;
-                mInsertFirstDelimiter = insertFirstDelimiter;
-                mBracket = bracket;
+            private ObjectArrayParser(@NonNull final Settings settings) {
+                mSettings = settings;
+                mNeedMethodTag = mSettings.mNeedMethodTag;
+                mInsertMainMsgDelimiter = mSettings.mInsertFirstMainMsgDelimiter;
             }
 
             private ObjectArrayParser reset() {
-                mMethodTag = null;
+                mMethodTagSource = null;
                 if (mTrArray != null) mTrArray.clear();
-                mStringBuilder.setLength(0);
+                if (mPrioritizedMsgBuilder != null) mPrioritizedMsgBuilder.setLength(0);
+                if (mMainMsgBuilder != null) mMainMsgBuilder.setLength(0);
                 mLgType = Type.X;
 
                 mIsParsed = false;
                 return this;
             }
 
-            /** Ignore mMethodTag of another*/
+            /** Ignore mMethodTagSource of another*/
             private ObjectArrayParser parseAnotherParser(@NonNull final ObjectArrayParser another) {
-                //Don't get method tag from another parser
                 final boolean origNeedMethodTag = mNeedMethodTag;
                 mNeedMethodTag = false;
-                parse(//another.mMethodTag,
-                        another.mTrArray == null ? null : another.mTrArray.toArray(),
-                        another.mStringBuilder,
+                parse(another.mTrArray == null ? null : another.mTrArray.toArray(),
+                        another.mPrioritizedMsgBuilder,
+                        another.mMainMsgBuilder,
                         another.mLgType);
                 mNeedMethodTag = origNeedMethodTag;
                 return this;
@@ -178,12 +180,8 @@ public class XDD {
                 for (final Object obj : objects) {
                     if (obj == null) continue;
                     //cache some info--------------------------------------
-                    if (mNeedMethodTag
-                            && mMethodTag == null && obj instanceof CharSequence
-                            && METHOD_TAG_PATTERN.matcher((CharSequence)obj).matches()) {
-                        mMethodTag = (String) obj;
-                        if (!((String) obj).endsWith(TAG_END))
-                            mInsertFirstDelimiter = true;
+                    if (mNeedMethodTag && mMethodTagSource == null && obj instanceof StackTraceElement) {
+                        mMethodTagSource = (StackTraceElement) obj;
                     } else if (obj instanceof Throwable) {
                         if (mTrArray == null) mTrArray = new ArrayList<>();
                         mTrArray.add((Throwable) obj);
@@ -203,7 +201,6 @@ public class XDD {
                     } else if (!(obj instanceof CtrlKey)) {
                         //transform obj into string
                         //ArrayList is acceptable
-                        //Can't be Object[] and native array
                         boolean removePackageName = true;
                         String objStr;
                         if (obj instanceof String) {
@@ -211,9 +208,11 @@ public class XDD {
                         } else if (obj.getClass().isArray()) {//array with primitive type (array with class type has been processed in advance)
                             removePackageName = false;
                             objStr = primitiveTypeArrayToString(obj);
-                        } else {
+                        } else {//Can't be Object[] or array with native type
                             objStr = obj.toString();
                         }
+
+                        if (objStr.isEmpty()) continue;
 
                         //remove package name if present
                         int dotPos;
@@ -221,19 +220,22 @@ public class XDD {
                             objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
                         }
 
-                        if (objStr.isEmpty()) {
-                            continue;
-                        }
+                        if (PRIORITIZED_MSG_PATTERN.matcher(objStr).matches()) {
+                            if (mPrioritizedMsgBuilder == null) mPrioritizedMsgBuilder = new StringBuilder();
+                            mPrioritizedMsgBuilder.append(objStr);
+                        } else {//normal string
+                            if (mMainMsgBuilder == null) mMainMsgBuilder = new StringBuilder(50);
 
-                        //output the result
-                        if (mInsertFirstDelimiter) {
-                            mStringBuilder.append(mDelimiter);
-                        }
-                        mStringBuilder.append(mBracket.mLeft);
-                        mStringBuilder.append(objStr);
-                        mStringBuilder.append(mBracket.mRight);
+                            //output the result
+                            if (mInsertMainMsgDelimiter) {
+                                mMainMsgBuilder.append(mSettings.mDelimiter);
+                            }
+                            mMainMsgBuilder.append(mSettings.mBracket.mLeft);
+                            mMainMsgBuilder.append(objStr);
+                            mMainMsgBuilder.append(mSettings.mBracket.mRight);
 
-                        mInsertFirstDelimiter = true;
+                            mInsertMainMsgDelimiter = true;
+                        }
                     }
                 }
 
@@ -244,43 +246,51 @@ public class XDD {
             @Override
             public String toString() {
                 Assert.assertTrue(mIsParsed);
+                final StringBuilder resultBuilder = new StringBuilder(200);
 
+                //MethodTag
                 if (mNeedMethodTag) {
-                    //modify tag if needed
-                    if (mMethodTag == null || mMethodTag.isEmpty()) mMethodTag = _getMethodTag(true);
-                    else mMethodTag = insertCodeHyperlinkIfNeeded(mMethodTag);//create hyperlink at the place where Lg.x is called if needed
+                    if (mMethodTagSource == null) {
+                        mMethodTagSource = findInvokerOfDeepestInnerElement();
+                    }
+                    resultBuilder.append(getMethodTag(mMethodTagSource));
                 }
+
+                if (mPrioritizedMsgBuilder != null) resultBuilder.append(mPrioritizedMsgBuilder);
+                if (mSettings.mNeedTagEnd) resultBuilder.append(TAG_END);
+                if (mMainMsgBuilder != null) resultBuilder.append(mMainMsgBuilder);
 
                 //tr must be at the end
                 if (mTrArray != null && mTrArray.size() != 0) {
                     final String dashSeparator = getSeparator("", '-');
-                    mStringBuilder.append('\n');
+                    resultBuilder.append('\n');
                     for (final Throwable tr : mTrArray) {
-                        mStringBuilder.append(dashSeparator).append('\n');
-                        mStringBuilder.append(Log.getStackTraceString(tr));
+                        resultBuilder.append(dashSeparator).append('\n');
+                        resultBuilder.append(Log.getStackTraceString(tr));
                     }
-                    mStringBuilder.append(getSeparator("Throwable end", '='));
+                    resultBuilder.append(getSeparator("Throwable end", '='));
                 }
 
                 //tag must be at the beginning
-                return mNeedMethodTag ? mMethodTag + mStringBuilder.toString() : mStringBuilder.toString();
+                return resultBuilder.toString();
             }
         }
 
         /**@param type: if unknown, use the result parsed from objects; if still unknown, assertion fails */
-        private static int _log(@NonNull final Type type, @NonNull final Object... objects) {
-            final ObjectArrayParser parser = ObjectArrayParser.newMessageParser().parse(objects);
-            final Type finalType = type == Type.X ? parser.mLgType : type;
-            switch (finalType){
-                case V: return Log.v(PRIMITIVE_LOG_TAG, parser.toString());
-                case D: return Log.d(PRIMITIVE_LOG_TAG, parser.toString());
-                case I: return Log.i(PRIMITIVE_LOG_TAG, parser.toString());
-                case W: return Log.w(PRIMITIVE_LOG_TAG, parser.toString());
-                case E: return Log.e(PRIMITIVE_LOG_TAG, parser.toString());
+        private static ObjectArrayParser _log(@NonNull final Type type, @NonNull final Object... objects) {
+            final ObjectArrayParser parser = new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(objects);
+            parser.mLgType = type == Type.X ? parser.mLgType : type;
+            switch (parser.mLgType){
+                case V: parser.mPrimitiveLogReturn = Log.v(PRIMITIVE_LOG_TAG, parser.toString());   break;
+                case D: parser.mPrimitiveLogReturn = Log.d(PRIMITIVE_LOG_TAG, parser.toString());   break;
+                case I: parser.mPrimitiveLogReturn = Log.i(PRIMITIVE_LOG_TAG, parser.toString());    break;
+                case W: parser.mPrimitiveLogReturn = Log.w(PRIMITIVE_LOG_TAG, parser.toString());  break;
+                case E: parser.mPrimitiveLogReturn = Log.e(PRIMITIVE_LOG_TAG, parser.toString());   break;
                 default:
                     Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + "[UsageError] Unknown Lg.Type");
-                    return -1;
+                    parser.mPrimitiveLogReturn = -1;
             }
+            return parser;
         }
 
         /** @return true if toString method of the object is not ever overridden */
@@ -321,98 +331,43 @@ public class XDD {
             return arrayList.toString();
         }
 
-        public static String getMethodTag(@NonNull final Object... messages){
-            //this method is invoked outside the class, and the result is reused, so don't show hyperlink
-            return _getMethodTag(false, messages);
-        }
-
-        private static String _getMethodTag(final boolean showHyperlink,
-                                            @NonNull final Object... messageObjects){
-            return _getMethodTag(showHyperlink, findFirstOuterElement(), messageObjects);
-        }
-
-        private static String _getMethodTag(final boolean showHyperlink,
-                                            @NonNull final StackTraceElement targetElement,
-                                            @NonNull final Object... messageObjects){
-            String tag = null;
-
-            if (DEBUG_PRINT_ELEMENTS) {
-                printStackTraceElements(Thread.currentThread().getStackTrace());
-            }
-
-            final StringBuilder resultBuilder = new StringBuilder();
-
-            if (showHyperlink) {//(FileName:LineNumber)   //no other text allowed
-                resultBuilder.append("(")
-                        .append(targetElement.getFileName())
-                        .append(":")
-                        .append(targetElement.getLineNumber())
-                        .append(")");
-            }
-
-            //OuterClass$InnerClass.MethodName
-            final String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
-            resultBuilder.append(METHOD_TAG_DELIMITER)
-                    .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//remove package name
-                    .append(".")
-                    .append(targetElement.getMethodName());
-
-            if (messageObjects.length != 0){
-                resultBuilder.append(ObjectArrayParser.newMethodTagParser().parse(messageObjects));
-            }
-
-            resultBuilder.append(TAG_END);
-
-            if (DEBUG_PRINT_ELEMENTS) {
-                d(tag, "result: " + resultBuilder.toString());
-                d(tag, getSeparator("end", '^'));
-            }
-            return resultBuilder.toString();
+        public static ObjectArrayParser getPrioritizedMessage(@NonNull final Object... messages){
+            return new ObjectArrayParser(ObjectArrayParser.Settings.PrioritizedMsg).parse(messages);
         }
 
         public static void printStackTrace(@NonNull final Object... objects){
             final String result = PRIMITIVE_LOG_TAG + TAG_END
-//                    + "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") "
-                    + ObjectArrayParser.newMessageParser().parse(objects,
-                            "\n\t" + PRIMITIVE_LOG_TAG + TAG_END + "direct invoker: "
-                                    + _getMethodTag(true, findOuterElementWithDepth(1)))
-                    .toString();
+                    + new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(objects,
+                            "\n\t" + PRIMITIVE_LOG_TAG + TAG_END
+                                    + "direct invoker: " + getMethodTag(findInvokerOfDeepestInnerElement(1)));
             (new Exception(result)).printStackTrace();
         }
 
         public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
-            final String message = ObjectArrayParser.newMessageParser().parse(objects).toString();
-            Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + message, Toast.LENGTH_LONG).show();
-            d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ") " + message);
+            ObjectArrayParser parser = d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ")", objects);
+            Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG).show();
         }
 
-        private static StackTraceElement findFirstOuterElement() {
-            return findOuterElementWithDepth(0);
+        private static StackTraceElement findInvokerOfDeepestInnerElement() {
+            return findInvokerOfDeepestInnerElement(0);
         }
 
-        private static StackTraceElement findOuterElementWithDepth(final int offset) {
-            final StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        private static StackTraceElement findInvokerOfDeepestInnerElement(final int offset) {
+            final StackTraceElement[] elements = Thread.currentThread().getStackTrace();//smaller index, called more recently
 
-            boolean previousIsInnerElement = false;//inner: XDD.xxx
-            for (int idx=0 ; idx<elements.length ; idx++){//the former is called earlier
-                boolean currentIsInnerElement = elements[idx].getFileName().equals(THIS_FILE_NAME);
-                if (previousIsInnerElement && !currentIsInnerElement) {
-                    return elements[idx + offset];
+            for (int idx=elements.length-1 ; idx>=0; idx--) {//search from the farthest to the recent
+                if (elements[idx].getFileName().equals(THIS_FILE_NAME)) {
+                    for (int jdx=idx+1+offset ; jdx < elements.length ; jdx++) {
+//                        if (!elements[jdx].getMethodName().equals("access")) {// TODO: 2017/6/16 access?
+                            return elements[jdx];
+//                        }
+                    }
                 }
-                previousIsInnerElement = currentIsInnerElement;
             }
+            //Should not enter here!!!
             printStackTraceElements(elements);
             Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!! firstOuterElement not found");
             return elements[0];//unreachable
-        }
-
-        private static String insertCodeHyperlinkIfNeeded(@NonNull final String origTag) {
-            if (CODE_HYPERLINK_PATTERN.matcher(origTag).matches()) {
-                return origTag;
-            } else {
-                final StackTraceElement targetElement = findFirstOuterElement();
-                return "(" + targetElement.getFileName() + ":" + targetElement.getLineNumber() + ")" + origTag;
-            }
         }
 
         private static void printStackTraceElements(@NonNull final StackTraceElement[] elements) {
@@ -424,19 +379,38 @@ public class XDD {
                         idx, element.getClassName(), element.getMethodName(), element.getFileName(), element.getLineNumber()));
             }
         }
+
+        /** (FileName.java:LineNumber)->OuterClass$InnerClass.MethodName */
+        private static String getMethodTag(@NonNull final StackTraceElement targetElement) {
+            final StringBuilder methodTagBuilder = new StringBuilder(50);
+            methodTagBuilder.append("(")
+                    .append(targetElement.getFileName())
+                    .append(":")
+                    .append(targetElement.getLineNumber())
+                    .append(")");
+
+            //OuterClass$InnerClass.MethodName
+            final String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
+            methodTagBuilder.append(ObjectArrayParser.Settings.PrioritizedMsg.mDelimiter)
+                    .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//remove package name
+                    .append(".")
+                    .append(targetElement.getMethodName());
+
+            return methodTagBuilder.toString();
+        }
     }
 
     /** Abbreviation of Time*/
-    public static class Tm {
+    public static final class Tm {
         private Tm() {}
 
         private static long sStartTime = 0;
         private static long sEndTime = 0;
-        private static String sStartMessage = null;
-        private static String sEndMessage = null;
+        private static Lg.ObjectArrayParser sStartMessage = null;
+        private static Lg.ObjectArrayParser sEndMessage = null;
 
         public static void start(@NonNull final Object... objects) {
-            sStartMessage = Lg.getMethodTag(objects);
+            sStartMessage = Lg.getPrioritizedMessage(objects);
             Lg.d(sStartMessage, "start timer~");
 
             sStartTime = System.currentTimeMillis();
@@ -445,7 +419,7 @@ public class XDD {
         public static void end(@NonNull final Object... objects) {
             sEndTime = System.currentTimeMillis();
 
-            sEndMessage = Lg.getMethodTag(objects);
+            sEndMessage = Lg.getPrioritizedMessage(objects);
             Lg.d(sEndMessage, "end timer~");
 
             elapsed();
@@ -466,7 +440,7 @@ public class XDD {
             final long timestamp = System.currentTimeMillis();
 
             final Lg.ObjectArrayParser parser =
-                    Lg.ObjectArrayParser.newMessageParser().parse(Lg.Type.D, "timestamp:"+ timestamp, objects);
+                    new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg).parse(Lg.Type.D, "timestamp:"+ timestamp, objects);
 
             Lg.log(parser, "go to sleep " + ms + "ms~");
             try {
@@ -479,7 +453,7 @@ public class XDD {
     }
 
 
-    // TODO: 2017/5/19 stale: not apply getMethodTag and Lg
+    // TODO: 2017/5/19 stale: not apply getPrioritizedMessage and Lg
     public static Bitmap drawCross(@Nullable final String outerTag, @Nullable Bitmap bitmap, final int color, @Nullable final String msg){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + Lg.TAG_END;
         if (bitmap == null) {
@@ -505,7 +479,7 @@ public class XDD {
         return bitmap;
     }
 
-    // TODO: 2017/5/19 stale: not apply getMethodTag and Lg
+    // TODO: 2017/5/19 stale: not apply getPrioritizedMessage and Lg
     public static void saveBitmap(@Nullable final String outerTag, @Nullable final Bitmap bitmap, @NonNull final String fileName){
         final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + Lg.TAG_END;
         if (bitmap != null) {
@@ -544,7 +518,7 @@ public class XDD {
         return getSeparator(message, separator, DEFAULT_REPEAT_COUNT);
     }
     public static String getSeparator(@Nullable final String message, final char separator, final int count) {
-        final StringBuilder stringBuilder = new StringBuilder();
+        final StringBuilder stringBuilder = new StringBuilder(count * 2 + 4 + (message == null ? 0 : message.length()));
         final String halfSeparator = stringRepeat(count, String.valueOf(separator));
         stringBuilder.append(halfSeparator);
         if (message != null && !message.isEmpty()) {
