@@ -553,4 +553,8 @@ public final class XDD {
             return Looper.getMainLooper() == Looper.myLooper();
         }
     }
+
+    public static String argbIntToHexString(final int color) {
+        return String.format("#%08x", color);
+    }
 }
