@@ -83,6 +83,7 @@ public final class XDD {
         public static final String PRIMITIVE_LOG_TAG = XDD.class.getSimpleName() + "D";//mutable
         private static final String TAG_END = ": ";
         private static final Pattern PRIORITIZED_MSG_PATTERN = Pattern.compile("^->\\[.+\\]$");//->[ANYTHING]
+        private static final Pattern ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$");//->[ANYTHING]
 
         @SuppressWarnings("all")
         public enum Type {
@@ -358,9 +359,9 @@ public final class XDD {
             for (int idx=elements.length-1 ; idx>=0; idx--) {//search from the farthest to the recent
                 if (elements[idx].getFileName().equals(THIS_FILE_NAME)) {
                     for (int jdx=idx+1+offset ; jdx < elements.length ; jdx++) {
-//                        if (!elements[jdx].getMethodName().equals("access")) {// TODO: 2017/6/16 access?
+                        if (!ACCESS_METHOD_PATTERN.matcher(elements[jdx].getMethodName()).matches()) {//skip access method like "access$000"
                             return elements[jdx];
-//                        }
+                        }
                     }
                 }
             }
