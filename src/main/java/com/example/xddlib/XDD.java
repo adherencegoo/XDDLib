@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -405,37 +406,185 @@ public final class XDD {
     public static final class Tm {
         private Tm() {}
 
-        private static long sStartTime = 0;
-        private static long sEndTime = 0;
-        private static Lg.ObjectArrayParser sStartMessage = null;
-        private static Lg.ObjectArrayParser sEndMessage = null;
+        private static class Timing {
+            @NonNull private final Object mId;
+            @NonNull private final Lg.ObjectArrayParser mInfo;
+            private long t1 = Long.MAX_VALUE, t2 = Long.MIN_VALUE;
 
-        public static void start(@NonNull final Object... objects) {
-            sStartMessage = Lg.getPrioritizedMessage(objects);
-            Lg.d(sStartMessage, "start timer~");
+            private Timing(@NonNull final Object id, @NonNull final Lg.ObjectArrayParser info) {
+                mId = id;
+                mInfo = info;
+            }
 
-            sStartTime = System.currentTimeMillis();
+            private long subtract(@NonNull final Timing past) {
+                final long result = t1 - past.t2;
+                Assert.assertTrue(result >= 0);
+                return result;
+            }
         }
 
-        public static void end(@NonNull final Object... objects) {
-            sEndTime = System.currentTimeMillis();
+        private static class Timeline {
+            @NonNull private final Object mId;
+            @NonNull private final ArrayList<Timing> mTimings = new ArrayList<>();
 
-            sEndMessage = Lg.getPrioritizedMessage(objects);
-            Lg.d(sEndMessage, "end timer~");
+            private Timeline(@NonNull final Object id) {
+                mId = id;
+            }
 
-            elapsed();
+            @NonNull private Timing tick(@NonNull final Lg.ObjectArrayParser info) {
+                final Timing timing = new Timing(mId, info);
+                mTimings.add(timing);
+                return timing;
+            }
+
+            /**Excluding the time of my own procedure*/
+            private long calculateInterestingElapsedTime() {
+                Assert.assertTrue(mTimings.size() >= 2);
+
+                long result = 0;
+                Timing previous = null;
+                for (final Timing current: mTimings){
+                    if (previous != null) result += current.subtract(previous);
+                    previous = current;
+                }
+
+                Assert.assertTrue(result >= 0);
+                return result;
+            }
+
+            /**Including the time of my own procedure*/
+            private long calculateRealElapsedTime() {
+                Assert.assertTrue(mTimings.size() >= 2);
+                final long result = mTimings.get(mTimings.size()-1).t2 - mTimings.get(0).t1;
+                Assert.assertTrue(result >= 0);
+                return result;
+            }
+
+            private long calculateProcedureTime() {
+                final long result = calculateRealElapsedTime() - calculateInterestingElapsedTime();
+                Assert.assertTrue(result >= 0);
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                Assert.assertTrue(mTimings.size() >= 2);
+                final StringBuilder builder = new StringBuilder(mTimings.size() * 50);
+
+                Timing previous = null;
+                for (final Timing current: mTimings){
+                    if (previous != null) {
+                        builder.append("\n").append(current.subtract(previous)).append("ms");
+                        // TODO: 2017/6/17  output more~
+                    }
+                    previous = current;
+                }
+
+                builder.append("\nTotal elapsed time:")
+                        .append(calculateInterestingElapsedTime())
+                        .append("ms");
+
+                //test
+                builder.append("\n[TEST] real total elapsed time:")
+                        .append(calculateRealElapsedTime())
+                        .append("ms");
+
+                return builder.toString();
+            }
+
+            private void clear() {
+                mTimings.clear();
+            }
+
+            private int size() {
+                return mTimings.size();
+            }
         }
 
-        private static void elapsed(@NonNull final Object... objects) {
-            Lg.d("Elapsed time:" + (sEndTime - sStartTime) + "ms",
-                    "from {" + sStartMessage + "} to {" + sEndMessage + "}",
-                    objects);
+        private static class TimelineManager {
+            @NonNull private final HashMap<Object, Timeline> mTimelines = new HashMap<>(3);
 
-            sStartTime = 0;
-            sEndTime = 0;
-            sStartMessage = null;
-            sEndMessage = null;
+            /**
+                     * If id==null:<br/>
+                     *      If number of timelines is 1, return it;<br/>
+                     *      else: assert fail<br/>
+                     * else:<br/>
+                     *      If target found: return it<br/>
+                     *      else: create a new timeline using given id*/
+            @NonNull private Timeline getTargetTimeline(@Nullable final Object id, final boolean asNew) {
+                if (asNew) Assert.assertTrue(id != null);
+
+                Timeline target = null;
+                if (id == null) {
+                    if (mTimelines.size() == 1) {//get the only timeline
+                        target = mTimelines.values().iterator().next();
+                    } else {//Create a timeline using current timestamp
+                        Assert.fail(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END + "There are zero/multiple Timelines, but no id is given");
+                    }
+                } else {
+                    target = mTimelines.get(id);
+                    if (target == null) {//Create a timeline using given id
+                        target = new Timeline(id);
+                        mTimelines.put(id, target);
+                    }
+                }
+
+                if (asNew) {
+                    target.clear();
+                } else {
+                    Assert.assertTrue(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END + "Should not be empty, but it is actually", target.size() != 0);
+                }
+
+                return target;
+            }
+
+            private void remove(@NonNull final Object id) {
+                final Timeline removed = mTimelines.remove(id);
+                if (removed != null) {
+                    removed.clear();
+                }
+            }
         }
+
+        @NonNull private static final TimelineManager sManager = new TimelineManager();
+
+        //======================================================================
+
+        @NonNull public static Object start(@Nullable final Object id, @NonNull final Object... objects) {
+            final long t1 = System.currentTimeMillis();
+
+            final Timeline timeline = sManager.getTargetTimeline(id == null ? t1 : id, true);
+            final Timing timing = timeline.tick(Lg.log(Lg.Type.V, Lg.getPrioritizedMessage("id:" + timeline.mId), "start timer~", objects));
+
+            timing.t1 = t1;
+            timing.t2 = System.currentTimeMillis();
+            return timing.mId;
+        }
+
+        @NonNull public static Object tick(@Nullable final Object id, @NonNull final Object... objects) {
+            long t1 = System.currentTimeMillis();
+
+            final Timeline timeline = sManager.getTargetTimeline(id, false);
+            final Timing timing = timeline.tick(Lg.log(Lg.Type.V, Lg.getPrioritizedMessage("id:" + timeline.mId), "timer ticks", objects));
+
+            timing.t1 = t1;
+            timing.t2 = System.currentTimeMillis();
+            return timing.mId;
+        }
+
+        public static void end(@Nullable final Object id, @NonNull final Object... objects) {
+            long t1 = System.currentTimeMillis();
+
+            final Timeline timeline = sManager.getTargetTimeline(id, false);
+            final Timing timing = timeline.tick(Lg.log(Lg.Type.V, Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects));
+
+            timing.t1 = t1;
+            timing.t2 = System.currentTimeMillis();
+
+            Lg.log(timing.mInfo.mLgType, timeline);//output the elapsed time
+            sManager.remove(timeline.mId);
+        }
+
 
         public static void sleep(final long ms, @NonNull final Object... objects) {
             final long timestamp = System.currentTimeMillis();
