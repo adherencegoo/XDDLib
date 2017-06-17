@@ -192,7 +192,9 @@ public final class XDD {
                             && ((List)obj).get(0) instanceof Throwable) {//List<Throwable>
                         this.parse(((List)obj).toArray());
                     } else if (obj instanceof Type) {
-                        mLgType = (Type) obj;
+                        if (((Type) obj).mValue > mLgType.mValue) {
+                            mLgType = (Type) obj;
+                        }
 
                         //process the data======================================================
                     } else if (obj instanceof ObjectArrayParser) {
