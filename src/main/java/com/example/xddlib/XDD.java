@@ -88,13 +88,15 @@ public final class XDD {
 
         @SuppressWarnings("all")
         public enum Type {
-            V(Log.VERBOSE), D(Log.DEBUG), I(Log.INFO), W(Log.WARN), E(Log.ERROR), X(-1);
+            V(Log.VERBOSE), D(Log.DEBUG), I(Log.INFO), W(Log.WARN), E(Log.ERROR),
+            NONE(0), UNKNOWN(-1);
 
             public final int mValue;
             private Type(final int value) {
                 mValue = value;
             }
         }
+        private static final Type DEFAULT_INTERNAL_LG_TYPE = Type.V;
 
         public static ObjectArrayParser v(@NonNull final Object... objects) { return _log(Type.V, objects); }
         public static ObjectArrayParser d(@NonNull final Object... objects) { return _log(Type.D, objects); }
@@ -102,7 +104,7 @@ public final class XDD {
         public static ObjectArrayParser w(@NonNull final Object... objects) { return _log(Type.W, objects); }
         public static ObjectArrayParser e(@NonNull final Object... objects) { return _log(Type.E, objects); }
         /** @param objects: must contain Lg.Type*/
-        public static ObjectArrayParser log(@NonNull final Object... objects) { return _log(Type.X, objects); }
+        public static ObjectArrayParser log(@NonNull final Object... objects) { return _log(Type.UNKNOWN, objects); }
 
         public static class ObjectArrayParser {
             private enum Settings {
@@ -142,7 +144,7 @@ public final class XDD {
             private ArrayList<Throwable> mTrArray = null;
             private StringBuilder mPrioritizedMsgBuilder = null;
             private StringBuilder mMainMsgBuilder = null;
-            private Type mLgType = Type.X;//cache the LAST found one
+            private Type mLgType = Type.UNKNOWN;//cache the LAST found one
 
             //others =====================================================
             private boolean mIsParsed = false;
@@ -159,7 +161,7 @@ public final class XDD {
                 if (mTrArray != null) mTrArray.clear();
                 if (mPrioritizedMsgBuilder != null) mPrioritizedMsgBuilder.setLength(0);
                 if (mMainMsgBuilder != null) mMainMsgBuilder.setLength(0);
-                mLgType = Type.X;
+                mLgType = Type.UNKNOWN;
 
                 mIsParsed = false;
                 return this;
@@ -283,15 +285,16 @@ public final class XDD {
         /**@param type: if unknown, use the result parsed from objects; if still unknown, assertion fails */
         private static ObjectArrayParser _log(@NonNull final Type type, @NonNull final Object... objects) {
             final ObjectArrayParser parser = new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(objects);
-            parser.mLgType = type == Type.X ? parser.mLgType : type;
+            parser.mLgType = type == Type.UNKNOWN ? parser.mLgType : type;
             switch (parser.mLgType){
                 case V: parser.mPrimitiveLogReturn = Log.v(PRIMITIVE_LOG_TAG, parser.toString());   break;
                 case D: parser.mPrimitiveLogReturn = Log.d(PRIMITIVE_LOG_TAG, parser.toString());   break;
                 case I: parser.mPrimitiveLogReturn = Log.i(PRIMITIVE_LOG_TAG, parser.toString());    break;
                 case W: parser.mPrimitiveLogReturn = Log.w(PRIMITIVE_LOG_TAG, parser.toString());  break;
                 case E: parser.mPrimitiveLogReturn = Log.e(PRIMITIVE_LOG_TAG, parser.toString());   break;
+                case NONE: parser.mPrimitiveLogReturn = -1;   break;
                 default:
-                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + "[UsageError] Unknown Lg.Type");
+                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + "[UsageError] Unknown Lg.Type: " + parser.mLgType);
                     parser.mPrimitiveLogReturn = -1;
             }
             return parser;
@@ -348,7 +351,7 @@ public final class XDD {
         }
 
         public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
-            ObjectArrayParser parser = d("(" + (new Throwable().getStackTrace()[0].getMethodName()) + ")", objects);
+            ObjectArrayParser parser = log(DEFAULT_INTERNAL_LG_TYPE, "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ")", objects);
             Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG).show();
         }
 
@@ -376,10 +379,10 @@ public final class XDD {
 
         private static void printStackTraceElements(@NonNull final StackTraceElement[] elements) {
             final String tag = PRIMITIVE_LOG_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
-            d(tag, getSeparator("start", 'v'));
+            w(tag, getSeparator("start", 'v'));
             for (int idx=0 ; idx<elements.length ; idx++) {
                 StackTraceElement element = elements[idx];
-                d(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
+                w(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
                         idx, element.getClassName(), element.getMethodName(), element.getFileName(), element.getLineNumber()));
             }
         }
@@ -556,7 +559,7 @@ public final class XDD {
             final long t1 = System.currentTimeMillis();
 
             final Timeline timeline = sManager.getTargetTimeline(id == null ? t1 : id, true);
-            final Timing timing = timeline.tick(Lg.log(Lg.Type.V, Lg.getPrioritizedMessage("id:" + timeline.mId), "start timer~", objects));
+            final Timing timing = timeline.tick(Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "start timer~", objects));
 
             timing.t1 = t1;
             timing.t2 = System.currentTimeMillis();
@@ -567,7 +570,7 @@ public final class XDD {
             long t1 = System.currentTimeMillis();
 
             final Timeline timeline = sManager.getTargetTimeline(id, false);
-            final Timing timing = timeline.tick(Lg.log(Lg.Type.V, Lg.getPrioritizedMessage("id:" + timeline.mId), "timer ticks", objects));
+            final Timing timing = timeline.tick(Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "timer ticks", objects));
 
             timing.t1 = t1;
             timing.t2 = System.currentTimeMillis();
@@ -578,7 +581,7 @@ public final class XDD {
             long t1 = System.currentTimeMillis();
 
             final Timeline timeline = sManager.getTargetTimeline(id, false);
-            final Timing timing = timeline.tick(Lg.log(Lg.Type.V, Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects));
+            final Timing timing = timeline.tick(Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects));
 
             timing.t1 = t1;
             timing.t2 = System.currentTimeMillis();
@@ -592,7 +595,7 @@ public final class XDD {
             final long timestamp = System.currentTimeMillis();
 
             final Lg.ObjectArrayParser parser =
-                    new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg).parse(Lg.Type.D, "timestamp:"+ timestamp, objects);
+                    new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg).parse(Lg.DEFAULT_INTERNAL_LG_TYPE, "timestamp:"+ timestamp, objects);
 
             Lg.log(parser, "go to sleep " + ms + "ms~");
             try {
