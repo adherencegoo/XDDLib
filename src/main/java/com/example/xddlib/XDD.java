@@ -523,8 +523,8 @@ public final class XDD {
                 if (id == null) {
                     if (mTimelines.size() == 1) {//get the only timeline
                         target = mTimelines.values().iterator().next();
-                    } else {//Create a timeline using current timestamp
-                        Assert.fail(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END + "There are zero/multiple Timelines, but no id is given");
+                    } else {
+                        Assert.fail(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END + "There are " + mTimelines.size() + " Timelines, but no id is given");
                     }
                 } else {
                     target = mTimelines.get(id);
@@ -555,6 +555,10 @@ public final class XDD {
 
         //======================================================================
 
+        /**
+         * @param id used as the identifier of new timeline, leave null to use current timestamp for default
+         * @return id
+         * */
         @NonNull public static Object start(@Nullable final Object id, @NonNull final Object... objects) {
             final long t1 = System.currentTimeMillis();
 
@@ -566,6 +570,12 @@ public final class XDD {
             return timing.mId;
         }
 
+        /**
+         * @param id used to identify which timeline to use, leave null to<br/>
+         *           if there is exactly only one, use it<br/>
+         *           else, throw exception
+         * @return id
+         * */
         @NonNull public static Object tick(@Nullable final Object id, @NonNull final Object... objects) {
             long t1 = System.currentTimeMillis();
 
@@ -577,6 +587,9 @@ public final class XDD {
             return timing.mId;
         }
 
+        /**
+         * @param id see {@link #tick}
+         * */
         public static void end(@Nullable final Object id, @NonNull final Object... objects) {
             long t1 = System.currentTimeMillis();
 
