@@ -609,7 +609,7 @@ public final class XDD {
             timing.t1 = t1;
             timing.t2 = System.currentTimeMillis();
 
-            Lg.log(timing.mInfo.mLgType, timeline);//output the elapsed time
+            Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline);//output the elapsed time
             sManager.remove(timeline.mId);
         }
 
