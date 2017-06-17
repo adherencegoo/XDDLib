@@ -245,6 +245,10 @@ public final class XDD {
                     }
                 }
 
+                if (mNeedMethodTag && mMethodTagSource == null) {
+                    mMethodTagSource = findInvokerOfDeepestInnerElement();
+                }
+
                 mIsParsed = true;
                 return this;
             }
@@ -256,9 +260,6 @@ public final class XDD {
 
                 //MethodTag
                 if (mNeedMethodTag) {
-                    if (mMethodTagSource == null) {
-                        mMethodTagSource = findInvokerOfDeepestInnerElement();
-                    }
                     resultBuilder.append(getMethodTag(mMethodTagSource));
                 }
 
