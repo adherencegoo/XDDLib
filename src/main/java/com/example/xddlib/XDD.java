@@ -246,7 +246,7 @@ public final class XDD {
                 }
 
                 if (mNeedMethodTag && mMethodTagSource == null) {
-                    mMethodTagSource = findInvokerOfDeepestInnerElement();
+                    mMethodTagSource = findInvokerOfDeepestInnerElementWithOffset(0);
                 }
 
                 mIsParsed = true;
@@ -347,7 +347,7 @@ public final class XDD {
             final String result = PRIMITIVE_LOG_TAG + TAG_END
                     + new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(objects,
                             "\n\t" + PRIMITIVE_LOG_TAG + TAG_END
-                                    + "direct invoker: " + getMethodTag(findInvokerOfDeepestInnerElement(1)));
+                                    + "direct invoker: " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)));
             (new Exception(result)).printStackTrace();
         }
 
@@ -356,11 +356,8 @@ public final class XDD {
             Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG).show();
         }
 
-        private static StackTraceElement findInvokerOfDeepestInnerElement() {
-            return findInvokerOfDeepestInnerElement(0);
-        }
-
-        private static StackTraceElement findInvokerOfDeepestInnerElement(final int offset) {
+        private static StackTraceElement findInvokerOfDeepestInnerElementWithOffset(final int offset) {
+            Assert.assertTrue(offset >= 0);
             final StackTraceElement[] elements = Thread.currentThread().getStackTrace();//smaller index, called more recently
 
             for (int idx=elements.length-1 ; idx>=0; idx--) {//search from the farthest to the recent
