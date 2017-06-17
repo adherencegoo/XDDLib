@@ -194,7 +194,7 @@ public final class XDD {
                             && ((List)obj).get(0) instanceof Throwable) {//List<Throwable>
                         this.parse(((List)obj).toArray());
                     } else if (obj instanceof Type) {
-                        if (((Type) obj).mValue > mLgType.mValue) {
+                        if (obj != Type.UNKNOWN) {
                             mLgType = (Type) obj;
                         }
 
