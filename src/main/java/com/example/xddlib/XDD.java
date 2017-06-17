@@ -174,7 +174,7 @@ public final class XDD {
                 parse(another.mTrArray == null ? null : another.mTrArray.toArray(),
                         another.mPrioritizedMsgBuilder,
                         another.mMainMsgBuilder,
-                        another.mLgType);
+                        another.mLgType == Type.UNKNOWN ? null : another.mLgType);
                 mNeedMethodTag = origNeedMethodTag;
                 return this;
             }
