@@ -477,20 +477,23 @@ public final class XDD {
                 final StringBuilder builder = new StringBuilder(mTimings.size() * 50);
 
                 Timing previous = null;
+                int idx = 0;
                 for (final Timing current: mTimings){
+                    builder.append("\n[").append(idx).append("] ");
                     if (previous != null) {
-                        builder.append("\n").append(current.subtract(previous)).append("ms");
-                        // TODO: 2017/6/17  output more~
+                        builder.append(current.subtract(previous)).append("ms ");
                     }
+                    builder.append(current.mInfo);
                     previous = current;
+                    idx++;
                 }
 
-                builder.append("\nTotal elapsed time:")
+                builder.append("\nTotal elapsed time: ")
                         .append(calculateInterestingElapsedTime())
                         .append("ms");
 
                 //test
-                builder.append("\n[TEST] real total elapsed time:")
+                builder.append("\n[TEST] Real total elapsed time: ")
                         .append(calculateRealElapsedTime())
                         .append("ms");
 
