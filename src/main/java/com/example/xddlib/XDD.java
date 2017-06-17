@@ -390,7 +390,7 @@ public final class XDD {
 
         /** (FileName.java:LineNumber)->OuterClass$InnerClass.MethodName */
         private static String getMethodTag(@NonNull final StackTraceElement targetElement) {
-            final StringBuilder methodTagBuilder = new StringBuilder(50);
+            /*final StringBuilder methodTagBuilder = new StringBuilder(50);
             methodTagBuilder.append("(")
                     .append(targetElement.getFileName())
                     .append(":")
@@ -404,7 +404,16 @@ public final class XDD {
                     .append(".")
                     .append(targetElement.getMethodName());
 
-            return methodTagBuilder.toString();
+            return methodTagBuilder.toString();*/
+
+            final String string = targetElement.toString();
+            //remove package name
+            //ex: packageName.ClassName.methodName(FileName.java:LineNumber)
+            int dotIdx = string.length();
+            for (int idx=0 ; idx<3 ; idx++) {//find the 3rd dot starting from the end
+                dotIdx = string.lastIndexOf('.', dotIdx-1);
+            }
+            return string.substring(dotIdx+1);
         }
     }
 
