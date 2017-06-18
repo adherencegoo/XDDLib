@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -433,6 +434,12 @@ public final class XDD {
                 Assert.assertTrue(result >= 0);
                 return result;
             }
+
+            private long getInternalElapsedTime() {
+                final long result = t2 - t1;
+                Assert.assertTrue(result >= 0);
+                return result;
+            }
         }
 
         private static class Timeline {
@@ -472,7 +479,7 @@ public final class XDD {
                 return result;
             }
 
-            private long calculateProcedureTime() {
+            private long calculateInternalElapsedTime() {
                 final long result = calculateRealElapsedTime() - calculateInterestingElapsedTime();
                 Assert.assertTrue(result >= 0);
                 return result;
@@ -486,23 +493,24 @@ public final class XDD {
                 Timing previous = null;
                 int idx = 0;
                 for (final Timing current: mTimings){
-                    builder.append("\n[").append(idx).append("] ");
                     if (previous != null) {
-                        builder.append(current.subtract(previous)).append("ms ");
+                        builder.append("\n\t\t↓ ").append(current.subtract(previous)).append("ms");
                     }
-                    builder.append(current.mInfo);
+                    builder.append("\n[").append(idx).append("] ")
+                            .append("internal: ").append(current.getInternalElapsedTime()).append("ms, ")//test
+                            .append(current.mInfo);
                     previous = current;
                     idx++;
                 }
 
-                builder.append("\nTotal elapsed time: ")
-                        .append(calculateInterestingElapsedTime())
-                        .append("ms");
+                final long interestingElapsed = calculateInterestingElapsedTime();
+                final long realElapsed = calculateRealElapsedTime();
+                final long internalElapsed = realElapsed - interestingElapsed;
+                builder.append("\nTotal elapsed time: ").append(interestingElapsed).append("ms");
 
                 //test
-                builder.append("\n[TEST] Real total elapsed time: ")
-                        .append(calculateRealElapsedTime())
-                        .append("ms");
+                builder.append("; [TEST] Real total elapsed time: ").append(realElapsed)
+                        .append("ms, internal elapsed time: ").append(internalElapsed).append("ms");
 
                 return builder.toString();
             }
@@ -601,14 +609,17 @@ public final class XDD {
          * @param id see {@link #tick}
          * */
         public static void end(@Nullable final Object id, @NonNull final Object... objects) {
-            long t1 = System.currentTimeMillis();
+            final long t1 = System.currentTimeMillis();
 
             final Timeline timeline = sManager.getTargetTimeline(id, false);
-            final Timing timing = timeline.tick(Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects));
+            final Timing timing = timeline.tick(//need not output log at this moment
+                    new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg)
+                            .parse(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects));
 
             timing.t1 = t1;
             timing.t2 = System.currentTimeMillis();
 
+            //about 1ms for the following actions
             Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline);//output the elapsed time
             sManager.remove(timeline.mId);
         }
