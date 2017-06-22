@@ -641,14 +641,7 @@ public final class XDD {
         }
     }
 
-
-    // TODO: 2017/5/19 stale: not apply getPrioritizedMessage and Lg
-    public static Bitmap drawCross(@Nullable final String outerTag, @Nullable Bitmap bitmap, final int color, @Nullable final String msg){
-        final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + Lg.TAG_END;
-        if (bitmap == null) {
-            Log.e(Lg.PRIMITIVE_LOG_TAG, tag + "null bitmap");
-            return null;
-        }
+    public static Bitmap drawCross(@NonNull final Bitmap bitmap, final int color, @Nullable final String msg){
 
         int imageWidth = bitmap.getWidth();
         int imageHeight = bitmap.getHeight();
