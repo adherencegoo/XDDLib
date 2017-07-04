@@ -4,13 +4,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -98,6 +98,15 @@ public final class XDD {
             }
         }
         private static final Type DEFAULT_INTERNAL_LG_TYPE = Type.V;
+
+        private static final Type[] TYPES = {Type.V, Type.D, Type.I, Type.W, Type.E};
+        public static Type types(final int idx) {
+            return TYPES[idx % TYPES.length];
+        }
+        private static final int[] COLORS = {Color.WHITE, Color.BLUE, Color.GREEN, Color.YELLOW, Color.RED};
+        public static int colors(final int idx) {
+            return COLORS[idx % COLORS.length];
+        }
 
         public static ObjectArrayParser v(@NonNull final Object... objects) { return _log(Type.V, objects); }
         public static ObjectArrayParser d(@NonNull final Object... objects) { return _log(Type.D, objects); }
