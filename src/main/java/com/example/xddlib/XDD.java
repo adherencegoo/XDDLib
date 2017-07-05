@@ -217,24 +217,16 @@ public final class XDD {
                     } else if (!(obj instanceof CtrlKey)) {
                         //transform obj into string
                         //ArrayList is acceptable
-                        boolean removePackageName = true;
                         String objStr;
                         if (obj instanceof String) {
                             objStr = (String) obj;
                         } else if (obj.getClass().isArray()) {//array with primitive type (array with class type has been processed in advance)
-                            removePackageName = false;
                             objStr = primitiveTypeArrayToString(obj);
                         } else {//Can't be Object[] or array with native type
-                            objStr = obj.toString();
+                            objStr = toSimpleString(obj);
                         }
 
                         if (objStr.isEmpty()) continue;
-
-                        //remove package name if present
-                        int dotPos;
-                        if (removePackageName && isToStringFromObjectClass(obj) && (dotPos = objStr.lastIndexOf('.')) != -1) {
-                            objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
-                        }
 
                         if (PRIORITIZED_MSG_PATTERN.matcher(objStr).matches()) {
                             if (mPrioritizedMsgBuilder == null) mPrioritizedMsgBuilder = new StringBuilder();
@@ -324,6 +316,20 @@ public final class XDD {
                 e.printStackTrace();
             }
             return true;
+        }
+
+        /** @return toString without package name if toString is not overridden */
+        public static String toSimpleString(@Nullable final Object object) {
+            if (object == null) {
+                return "null";
+            }
+
+            int dotPos;
+            String objStr = object.toString();
+            if (isToStringFromObjectClass(object) && (dotPos = objStr.lastIndexOf('.')) != -1) {
+                objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
+            }
+            return objStr;
         }
 
         private static String primitiveTypeArrayToString(@NonNull final Object obj) {
