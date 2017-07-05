@@ -362,8 +362,7 @@ public final class XDD {
         public static void printStackTrace(@NonNull final Object... objects){
             final String result = PRIMITIVE_LOG_TAG + TAG_END
                     + new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(objects,
-                            "\n\t" + PRIMITIVE_LOG_TAG + TAG_END
-                                    + "direct invoker: " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)));
+                            "\n\tdirect invoker: " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)));
             (new Exception(result)).printStackTrace();
         }
 
