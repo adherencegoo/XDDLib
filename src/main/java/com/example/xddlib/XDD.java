@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -675,38 +676,48 @@ public final class XDD {
         return bitmap;
     }
 
-    // TODO: 2017/5/19 stale: not apply getPrioritizedMessage and Lg
-    public static void saveBitmap(@Nullable final String outerTag, @Nullable final Bitmap bitmap, @NonNull final String fileName){
-        final String tag = outerTag + (new Object(){}.getClass().getEnclosingMethod().getName()) + Lg.TAG_END;
-        if (bitmap != null) {
-            //produce full path for file
-            String fileFullPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath();
-            if (!fileName.startsWith("/")){
-                fileFullPath += "/";
-            }
-            fileFullPath += fileName;
-            if (!fileName.endsWith(".jpg")){
-                fileFullPath += ".jpg";
-            }
+    public static void saveBitmap(@NonNull final Context context, @Nullable final Bitmap bitmap, @NonNull final String fileName,
+                                  @NonNull final Object... objects) {
+        final String tag = (new Object(){}.getClass().getEnclosingMethod().getName());
 
+        //produce full path for file
+        String fileFullPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath();
+        if (!fileFullPath.endsWith("/") && !fileName.startsWith("/")){
+            fileFullPath += "/";
+        }
+        fileFullPath += fileName;
+        if (!fileName.endsWith(".jpg")){
+            fileFullPath += ".jpg";
+        }
+
+        if (bitmap != null) {
             //create folders if needed
             final String folderName = fileFullPath.substring(0, fileFullPath.lastIndexOf('/'));
-            File folder = new File(folderName);
+            final File folder = new File(folderName);
             if (!folder.isDirectory()) {//folder not exist
-                Assert.assertTrue(tag + "Error in creating folder:[" + folderName + "]", folder.mkdirs());
+                Assert.assertTrue(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END
+                        + "Error in creating folder:[" + folderName + "]", folder.mkdirs());
             }
 
             OutputStream os = null;
             try {
                 os = new FileOutputStream(fileFullPath);
             } catch (FileNotFoundException e) {
-                Log.e(Lg.PRIMITIVE_LOG_TAG, tag + "FileNotFoundException: filePath:" + fileFullPath);
-                e.printStackTrace();
+                Lg.e("FileNotFoundException: filePath:" + fileFullPath, e);
             }
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
-            Log.i(Lg.PRIMITIVE_LOG_TAG, tag + "bitmap saved:" + fileFullPath);
+
+            final StackTraceElement stackTraceElement = Lg.findInvokerOfDeepestInnerElementWithOffset(0);
+            //Note: Must scan file instead of folder
+            MediaScannerConnection.scanFile(context, new String[]{fileFullPath}, null, new MediaScannerConnection.OnScanCompletedListener() {
+                @Override
+                public void onScanCompleted(String path, Uri uri) {
+                    Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, stackTraceElement, tag, "onScanCompleted",
+                            "Bitmap saved", "path:" + path, "Uri:" + uri, objects);
+                }
+            });
         } else {
-            Log.e(Lg.PRIMITIVE_LOG_TAG, tag + "bitmap==null");
+            Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, tag, "bitmap==null", fileFullPath, objects);
         }
     }
 
