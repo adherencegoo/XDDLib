@@ -592,7 +592,7 @@ public final class XDD {
          * @param id used as the identifier of new timeline, leave null to use current timestamp for default
          * @return id
          * */
-        @NonNull public static Object start(@Nullable final Object id, @NonNull final Object... objects) {
+        @NonNull public static Object begin(@Nullable final Object id, @NonNull final Object... objects) {
             final long t1 = System.currentTimeMillis();
 
             final Timeline timeline = sManager.getTargetTimeline(id == null ? t1 : id, true);
