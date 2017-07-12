@@ -444,6 +444,11 @@ public final class XDD {
                 mInfo = info;
             }
 
+            @Override
+            public String toString() {
+                return "internal: " + getInternalElapsedTime() + "ms, " + mInfo;
+            }
+
             private long subtract(@NonNull final Timing past) {
                 final long result = t1 - past.t2;
                 Assert.assertTrue(result >= 0);
@@ -511,9 +516,8 @@ public final class XDD {
                     if (previous != null) {
                         builder.append("\n\t\t↓ ").append(current.subtract(previous)).append("ms");
                     }
-                    builder.append("\n[").append(idx).append("] ")
-                            .append("internal: ").append(current.getInternalElapsedTime()).append("ms, ")//test
-                            .append(current.mInfo);
+                    builder.append("\n[").append(idx).append("] ").append(current);
+
                     previous = current;
                     idx++;
                 }
