@@ -1,7 +1,10 @@
 package com.example.xddlib;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -30,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /** Created by Owen_Chen on 2017/3/15. */
@@ -766,5 +770,47 @@ public final class XDD {
 
     public static String argbIntToHexString(final int color) {
         return String.format("#%08x", color);
+    }
+
+    private static final AtomicBoolean sIsActionDialogShowing = new AtomicBoolean(false);
+    public static void showActionDialog(@NonNull final Activity activity,//can't be ApplicationContext
+                                        @NonNull final Runnable action,
+                                        @NonNull final Object... objects) {
+        final Lg.ObjectArrayParser kMethodTag = Lg.getPrioritizedMessage(new Object(){}.getClass().getEnclosingMethod().getName());
+        if (sIsActionDialogShowing.get()) {
+            Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kMethodTag, "Confirm dialog is showing, skip this request");
+        } else {
+            sIsActionDialogShowing.set(true);
+
+            final Lg.ObjectArrayParser kParsedObjects = new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg).parse(objects);
+            kParsedObjects.mNeedMethodTag = false;
+
+            Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kMethodTag, kParsedObjects);
+
+            final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(activity);
+            dialogBuilder.setTitle(Lg.PRIMITIVE_LOG_TAG)
+                    .setMessage(kParsedObjects.toString())
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            action.run();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .setCancelable(true)
+                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            sIsActionDialogShowing.set(false);
+                        }
+                    });
+
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    dialogBuilder.show();
+                }
+            });
+        }
     }
 }
