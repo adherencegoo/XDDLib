@@ -773,41 +773,59 @@ public final class XDD {
     public static void showActionDialog(@NonNull final Activity activity,//can't be ApplicationContext
                                         @NonNull final Runnable action,
                                         @NonNull final Object... objects) {
-        final Lg.ObjectArrayParser kMethodTag = Lg.getPrioritizedMessage(new Object(){}.getClass().getEnclosingMethod().getName());
-        if (sIsActionDialogShowing.get()) {
-            Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kMethodTag, "Confirm dialog is showing, skip this request");
-        } else {
-            sIsActionDialogShowing.set(true);
+        final Lg.ObjectArrayParser kInnerMethodTag = Lg.getPrioritizedMessage(
+                new Object(){}.getClass().getEnclosingMethod().getName(),
+                "timestamp:" + System.currentTimeMillis());
 
-            final Lg.ObjectArrayParser kParsedObjects = new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg).parse(objects);
-            kParsedObjects.mNeedMethodTag = false;
+        try {
+            //if sIsActionDialogShowing is false originally: return true and update it to true
+            if (sIsActionDialogShowing.compareAndSet(false, true)) {
+                //parse objects
+                final Lg.ObjectArrayParser kParsedObjects = new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg).parse(objects);
+                final StackTraceElement kOuterMethodTagSource = kParsedObjects.mMethodTagSource;
+                kParsedObjects.mNeedMethodTag = false;
+                final String kDialogMessage = kParsedObjects.toString();
 
-            Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kMethodTag, kParsedObjects);
+                //log for starting
+                Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kOuterMethodTagSource, kInnerMethodTag, kParsedObjects);
 
-            final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(activity);
-            dialogBuilder.setTitle(Lg.PRIMITIVE_LOG_TAG)
-                    .setMessage(kParsedObjects.toString())
-                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            action.run();
-                        }
-                    })
-                    .setNegativeButton(android.R.string.no, null)
-                    .setCancelable(true)
-                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            sIsActionDialogShowing.set(false);
-                        }
-                    });
+                //build dialog
+                final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(activity);
+                dialogBuilder.setTitle(Lg.PRIMITIVE_LOG_TAG)
+                        .setMessage(kDialogMessage)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                action.run();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null)
+                        .setCancelable(true)
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                //log for ending
+                                Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kInnerMethodTag,
+                                        kOuterMethodTagSource,
+                                        "sIsActionDialogShowing=false due to dialog dismissed");
+                                sIsActionDialogShowing.set(false);
+                            }
+                        });
 
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    dialogBuilder.show();
-                }
-            });
+                //show dialog
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dialogBuilder.show();
+                    }
+                });
+            } else {//sIsActionDialogShowing is true
+                Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kInnerMethodTag, "Confirm dialog is showing, skip this request");
+            }
+        } catch (Exception e) {
+            //log for ending
+            Lg.e(kInnerMethodTag, "sIsActionDialogShowing=false due to exception", e);
+            sIsActionDialogShowing.set(false);
         }
     }
 }
