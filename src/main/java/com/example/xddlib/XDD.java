@@ -124,24 +124,21 @@ public final class XDD {
         public static class ObjectArrayParser {
             private enum Settings {
                 /** ->[a]->[b]->[c] */
-                PrioritizedMsg(false, true, false, "->", BracketType.BRACKET),
+                PrioritizedMsg(false, true, "->", BracketType.BRACKET),
                 /** ->[a]->[b]->[c]: a, b, c */
-                FinalMsg(true, false, true, ", ", BracketType.NONE);
+                FinalMsg(true, false, ", ", BracketType.NONE);
 
                 private final boolean mNeedMethodTag;
                 private final boolean mInsertFirstMainMsgDelimiter;
-                private final boolean mNeedTagEnd;
                 private final String mDelimiter;
                 private final BracketType mBracket;
 
                 Settings(final boolean needMethodTag,
                          final boolean insertFirstDelimiter,
-                         final boolean needTagEnd,
                          @NonNull final String delimiter,
                          @NonNull final BracketType bracket){
                     mNeedMethodTag = needMethodTag;
                     mInsertFirstMainMsgDelimiter = insertFirstDelimiter;
-                    mNeedTagEnd = needTagEnd;
 
                     mDelimiter = delimiter;
                     mBracket = bracket;
@@ -271,7 +268,7 @@ public final class XDD {
                 }
 
                 if (mPrioritizedMsgBuilder != null) resultBuilder.append(mPrioritizedMsgBuilder);
-                if (mSettings.mNeedTagEnd) resultBuilder.append(TAG_END);
+                if (mNeedMethodTag) resultBuilder.append(TAG_END);
                 if (mMainMsgBuilder != null) resultBuilder.append(mMainMsgBuilder);
 
                 //tr must be at the end
