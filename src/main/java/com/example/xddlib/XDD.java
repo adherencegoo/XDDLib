@@ -829,15 +829,23 @@ public final class XDD {
         }
     }
 
-    /**
-     * 3 parameters should not be null at the same time
-     * @param fileName will auto add postfix ".java" if missing
-     * @param partialClassName true if StackTraceElement.getClassName CONTAINS it
-     * @return true if those NonNull names are matched*/
+    /** {@link #isInvokedFrom(String, String, String, int)} */
     public static boolean isInvokedFrom(@Nullable String fileName,
                                         @Nullable final String partialClassName,
                                         @Nullable final String methodName) {
-        Assert.assertFalse(fileName == null && partialClassName == null && methodName == null);
+        return isInvokedFrom(fileName, partialClassName, methodName, -1);
+    }
+
+    /** All parameters should not be null(illegal) at the same time
+     * @param fileName will auto add postfix ".java" if missing
+     * @param partialClassName true if StackTraceElement.getClassName CONTAINS it
+     * @return true if those NonNull names are matched
+     * */
+    public static boolean isInvokedFrom(@Nullable String fileName,
+                                        @Nullable final String partialClassName,
+                                        @Nullable final String methodName,
+                                        final int lineNumber) {
+        Assert.assertFalse(fileName == null && partialClassName == null && methodName == null && lineNumber <= 0);
         if (fileName != null && !fileName.endsWith(".java")) fileName += ".java";
 
         final StackTraceElement[] kElements = Thread.currentThread().getStackTrace();
@@ -846,6 +854,7 @@ public final class XDD {
             if (/*found && */fileName != null) found = kElement.getFileName().equals(fileName);
             if (found && partialClassName != null) found = kElement.getClassName().contains(partialClassName) ;
             if (found && methodName != null) found = kElement.getMethodName().equals(methodName);
+            if (found && lineNumber > 0) found = kElement.getLineNumber() == lineNumber;
 
             if (found) return true;
         }
