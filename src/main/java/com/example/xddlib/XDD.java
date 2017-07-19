@@ -828,4 +828,27 @@ public final class XDD {
             sIsActionDialogShowing.set(false);
         }
     }
+
+    /**
+     * 3 parameters should not be null at the same time
+     * @param fileName will auto add postfix ".java" if missing
+     * @param partialClassName true if StackTraceElement.getClassName CONTAINS it
+     * @return true if those NonNull names are matched*/
+    public static boolean isInvokedFrom(@Nullable String fileName,
+                                        @Nullable final String partialClassName,
+                                        @Nullable final String methodName) {
+        Assert.assertFalse(fileName == null && partialClassName == null && methodName == null);
+        if (fileName != null && !fileName.endsWith(".java")) fileName += ".java";
+
+        final StackTraceElement[] kElements = Thread.currentThread().getStackTrace();
+        for (final StackTraceElement kElement : kElements) {
+            boolean found = true;
+            if (/*found && */fileName != null) found = kElement.getFileName().equals(fileName);
+            if (found && partialClassName != null) found = kElement.getClassName().contains(partialClassName) ;
+            if (found && methodName != null) found = kElement.getMethodName().equals(methodName);
+
+            if (found) return true;
+        }
+        return false;
+    }
 }
