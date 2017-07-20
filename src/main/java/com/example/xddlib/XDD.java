@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -837,34 +838,59 @@ public final class XDD {
         }
     }
 
-    /** {@link #isInvokedFrom(String, String, String, int)} */
-    public static boolean isInvokedFrom(@Nullable String fileName,
-                                        @Nullable final String partialClassName,
-                                        @Nullable final String methodName) {
-        return isInvokedFrom(fileName, partialClassName, methodName, -1);
+    public static final class StackTraceElementDescription {
+        @Nullable final String kFileName;
+        @Nullable final String kPartialClassName;
+        @Nullable final String kMethodName;
+        final int kLineNumber;
+
+        public StackTraceElementDescription(@Nullable String fileName,
+                                     @Nullable final String partialClassName,
+                                     @Nullable final String methodName) {
+            this(fileName, partialClassName, methodName, -1);
+        }
+
+        /** All illegal -> fail! (At least one element must be legal)
+         * @param fileName will auto add postfix ".java" if missing
+         * @param partialClassName true if StackTraceElement.getClassName CONTAINS it
+         * */
+        public StackTraceElementDescription(@Nullable final String fileName,
+                                     @Nullable final String partialClassName,
+                                     @Nullable final String methodName,
+                                     final int lineNumber) {
+            //All illegal -> fail! (At least one element must be legal)
+            Assert.assertFalse(fileName == null && partialClassName == null && methodName == null && lineNumber <= 0);
+
+            kFileName = (fileName != null && !fileName.endsWith(".java")) ? fileName + ".java" : fileName;
+            kPartialClassName = partialClassName;
+            kMethodName = methodName;
+            kLineNumber = lineNumber;
+        }
+
+        private boolean isMatched(@NonNull final StackTraceElement element) {
+            boolean matched = true;
+            if (/*found && */kFileName != null) matched = element.getFileName().equals(kFileName);
+            if (matched && kPartialClassName != null) matched = element.getClassName().contains(kPartialClassName) ;
+            if (matched && kMethodName != null) matched = element.getMethodName().equals(kMethodName);
+            if (matched && kLineNumber > 0) matched = element.getLineNumber() == kLineNumber;
+            return matched;
+        }
     }
 
-    /** All parameters should not be null(illegal) at the same time
-     * @param fileName will auto add postfix ".java" if missing
-     * @param partialClassName true if StackTraceElement.getClassName CONTAINS it
-     * @return true if those NonNull names are matched
-     * */
-    public static boolean isInvokedFrom(@Nullable String fileName,
-                                        @Nullable final String partialClassName,
-                                        @Nullable final String methodName,
-                                        final int lineNumber) {
-        Assert.assertFalse(fileName == null && partialClassName == null && methodName == null && lineNumber <= 0);
-        if (fileName != null && !fileName.endsWith(".java")) fileName += ".java";
+    /**@return true if all descriptions are matched in current stack trace*/
+    public static boolean isInvokedFrom(@NonNull final StackTraceElementDescription... descriptions) {
+        final ArrayList<StackTraceElementDescription> kUnmatchedDescriptions = new ArrayList<>(Arrays.asList(descriptions));
 
         final StackTraceElement[] kElements = Thread.currentThread().getStackTrace();
         for (final StackTraceElement kElement : kElements) {
-            boolean found = true;
-            if (/*found && */fileName != null) found = kElement.getFileName().equals(fileName);
-            if (found && partialClassName != null) found = kElement.getClassName().contains(partialClassName) ;
-            if (found && methodName != null) found = kElement.getMethodName().equals(methodName);
-            if (found && lineNumber > 0) found = kElement.getLineNumber() == lineNumber;
+            for (int i=0 ; i< kUnmatchedDescriptions.size() ; i++) {
+                if (kUnmatchedDescriptions.get(i).isMatched(kElement)) {
+                    kUnmatchedDescriptions.remove(i);
+                    break;//it's impossible to match 2 descriptions using the same element, so break to next element
+                }
+            }
 
-            if (found) return true;
+            if (kUnmatchedDescriptions.size() == 0) return true;
         }
         return false;
     }
