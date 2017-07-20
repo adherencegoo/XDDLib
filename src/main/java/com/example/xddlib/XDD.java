@@ -361,11 +361,19 @@ public final class XDD {
             return new ObjectArrayParser(ObjectArrayParser.Settings.PrioritizedMsg).parse(messages);
         }
 
+        /**
+         * @param objects if containing Lg.Type and it's not UNKNOWN, print stack trace according to that Lg.Type using Lg.log; else print stack trace normally
+         * */
         public static void printStackTrace(@NonNull final Object... objects){
-            final String result = PRIMITIVE_LOG_TAG + TAG_END
-                    + new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(objects,
-                            "\n\tdirect invoker: " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)));
-            (new Exception(result)).printStackTrace();
+            final String self = new Object(){}.getClass().getEnclosingMethod().getName();
+            final ObjectArrayParser parser = new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg)
+                    .parse(objects, "\n\tdirect invoker: " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)));
+
+            if (parser.mLgType == Type.UNKNOWN) {
+                (new Exception(PRIMITIVE_LOG_TAG + TAG_END + parser)).printStackTrace();
+            } else if (parser.mLgType != Type.NONE) {//avoid redundant process
+                Lg.log(parser, new Exception(self));
+            }
         }
 
         public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
