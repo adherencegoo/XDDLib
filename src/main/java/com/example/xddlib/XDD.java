@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -670,7 +671,7 @@ public final class XDD {
         }
     }
 
-    public static Bitmap drawCross(@NonNull final Bitmap bitmap, final int color, @Nullable final String msg){
+    public static Bitmap drawCross(@NonNull final Bitmap bitmap, @ColorInt final int color, @Nullable final String msg){
 
         int imageWidth = bitmap.getWidth();
         int imageHeight = bitmap.getHeight();
@@ -774,7 +775,7 @@ public final class XDD {
         }
     }
 
-    public static String argbIntToHexString(final int color) {
+    public static String argbIntToHexString(@ColorInt final int color) {
         return String.format("#%08x", color);
     }
 
