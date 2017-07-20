@@ -233,10 +233,10 @@ public final class XDD {
                         if (objStr.isEmpty()) continue;
 
                         if (PRIORITIZED_MSG_PATTERN.matcher(objStr).matches()) {
-                            if (mPrioritizedMsgBuilder == null) mPrioritizedMsgBuilder = new StringBuilder();
+                            if (mPrioritizedMsgBuilder == null) mPrioritizedMsgBuilder = new StringBuilder(30);
                             mPrioritizedMsgBuilder.append(objStr);
                         } else {//normal string
-                            if (mMainMsgBuilder == null) mMainMsgBuilder = new StringBuilder(50);
+                            if (mMainMsgBuilder == null) mMainMsgBuilder = new StringBuilder(120);
 
                             //output the result
                             if (mInsertMainMsgDelimiter) {
@@ -519,7 +519,7 @@ public final class XDD {
             @Override
             public String toString() {
                 Assert.assertTrue(mTimings.size() >= 2);
-                final StringBuilder builder = new StringBuilder(mTimings.size() * 50);
+                final StringBuilder builder = new StringBuilder(mTimings.size() * 80);
 
                 Timing previous = null;
                 int idx = 0;
