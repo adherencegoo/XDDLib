@@ -846,6 +846,19 @@ public final class XDD {
         final int kLineNumber;
 
         public StackTraceElementDescription(@Nullable String fileName,
+                                            @NonNull final Class<?> klass,
+                                            @Nullable final String methodName) {
+            this(fileName, klass.getName(), methodName);
+        }
+
+        public StackTraceElementDescription(@Nullable String fileName,
+                                            @NonNull final Class<?> klass,
+                                            @Nullable final String methodName,
+                                            final int lineNumber) {
+            this(fileName, klass.getName(), methodName, lineNumber);
+        }
+
+        public StackTraceElementDescription(@Nullable String fileName,
                                      @Nullable final String partialClassName,
                                      @Nullable final String methodName) {
             this(fileName, partialClassName, methodName, -1);
