@@ -16,6 +16,7 @@ import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.ColorInt;
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -654,16 +655,24 @@ public final class XDD {
             sManager.remove(timeline.mId);
         }
 
-
         public static void sleep(final long ms, @NonNull final Object... objects) {
+            sleep(ms, 1, objects);
+        }
+
+        public static void sleep(final long ms,
+                                 final @IntRange(from=1,to=Integer.MAX_VALUE) int count,
+                                 @NonNull final Object... objects) {
             final long timestamp = System.currentTimeMillis();
 
             final Lg.ObjectArrayParser parser =
-                    new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg).parse(Lg.DEFAULT_INTERNAL_LG_TYPE, "timestamp:"+ timestamp, objects);
+                    new Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg)
+                            .parse(Lg.DEFAULT_INTERNAL_LG_TYPE, "timestamp:"+ timestamp, objects);
 
-            Lg.log(parser, "go to sleep " + ms + "ms~");
             try {
-                Thread.sleep(ms);
+                for (int i = 0; i < count; i++) {
+                    Lg.log(parser, String.format(Locale.getDefault(), "[%d/%d] go to sleep %d ms", i, count, ms));
+                    Thread.sleep(ms);
+                }
             } catch (InterruptedException e) {
                 Lg.e(e);
             }
