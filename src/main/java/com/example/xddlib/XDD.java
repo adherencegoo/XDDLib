@@ -323,6 +323,13 @@ public final class XDD {
             return true;
         }
 
+        /** @return equivalent call to NON-OVERRIDDEN Object.toString without package name*/
+        @SuppressWarnings("unused")
+        public static @NonNull String toNativeSimpleString(@Nullable final Object object) {
+            return object == null ? "null"
+                    : object.getClass().getSimpleName() + "@" + Integer.toHexString(object.hashCode());
+        }
+
         /** @return toString without package name if toString is not overridden */
         public static String toSimpleString(@Nullable final Object object) {
             if (object == null) {
