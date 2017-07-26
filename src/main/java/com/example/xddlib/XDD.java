@@ -337,7 +337,7 @@ public final class XDD {
             return objStr;
         }
 
-        private static String primitiveTypeArrayToString(@NonNull final Object obj) {
+        public static String primitiveTypeArrayToString(@NonNull final Object obj) {
             Assert.assertTrue(obj.getClass().isArray());
             final Class componentType = obj.getClass().getComponentType();
             final ArrayList<Object> arrayList = new ArrayList<>();//Note: [NotWork] arrayList = new ArrayList(Arrays.asList((int[])obj));
