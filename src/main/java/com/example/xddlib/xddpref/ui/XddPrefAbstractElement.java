@@ -11,7 +11,7 @@ import android.widget.LinearLayout;
 
 import com.example.xddlib.R;
 import com.example.xddlib.XddInternalUtils;
-import com.example.xddlib.xddpref.data.XddPrefEnumData;
+import com.example.xddlib.xddpref.data.XddPrefAbstractData;
 
 /**
  * Created by adher on 2017/7/20.
@@ -20,8 +20,8 @@ import com.example.xddlib.xddpref.data.XddPrefEnumData;
 abstract class XddPrefAbstractElement extends LinearLayout {
     static @ColorInt int sColorPrimary = -1;
 
-    XddPrefEnumData<?> mPrefData;
-    Button mResetButton;
+    XddPrefAbstractData<?> mPrefData;
+    private Button mResetButton;
 
     public XddPrefAbstractElement(Context context, @Nullable AttributeSet attributeSet) {
         super(context, attributeSet);
@@ -30,7 +30,7 @@ abstract class XddPrefAbstractElement extends LinearLayout {
         }
     }
 
-    void init(final @NonNull XddPrefEnumData<?> prefData) {
+    void init(final @NonNull XddPrefAbstractData<?> prefData) {
         mPrefData = prefData;
 
         mResetButton = (Button) findViewById(R.id.key);

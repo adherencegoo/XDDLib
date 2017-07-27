@@ -9,8 +9,8 @@ import android.widget.LinearLayout;
 
 import com.example.xddlib.R;
 import com.example.xddlib.XddInternalUtils;
+import com.example.xddlib.xddpref.data.XddPrefAbstractData;
 import com.example.xddlib.xddpref.data.XddPrefBinaryData;
-import com.example.xddlib.xddpref.data.XddPrefEnumData;
 
 import java.util.Map;
 
@@ -27,9 +27,9 @@ public final class XddPrefContainer extends LinearLayout {
         return XddInternalUtils.UiUtils.inflate(XddPrefContainer.class, R.layout.xdd_pref_dialog_container_constructor, context, parent);
     }
 
-    public XddPrefContainer init(@NonNull final Map<String, XddPrefEnumData<?>> prefs) {
-        for (final Map.Entry<String, XddPrefEnumData<?>> entry : prefs.entrySet()) {
-            final XddPrefEnumData<?> aPref = entry.getValue();
+    public XddPrefContainer init(@NonNull final Map<String, XddPrefAbstractData<?>> prefs) {
+        for (final Map.Entry<String, XddPrefAbstractData<?>> entry : prefs.entrySet()) {
+            final XddPrefAbstractData<?> aPref = entry.getValue();
             if (aPref instanceof XddPrefBinaryData) {
                 XddPrefToggleElement.inflate(this).init(aPref);
             } else {

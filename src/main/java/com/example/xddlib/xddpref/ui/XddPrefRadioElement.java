@@ -10,14 +10,17 @@ import android.widget.RadioGroup;
 
 import com.example.xddlib.R;
 import com.example.xddlib.XddInternalUtils;
+import com.example.xddlib.xddpref.data.XddPrefAbstractData;
 import com.example.xddlib.xddpref.data.XddPrefEnumData;
+
+import junit.framework.Assert;
 
 /**
  * Created by adher on 2017/7/21.
  */
 
 public class XddPrefRadioElement extends XddPrefAbstractElement {
-    RadioGroup mRadioGroup;
+    private RadioGroup mRadioGroup;
 
     public XddPrefRadioElement(Context context, @Nullable AttributeSet attributeSet) {
         super(context, attributeSet);
@@ -28,8 +31,11 @@ public class XddPrefRadioElement extends XddPrefAbstractElement {
     }
 
     @Override
-    void init(@NonNull final XddPrefEnumData<?> prefData) {
+    void init(@NonNull final XddPrefAbstractData<?> prefData) {
+        Assert.assertEquals(XddPrefEnumData.class, prefData.getClass());
         super.init(prefData);
+
+        final XddPrefEnumData<?> enumData = (XddPrefEnumData<?>) prefData;
 
         mRadioGroup = (RadioGroup) findViewById(R.id.radioGroup);
         mRadioGroup.removeAllViews();
@@ -41,7 +47,7 @@ public class XddPrefRadioElement extends XddPrefAbstractElement {
         });
 
         //create radio buttons based on values in pref
-        for (final Object object : prefData.getValues()) {
+        for (final Object object : enumData.getValues()) {
             final RadioButton radioButton  = new RadioButton(this.getContext());
             mRadioGroup.addView(radioButton); //the RadioButtons are added to the radioGroup instead of the layout
             radioButton.setText(object.toString());

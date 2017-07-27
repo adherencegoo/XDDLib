@@ -10,8 +10,8 @@ import android.widget.ToggleButton;
 
 import com.example.xddlib.R;
 import com.example.xddlib.XddInternalUtils;
+import com.example.xddlib.xddpref.data.XddPrefAbstractData;
 import com.example.xddlib.xddpref.data.XddPrefBinaryData;
-import com.example.xddlib.xddpref.data.XddPrefEnumData;
 
 import junit.framework.Assert;
 
@@ -20,7 +20,7 @@ import junit.framework.Assert;
  */
 
 public class XddPrefToggleElement extends XddPrefAbstractElement {
-    ToggleButton mToggleButton;
+    private ToggleButton mToggleButton;
 
     public XddPrefToggleElement(Context context, @Nullable AttributeSet attributeSet) {
         super(context, attributeSet);
@@ -28,7 +28,7 @@ public class XddPrefToggleElement extends XddPrefAbstractElement {
 
     /**@param prefData must be {@link com.example.xddlib.xddpref.data.XddPrefBinaryData}*/
     @Override
-    void init(@NonNull final XddPrefEnumData<?> prefData) {
+    void init(@NonNull final XddPrefAbstractData<?> prefData) {
         Assert.assertEquals(XddPrefBinaryData.class, prefData.getClass());
         super.init(prefData);
 

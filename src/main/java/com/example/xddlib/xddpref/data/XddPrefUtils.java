@@ -16,9 +16,7 @@ import java.util.Map;
  * Created by adher on 2017/7/14.
  * Usage:<br/>
  * <ol>
- *     <li>Create data:
- *          <br/>{@link XddPrefEnumData#XddPrefEnumData(Class, String, Object, Object, Object[])},
- *          <br/>{@link com.example.xddlib.xddpref.data.XddPrefBinaryData#XddPrefBinaryData(String, boolean, String, String)}</li>
+ *     <li>Create data: Child class of {@link com.example.xddlib.xddpref.data.XddPrefAbstractData},
  *     <li>Init: {@link #initAfterDataCreated(Context)}</li>
  *     <li>Mount UI: {@link #showDialog(Activity)}</li>
  *     <li>Use it: {@link XddPrefEnumData#getCachedValue()}</li>
@@ -30,9 +28,9 @@ public final class XddPrefUtils {
     private static final String TAG = XddPrefUtils.class.getSimpleName();
 
     //LinkedHashMap: make sure no elements with the same key
-    private static final LinkedHashMap<String, XddPrefEnumData<?>> sXddPrefs = new LinkedHashMap<>();
+    private static final LinkedHashMap<String, XddPrefAbstractData<?>> sXddPrefs = new LinkedHashMap<>();
 
-    static void addPref(@NonNull final XddPrefEnumData pref) {
+    static void addPref(@NonNull final XddPrefAbstractData<?> pref) {
         sXddPrefs.put(pref.getKey(), pref);
     }
 
@@ -49,7 +47,7 @@ public final class XddPrefUtils {
     public static void initAfterDataCreated(@NonNull final Context context) {
         if (!sIsInitialized) {
             NativePreferenceHelper.init(context);
-            for (Map.Entry<String, XddPrefEnumData<?>> entry : sXddPrefs.entrySet()) {
+            for (Map.Entry<String, XddPrefAbstractData<?>> entry : sXddPrefs.entrySet()) {
                 entry.getValue().init();
             }
             sIsInitialized = true;
