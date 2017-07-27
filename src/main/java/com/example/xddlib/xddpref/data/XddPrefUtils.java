@@ -45,10 +45,14 @@ public final class XddPrefUtils {
         editor.apply();
     }
 
+    private static boolean sIsInitialized = false;
     public static void initAfterDataCreated(@NonNull final Context context) {
-        NativePreferenceHelper.init(context);
-        for (Map.Entry<String, XddPrefEnumData<?>> entry : sXddPrefs.entrySet()) {
-            entry.getValue().init();
+        if (!sIsInitialized) {
+            NativePreferenceHelper.init(context);
+            for (Map.Entry<String, XddPrefEnumData<?>> entry : sXddPrefs.entrySet()) {
+                entry.getValue().init();
+            }
+            sIsInitialized = true;
         }
     }
 
