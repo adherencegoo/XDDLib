@@ -26,7 +26,7 @@ abstract class XddPrefAbstractElement extends LinearLayout {
     public XddPrefAbstractElement(Context context, @Nullable AttributeSet attributeSet) {
         super(context, attributeSet);
         if (sColorPrimary == -1) {
-            sColorPrimary = XddInternalUtils.StyleUtils.getColorAttr(context, android.R.attr.colorPrimary);
+            sColorPrimary = XddInternalUtils.StyleUtils.getColorAttr(context, android.R.attr.colorAccent);
         }
     }
 
