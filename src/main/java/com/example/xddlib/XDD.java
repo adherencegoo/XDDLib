@@ -664,12 +664,12 @@ public final class XDD {
         }
 
         public static void sleep(final long ms, @NonNull final Object... objects) {
-            sleep(ms, 1, objects);
+            sleepManyTimes(ms, 1, objects);
         }
 
-        public static void sleep(final long ms,
-                                 final @IntRange(from=1,to=Integer.MAX_VALUE) int count,
-                                 @NonNull final Object... objects) {
+        public static void sleepManyTimes(final long ms,
+                                          final @IntRange(from=1,to=Integer.MAX_VALUE) int count,
+                                          @NonNull final Object... objects) {
             final long timestamp = System.currentTimeMillis();
 
             final Lg.ObjectArrayParser parser =
