@@ -276,11 +276,12 @@ public final class XDD {
 
                 //tr must be at the end
                 if (mTrArray != null && mTrArray.size() != 0) {
-                    final String dashSeparator = getSeparator("", '-');
                     resultBuilder.append('\n');
+                    int idx = 0;
                     for (final Throwable tr : mTrArray) {
-                        resultBuilder.append(dashSeparator).append('\n');
+                        resultBuilder.append(getSeparator("[" + idx + "] " + tr.toString(), '-')).append('\n');
                         resultBuilder.append(Log.getStackTraceString(tr));
+                        idx++;
                     }
                     resultBuilder.append(getSeparator("Throwable end", '='));
                 }
