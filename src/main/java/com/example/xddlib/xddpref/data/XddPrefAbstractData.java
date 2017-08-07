@@ -10,6 +10,7 @@ import junit.framework.Assert;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Locale;
 
 /**
  * Created by adher on 2017/7/28.
@@ -64,13 +65,23 @@ public abstract class XddPrefAbstractData<T> {
         Assert.assertTrue(givenValueIsCandidate(mCachedValue));
     }
 
+    @Override
+    public String toString() {
+        return String.format(Locale.getDefault(), "key:%s, %s, cachedValue:%s", kKey, kClass, mCachedValue);
+    }
+
     public @NonNull String getKey() {
         return kKey;
     }
 
-    public @NonNull T getCachedValue() {
+    public @NonNull T getCachedValue(final boolean showLog) {
         Assert.assertNotNull(mCachedValue);
+        if (showLog) XDD.Lg.printStackTrace(this);
         return mCachedValue;
+    }
+
+    public @NonNull T getCachedValue() {
+        return getCachedValue(false);
     }
 
     public boolean cachedValueIsEqualTo(@NonNull final Object valueAsObject) {
