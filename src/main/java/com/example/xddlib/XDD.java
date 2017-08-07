@@ -385,7 +385,7 @@ public final class XDD {
         public static void printStackTrace(@NonNull final Object... objects){
             final String self = new Object(){}.getClass().getEnclosingMethod().getName();
             final ObjectArrayParser parser = new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg)
-                    .parse(objects, "\n\tdirect invoker: " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)));
+                    .parse(objects, "\n\tdirect invoker: at " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)));
 
             if (parser.mLgType == Type.UNKNOWN) {
                 (new Exception(PRIMITIVE_LOG_TAG + TAG_END + parser)).printStackTrace();
