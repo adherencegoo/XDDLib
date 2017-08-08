@@ -11,6 +11,11 @@ public final class XddPrefBinaryData extends XddPrefEnumData<Boolean> {
     @NonNull private final String kTrueDescription;
 
     @SuppressWarnings("unused")
+    public XddPrefBinaryData(@NonNull final String key){
+        this(key, key);
+    }
+
+    @SuppressWarnings("unused")
     public XddPrefBinaryData(@NonNull final String key,
                              @NonNull final String trueDescription){
         this(key, trueDescription, "Not " + trueDescription);
