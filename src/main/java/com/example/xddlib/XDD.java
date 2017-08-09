@@ -148,7 +148,14 @@ public final class XDD {
                 }
             }
 
-            private static final ArrayList<Character> sTrailingCharsWithoutDelimiter = new ArrayList<>(Arrays.asList(':'));
+            private static final ArrayList<Character> sTrailingCharsNeedNotDelimiter = new ArrayList<>(Arrays.asList(':'));
+
+            /** @return true if builder ends with specified chars indicating no delimiter*/
+            private static boolean needDelimiterBasedOnTrailingChar(@Nullable final StringBuilder builder) {
+                return builder != null
+                        && builder.length() != 0
+                        && !sTrailingCharsNeedNotDelimiter.contains(builder.charAt(builder.length() - 1));
+            }
 
             //settings =====================================================
             private final Settings mSettings;
@@ -242,18 +249,13 @@ public final class XDD {
 
                             //output the result
                             if (mInsertMainMsgDelimiter) {
-                                /* only append delimiter if the previous one is not end with specified chars */
-                                final Character trailingChar = mMainMsgBuilder.length() == 0 ?
-                                        null : mMainMsgBuilder.charAt(mMainMsgBuilder.length() -1);
-                                if (!sTrailingCharsWithoutDelimiter.contains(trailingChar)) {
-                                    mMainMsgBuilder.append(mSettings.mDelimiter);
-                                }
+                                mMainMsgBuilder.append(mSettings.mDelimiter);
                             }
                             mMainMsgBuilder.append(mSettings.mBracket.mLeft);
                             mMainMsgBuilder.append(objStr);
                             mMainMsgBuilder.append(mSettings.mBracket.mRight);
 
-                            mInsertMainMsgDelimiter = true;
+                            mInsertMainMsgDelimiter = needDelimiterBasedOnTrailingChar(mMainMsgBuilder);
                         }
                     }
                 }
