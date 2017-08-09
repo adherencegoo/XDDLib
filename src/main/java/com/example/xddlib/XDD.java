@@ -148,7 +148,7 @@ public final class XDD {
                 }
             }
 
-            private static final ArrayList<Character> sTrailingCharsWithoutDelimiter = new ArrayList<>(Arrays.asList(':', '"'));
+            private static final ArrayList<Character> sTrailingCharsWithoutDelimiter = new ArrayList<>(Arrays.asList(':'));
 
             //settings =====================================================
             private final Settings mSettings;
