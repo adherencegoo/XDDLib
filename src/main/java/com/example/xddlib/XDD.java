@@ -148,13 +148,13 @@ public final class XDD {
                 }
             }
 
-            private static final ArrayList<Character> sTrailingCharsNeedNotDelimiter = new ArrayList<>(Arrays.asList(':'));
+            /** When ending with one of these chars, need no delimiter */
+            private static final ArrayList<Character> sAffiliatedPostfix = new ArrayList<>(Arrays.asList(':'));
 
-            /** @return true if builder ends with specified chars indicating no delimiter*/
             private static boolean needDelimiterBasedOnTrailingChar(@Nullable final StringBuilder builder) {
                 return builder != null
                         && builder.length() != 0
-                        && !sTrailingCharsNeedNotDelimiter.contains(builder.charAt(builder.length() - 1));
+                        && !sAffiliatedPostfix.contains(builder.charAt(builder.length() - 1));
             }
 
             //settings =====================================================
@@ -205,7 +205,10 @@ public final class XDD {
             private ObjectArrayParser parse(@NonNull final Object... objects) {
 
                 for (final Object obj : objects) {
-                    if (obj == null) continue;
+                    //needDelimiterBasedOnTrailingChar==false means that current obj is an affiliated content of previous obj
+                    //so don't ignore even it's null
+                    if (obj == null && needDelimiterBasedOnTrailingChar(mMainMsgBuilder)) continue;
+
                     //cache some info--------------------------------------
                     if (mNeedMethodTag && mMethodTagSource == null && obj instanceof StackTraceElement) {
                         mMethodTagSource = (StackTraceElement) obj;
@@ -233,7 +236,7 @@ public final class XDD {
                         String objStr;
                         if (obj instanceof String) {
                             objStr = (String) obj;
-                        } else if (obj.getClass().isArray()) {//array with primitive type (array with class type has been processed in advance)
+                        } else if (obj != null && obj.getClass().isArray()) {//array with primitive type (array with class type has been processed in advance)
                             objStr = primitiveTypeArrayToString(obj);
                         } else {//Can't be Object[] or array with native type
                             objStr = toSimpleString(obj);
