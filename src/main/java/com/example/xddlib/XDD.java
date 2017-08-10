@@ -148,13 +148,18 @@ public final class XDD {
                 }
             }
 
-            /** When ending with one of these chars, need no delimiter */
-            private static final ArrayList<Character> sAffiliatedPostfix = new ArrayList<>(Arrays.asList(':'));
-
-            private static boolean needDelimiterBasedOnTrailingChar(@Nullable final StringBuilder builder) {
+            /** When the previous ends with one of these chars, need no delimiter */
+            private static final ArrayList<Character> sDelimiterKillerPostfix = new ArrayList<>(Arrays.asList(':', '(', '[', '{'));
+            private static boolean needDelimiterBasedOnPostfix(@Nullable final StringBuilder builder) {
                 return builder != null
                         && builder.length() != 0
-                        && !sAffiliatedPostfix.contains(builder.charAt(builder.length() - 1));
+                        && !sDelimiterKillerPostfix.contains(builder.charAt(builder.length() - 1));
+            }
+
+            /** When the current string starts with one of these chars, need no delimiter */
+            private static final ArrayList<Character> sDelimiterKillerPrefix = new ArrayList<>(Arrays.asList(':', ')', ']', '}'));
+            private static boolean needDelimiterBasedOnPrefix(@NonNull final String currentString) {
+                return !currentString.isEmpty() && !sDelimiterKillerPrefix.contains(currentString.charAt(0));
             }
 
             //settings =====================================================
@@ -205,9 +210,9 @@ public final class XDD {
             private ObjectArrayParser parse(@NonNull final Object... objects) {
 
                 for (final Object obj : objects) {
-                    //needDelimiterBasedOnTrailingChar==false means that current obj is an affiliated content of previous obj
+                    //needDelimiterBasedOnPostfix==false means that current obj is an affiliated content of previous obj
                     //so don't ignore even it's null
-                    if (obj == null && needDelimiterBasedOnTrailingChar(mMainMsgBuilder)) continue;
+                    if (obj == null && needDelimiterBasedOnPostfix(mMainMsgBuilder)) continue;
 
                     //cache some info--------------------------------------
                     if (mNeedMethodTag && mMethodTagSource == null && obj instanceof StackTraceElement) {
@@ -231,9 +236,7 @@ public final class XDD {
                         final Object[] objArray = (Object[]) obj;
                         if (objArray.length != 0) {
                             this.parse('[');
-                            mInsertMainMsgDelimiter = false;
                             this.parse(objArray);
-                            mInsertMainMsgDelimiter = false;
                             this.parse(']');
                         }
                     } else if (!(obj instanceof CtrlKey)) {
@@ -257,6 +260,7 @@ public final class XDD {
                             if (mMainMsgBuilder == null) mMainMsgBuilder = new StringBuilder(120);
 
                             //output the result
+                            mInsertMainMsgDelimiter = mInsertMainMsgDelimiter & needDelimiterBasedOnPrefix(objStr);
                             if (mInsertMainMsgDelimiter) {
                                 mMainMsgBuilder.append(mSettings.mDelimiter);
                             }
@@ -264,7 +268,7 @@ public final class XDD {
                             mMainMsgBuilder.append(objStr);
                             mMainMsgBuilder.append(mSettings.mBracket.mRight);
 
-                            mInsertMainMsgDelimiter = needDelimiterBasedOnTrailingChar(mMainMsgBuilder);
+                            mInsertMainMsgDelimiter = needDelimiterBasedOnPostfix(mMainMsgBuilder);
                         }
                     }
                 }
