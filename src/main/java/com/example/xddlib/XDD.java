@@ -229,7 +229,13 @@ public final class XDD {
                         parseAnotherParser((ObjectArrayParser) obj);
                     } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[], including native with any class type
                         final Object[] objArray = (Object[]) obj;
-                        if (objArray.length != 0) this.parse(objArray);
+                        if (objArray.length != 0) {
+                            this.parse('[');
+                            mInsertMainMsgDelimiter = false;
+                            this.parse(objArray);
+                            mInsertMainMsgDelimiter = false;
+                            this.parse(']');
+                        }
                     } else if (!(obj instanceof CtrlKey)) {
                         //transform obj into string
                         //ArrayList is acceptable
