@@ -129,6 +129,8 @@ public final class XDD {
                 /** ->[a]->[b]->[c] */
                 PrioritizedMsg(false, true, "->", BracketType.BRACKET),
                 /** ->[a]->[b]->[c]: a, b, c */
+                FinalMsgWithoutTag(false, false, ", ", BracketType.NONE),
+                /** ClassName.methodName(FileName.java:LineNumber)->[a]->[b]->[c]: a, b, c */
                 FinalMsg(true, false, ", ", BracketType.NONE);
 
                 private final boolean mNeedMethodTag;
@@ -394,8 +396,8 @@ public final class XDD {
             return new ObjectArrayParser(ObjectArrayParser.Settings.PrioritizedMsg).parse(messages);
         }
 
-        public static ObjectArrayParser getFinalMessage(@NonNull final Object... messages){
-            return new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(messages);
+        public static ObjectArrayParser getFinalNoTagMessage(@NonNull final Object... messages){
+            return new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsgWithoutTag).parse(messages);
         }
 
         /**
