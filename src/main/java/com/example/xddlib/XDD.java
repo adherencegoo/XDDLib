@@ -390,6 +390,10 @@ public final class XDD {
             return new ObjectArrayParser(ObjectArrayParser.Settings.PrioritizedMsg).parse(messages);
         }
 
+        public static ObjectArrayParser getFinalMessage(@NonNull final Object... messages){
+            return new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(messages);
+        }
+
         /**
          * @param objects if containing Lg.Type and it's not UNKNOWN, print stack trace according to that Lg.Type using Lg.log; else print stack trace normally
          * */
