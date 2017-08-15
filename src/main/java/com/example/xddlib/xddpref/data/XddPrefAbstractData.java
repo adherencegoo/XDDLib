@@ -81,7 +81,7 @@ public abstract class XddPrefAbstractData<T> {
     }
 
     public @NonNull T getCachedValue() {
-        return getCachedValue(false);
+        return getCachedValue(true);
     }
 
     public boolean cachedValueIsEqualTo(@NonNull final Object valueAsObject) {
