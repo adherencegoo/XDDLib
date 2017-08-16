@@ -410,6 +410,7 @@ public final class XDD {
 
             if (parser.mLgType == Type.UNKNOWN) {
                 (new Exception(PRIMITIVE_LOG_TAG + TAG_END + parser)).printStackTrace();
+                Log.v("System.err", "\t at " + getSeparator(self + " end", '^'));
             } else if (parser.mLgType != Type.NONE) {//avoid redundant process
                 Lg.log(parser, new Exception(self));
             }
