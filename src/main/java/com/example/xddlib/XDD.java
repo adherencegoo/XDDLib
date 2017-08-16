@@ -178,6 +178,7 @@ public final class XDD {
 
             //others =====================================================
             private boolean mIsParsed = false;
+            private boolean mShouldOutputNull = true;
             private int mPrimitiveLogReturn = -1;
 
             private ObjectArrayParser(@NonNull final Settings settings) {
@@ -200,21 +201,22 @@ public final class XDD {
             /** Ignore mMethodTagSource of another*/
             private ObjectArrayParser parseAnotherParser(@NonNull final ObjectArrayParser another) {
                 final boolean origNeedMethodTag = mNeedMethodTag;
+                final boolean origOutputNull = mShouldOutputNull;
                 mNeedMethodTag = false;
+                mShouldOutputNull = false;
                 parse(another.mTrArray == null ? null : another.mTrArray.toArray(),
                         another.mPrioritizedMsgBuilder,
                         another.mMainMsgBuilder,
                         another.mLgType == Type.UNKNOWN ? null : another.mLgType);
                 mNeedMethodTag = origNeedMethodTag;
+                mShouldOutputNull = origOutputNull;
                 return this;
             }
 
             private ObjectArrayParser parse(@NonNull final Object... objects) {
 
                 for (final Object obj : objects) {
-                    //needDelimiterBasedOnPostfix==false means that current obj is an affiliated content of previous obj
-                    //so don't ignore even it's null
-                    if (obj == null && needDelimiterBasedOnPostfix(mMainMsgBuilder)) continue;
+                    if (obj == null && !mShouldOutputNull) continue;
 
                     //cache some info--------------------------------------
                     if (mNeedMethodTag && mMethodTagSource == null && obj instanceof StackTraceElement) {
@@ -237,9 +239,12 @@ public final class XDD {
                     } else if (obj instanceof Object[]) {//recursively parse Object[] in Object[], including native with any class type
                         final Object[] objArray = (Object[]) obj;
                         if (objArray.length != 0) {
+                            final boolean origOutputNull = mShouldOutputNull;
+                            mShouldOutputNull = true;
                             this.parse('[');
                             this.parse(objArray);
                             this.parse(']');
+                            mShouldOutputNull = origOutputNull;
                         }
                     } else if (!(obj instanceof CtrlKey)) {
                         //transform obj into string
