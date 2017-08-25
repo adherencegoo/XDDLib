@@ -406,16 +406,19 @@ public final class XDD {
         }
 
         /**
+         * Special strings for AndroidMonitor filtering: {@link  #PRIMITIVE_LOG_TAG}, "{@code printStackTrace}", "{@code at}"
          * @param objects if containing Lg.Type and it's not UNKNOWN, print stack trace according to that Lg.Type using Lg.log; else print stack trace normally
          * */
-        public static void printStackTrace(@NonNull final Object... objects){
+        public static void printStackTrace(@NonNull final Object... objects) {
             final String self = new Object(){}.getClass().getEnclosingMethod().getName();
             final ObjectArrayParser parser = new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg)
                     .parse(objects, "\n\tdirect invoker: at " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)));
 
             if (parser.mLgType == Type.UNKNOWN) {
-                (new Exception(PRIMITIVE_LOG_TAG + TAG_END + parser)).printStackTrace();
-                Log.v("System.err", "\t at " + getSeparator(self + " end", '^'));
+                final String prefix = "\t at ";
+                (new Exception((PRIMITIVE_LOG_TAG + TAG_END + parser)
+                        .replace("\n", "\n" + prefix + "\t" + self + ": "))).printStackTrace();
+                Log.v("System.err", prefix + getSeparator(self + " end", '^'));
             } else if (parser.mLgType != Type.NONE) {//avoid redundant process
                 Lg.log(parser, new Exception(self));
             }
