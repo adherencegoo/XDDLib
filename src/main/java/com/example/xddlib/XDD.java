@@ -374,27 +374,24 @@ public final class XDD {
         }
 
         public static String primitiveTypeArrayToString(@Nullable final Object obj) {
-            if (obj == null) return "";
+            if (obj == null) return "null";
             Assert.assertTrue(obj.getClass().isArray());
             final Class componentType = obj.getClass().getComponentType();
-            final ArrayList<Object> arrayList = new ArrayList<>();//Note: [NotWork] arrayList = new ArrayList(Arrays.asList((int[])obj));
             switch (componentType.toString()) {
-                case "byte":    for (byte a: (byte[])obj) arrayList.add(a);         break;
-                case "short":   for (short a: (short[])obj) arrayList.add(a);       break;
-                case "int":     for (int a: (int[])obj) arrayList.add(a);           break;
-                case "long":    for (long a: (long[])obj) arrayList.add(a);         break;
-                case "float":   for (float a: (float[])obj) arrayList.add(a);       break;
-                case "double":  for (double a: (double[])obj) arrayList.add(a);     break;
-                case "char":    for (char a: (char[])obj) arrayList.add(a);         break;
-                case "boolean": for (boolean a: (boolean[])obj) arrayList.add(a);   break;
-                default:
-                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END
-                            + ObjectArrayParser.class.getCanonicalName()
-                            + "." + new Object(){}.getClass().getEnclosingMethod().getName()
-                            + "(): can't parse native array with primitive type yet: "
-                            + componentType + "[]");
+                case "byte":    return Arrays.toString((byte[]) obj);
+                case "short":   return Arrays.toString((short[]) obj);
+                case "int":     return Arrays.toString((int[]) obj);
+                case "long":    return Arrays.toString((long[]) obj);
+                case "float":   return Arrays.toString((float[]) obj);
+                case "double":  return Arrays.toString((double[]) obj);
+                case "char":    return Arrays.toString((char[]) obj);
+                case "boolean": return Arrays.toString((boolean[]) obj);
             }
-            return arrayList.toString();
+            throw new UnsupportedOperationException(PRIMITIVE_LOG_TAG + TAG_END
+                    + ObjectArrayParser.class.getCanonicalName()
+                    + "." + new Object(){}.getClass().getEnclosingMethod().getName()
+                    + "(): can't parse native array with primitive type yet: "
+                    + componentType + "[]");
         }
 
         public static ObjectArrayParser getPrioritizedMessage(@NonNull final Object... messages){
