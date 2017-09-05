@@ -355,22 +355,29 @@ public final class XDD {
         /** @return equivalent call to NON-OVERRIDDEN Object.toString without package name*/
         @SuppressWarnings("unused")
         public static @NonNull String toNativeSimpleString(@Nullable final Object object) {
-            return object == null ? "null"
-                    : object.getClass().getSimpleName() + "@" + Integer.toHexString(object.hashCode());
+            if (object == null) return "null";
+
+            return removePackageNameIfNeeded(object.getClass().getName() + "@" + Integer.toHexString(object.hashCode()));
         }
 
         /** @return toString without package name if toString is not overridden */
         public static String toSimpleString(@Nullable final Object object) {
-            if (object == null) {
-                return "null";
-            }
+            if (object == null) return "null";
 
-            int dotPos;
             String objStr = object.toString();
-            if (isToStringFromObjectClass(object) && (dotPos = objStr.lastIndexOf('.')) != -1) {
-                objStr = objStr.substring(dotPos + 1);//OuterClass$InnerClass
+            if (isToStringFromObjectClass(object)) {
+                objStr = removePackageNameIfNeeded(objStr);
             }
             return objStr;
+        }
+
+        private static String removePackageNameIfNeeded(@NonNull final String in) {
+            int dotPos;
+            String out = in;
+            if ((dotPos = in.lastIndexOf('.')) != -1) {
+                out = out.substring(dotPos + 1);//OuterClass$InnerClass
+            }
+            return out;
         }
 
         public static String primitiveTypeArrayToString(@Nullable final Object obj) {
