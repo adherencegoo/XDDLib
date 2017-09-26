@@ -438,7 +438,7 @@ public final class XDD {
             final StackTraceElement[] elements = Thread.currentThread().getStackTrace();//smaller index, called more recently
 
             for (int idx=elements.length-1 ; idx>=0; idx--) {//search from the farthest to the recent
-                if (elements[idx].getFileName().equals(THIS_FILE_NAME)) {
+                if (THIS_FILE_NAME.equals(elements[idx].getFileName())) {//fileName may be null
                     for (int jdx=idx+1+offset ; jdx < elements.length ; jdx++) {
                         if (!ACCESS_METHOD_PATTERN.matcher(elements[jdx].getMethodName()).matches()) {//skip access method like "access$000"
                             return elements[jdx];
