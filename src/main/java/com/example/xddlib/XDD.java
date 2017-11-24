@@ -427,7 +427,10 @@ public final class XDD {
         }
 
         public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
-            ObjectArrayParser parser = log(DEFAULT_INTERNAL_LG_TYPE, "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ")", objects);
+            ObjectArrayParser parser = getFinalNoTagMessage(DEFAULT_INTERNAL_LG_TYPE,
+                    "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ")",
+                    objects);
+            log(parser);
             Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG).show();
         }
 
