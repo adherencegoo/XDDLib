@@ -94,6 +94,7 @@ public final class XDD {
         private static final String TAG_END = ": ";
         private static final Pattern PRIORITIZED_MSG_PATTERN = Pattern.compile("^->\\[.+\\]$");//->[ANYTHING]
         private static final Pattern ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$");//->[ANYTHING]
+        private static final int MAX_PRIMITIVE_LOG_LENGTH = 3500;
 
         @SuppressWarnings("all")
         public enum Type {
@@ -321,16 +322,34 @@ public final class XDD {
         private static ObjectArrayParser _log(@NonNull final Type type, @NonNull final Object... objects) {
             final ObjectArrayParser parser = new ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(objects);
             parser.mLgType = type == Type.UNKNOWN ? parser.mLgType : type;
-            switch (parser.mLgType){
-                case V: parser.mPrimitiveLogReturn = Log.v(PRIMITIVE_LOG_TAG, parser.toString());   break;
-                case D: parser.mPrimitiveLogReturn = Log.d(PRIMITIVE_LOG_TAG, parser.toString());   break;
-                case I: parser.mPrimitiveLogReturn = Log.i(PRIMITIVE_LOG_TAG, parser.toString());    break;
-                case W: parser.mPrimitiveLogReturn = Log.w(PRIMITIVE_LOG_TAG, parser.toString());  break;
-                case E: parser.mPrimitiveLogReturn = Log.e(PRIMITIVE_LOG_TAG, parser.toString());   break;
-                case NONE: parser.mPrimitiveLogReturn = -1;   break;
-                default:
-                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + "[UsageError] Unknown Lg.Type: " + parser.mLgType);
-                    parser.mPrimitiveLogReturn = -1;
+
+            final StringBuilder remainingString = new StringBuilder(parser.toString());
+            for (int iteration = 0; remainingString.length() > 0; iteration++) {
+                final int end;
+                if (remainingString.length() > MAX_PRIMITIVE_LOG_LENGTH) {
+                    final int lastLineFeed = remainingString.lastIndexOf("\n", MAX_PRIMITIVE_LOG_LENGTH);
+                    end = lastLineFeed == -1 ? MAX_PRIMITIVE_LOG_LENGTH : lastLineFeed + 1;
+                } else {
+                    end = remainingString.length();
+                }
+
+                final String shownString = (iteration == 0 ? "" : "<Continuing (" + iteration + ")...>\n")
+                        + remainingString.substring(0, end);
+                remainingString.delete(0, end);
+                switch (parser.mLgType){
+                    case V: parser.mPrimitiveLogReturn = Log.v(PRIMITIVE_LOG_TAG, shownString);   break;
+                    case D: parser.mPrimitiveLogReturn = Log.d(PRIMITIVE_LOG_TAG, shownString);   break;
+                    case I: parser.mPrimitiveLogReturn = Log.i(PRIMITIVE_LOG_TAG, shownString);    break;
+                    case W: parser.mPrimitiveLogReturn = Log.w(PRIMITIVE_LOG_TAG, shownString);  break;
+                    case E: parser.mPrimitiveLogReturn = Log.e(PRIMITIVE_LOG_TAG, shownString);   break;
+                    case NONE:
+                        parser.mPrimitiveLogReturn = -1;
+                        remainingString.setLength(0);
+                        break;
+                    default:
+                        Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + "[UsageError] Unknown Lg.Type: " + parser.mLgType);
+                        parser.mPrimitiveLogReturn = -1;
+                }
             }
             return parser;
         }
