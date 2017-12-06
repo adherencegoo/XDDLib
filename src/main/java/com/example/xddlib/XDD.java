@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -445,12 +446,19 @@ public final class XDD {
             }
         }
 
+        @Nullable
+        private static WeakReference<Toast> sRefCachedToast = null;
         public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
             ObjectArrayParser parser = getFinalNoTagMessage(DEFAULT_INTERNAL_LG_TYPE,
                     "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ")",
                     objects);
             log(parser);
-            Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG).show();
+
+            Toast toast;
+            if (sRefCachedToast != null && (toast = sRefCachedToast.get()) != null) toast.cancel();
+            toast = Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG);
+            toast.show();
+            sRefCachedToast = new WeakReference<Toast>(toast);
         }
 
         private static StackTraceElement findInvokerOfDeepestInnerElementWithOffset(final int offset) {
