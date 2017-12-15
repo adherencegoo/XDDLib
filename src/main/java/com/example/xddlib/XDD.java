@@ -13,6 +13,7 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.ColorInt;
@@ -48,6 +49,12 @@ public final class XDD {
     private XDD(){}
     private static final String THIS_FILE_NAME = XDD.class.getSimpleName() + ".java";//immutable
     private static final int DEFAULT_REPEAT_COUNT = 30;
+
+    private static Handler mMainHandler;
+
+    public static void init(final Context context) {
+        mMainHandler = new Handler(context.getMainLooper());
+    }
 
     private enum BracketType {
         NONE("", ""),
@@ -449,16 +456,21 @@ public final class XDD {
         @Nullable
         private static WeakReference<Toast> sRefCachedToast = null;
         public static void showToast(@NonNull final Context context, @NonNull final Object... objects) {
-            ObjectArrayParser parser = getFinalNoTagMessage(DEFAULT_INTERNAL_LG_TYPE,
+            final ObjectArrayParser parser = getFinalNoTagMessage(DEFAULT_INTERNAL_LG_TYPE,
                     "(" + (new Throwable().getStackTrace()[0].getMethodName()) + ")",
                     objects);
             log(parser);
 
-            Toast toast;
-            if (sRefCachedToast != null && (toast = sRefCachedToast.get()) != null) toast.cancel();
-            toast = Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG);
-            toast.show();
-            sRefCachedToast = new WeakReference<Toast>(toast);
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast toast;
+                    if (sRefCachedToast != null && (toast = sRefCachedToast.get()) != null) toast.cancel();
+                    toast = Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG);
+                    toast.show();
+                    sRefCachedToast = new WeakReference<Toast>(toast);
+                }
+            });
         }
 
         private static StackTraceElement findInvokerOfDeepestInnerElementWithOffset(final int offset) {
