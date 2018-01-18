@@ -99,6 +99,8 @@ public final class XDD {
     public static final class Lg {
         private Lg(){}
         public static final String PRIMITIVE_LOG_TAG = XDD.class.getSimpleName() + "D";//mutable
+        public static final String LF = "\n";
+        public static final String TAB = "\t";
         private static final String TAG_END = ": ";
         private static final Pattern PRIORITIZED_MSG_PATTERN = Pattern.compile("^->\\[.+\\]$");//->[ANYTHING]
         private static final Pattern ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$");//->[ANYTHING]
