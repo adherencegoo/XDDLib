@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.support.annotation.ColorInt;
 import android.support.annotation.IntRange;
@@ -1007,5 +1008,11 @@ public final class XDD {
             if (kUnmatchedDescriptions.size() == 0) return true;
         }
         return false;
+    }
+
+    @SuppressWarnings("unused")
+    public static void vibrate(final Context context, final long ms) {
+        final Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null) vibrator.vibrate(ms);
     }
 }
