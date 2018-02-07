@@ -731,7 +731,7 @@ public final class XDD {
         /**
          * @param id see {@link #tick}
          * */
-        public static void end(@Nullable final Object id, @NonNull final Object... objects) {
+        public static Lg.ObjectArrayParser end(@Nullable final Object id, @NonNull final Object... objects) {
             final long t1 = System.currentTimeMillis();
 
             final Timeline timeline = sManager.getTargetTimeline(id, false);
@@ -743,8 +743,9 @@ public final class XDD {
             timing.t2 = System.currentTimeMillis();
 
             //about 1ms for the following actions
-            Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline);//output the elapsed time
+            final Lg.ObjectArrayParser object = Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline);//output the elapsed time
             sManager.remove(timeline.mId);
+            return object;
         }
 
         public static void sleep(final long ms, @NonNull final Object... objects) {
