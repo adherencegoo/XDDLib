@@ -186,7 +186,7 @@ public final class XDD {
             private ArrayList<Throwable> mTrArray = null;
             private StringBuilder mPrioritizedMsgBuilder = null;
             private StringBuilder mMainMsgBuilder = null;
-            private Type mLgType = Type.UNKNOWN;//cache the LAST found one
+            public Type mLgType = Type.UNKNOWN;//cache the LAST found one
 
             //others =====================================================
             private boolean mIsParsed = false;
@@ -225,7 +225,7 @@ public final class XDD {
                 return this;
             }
 
-            private ObjectArrayParser parse(@NonNull final Object... objects) {
+            public ObjectArrayParser parse(@NonNull final Object... objects) {
 
                 for (final Object obj : objects) {
                     if (obj == null && !mShouldOutputNull) continue;
