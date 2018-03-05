@@ -43,15 +43,16 @@ public class XddPrefToggleElement extends XddPrefAbstractElement {
             }
         });
 
+        final boolean binary = binaryData.get(false);
         mToggleButton.setTextColor(new ColorStateList(
                 new int[][] {
                         new int[]{android.R.attr.state_checked},
                         new int[]{-android.R.attr.state_checked/*unchecked*/}},
                 new int[]{
-                        binaryData.getCachedValue(false) ? sColorPrimary : mToggleButton.getTextColors().getDefaultColor(),
-                        binaryData.getCachedValue(false) ? mToggleButton.getTextColors().getDefaultColor() : sColorPrimary}));
+                        binary ? sColorPrimary : mToggleButton.getTextColors().getDefaultColor(),
+                        binary ? mToggleButton.getTextColors().getDefaultColor() : sColorPrimary}));
 
-        resetToCachedValue();
+        resetToSharedValue();
         //manually call listener, because when ToggleButton is just created, it's false for default; setChecked(false) won't invoke listener
         onUiValueChanged(getUiValue());
     }
@@ -62,8 +63,8 @@ public class XddPrefToggleElement extends XddPrefAbstractElement {
     }
 
     @Override
-    void resetToCachedValue() {
-        mToggleButton.setChecked(((XddPrefBinaryData)mPrefData).getCachedValue(false));
+    void resetToSharedValue() {
+        mToggleButton.setChecked(((XddPrefBinaryData)mPrefData).get(false));
     }
 
     public static XddPrefToggleElement inflate(@NonNull final XddPrefContainer parent) {

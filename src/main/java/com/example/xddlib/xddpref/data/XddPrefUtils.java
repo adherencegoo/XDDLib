@@ -19,7 +19,6 @@ import java.util.Map;
  *     <li>Create data: Child class of {@link com.example.xddlib.xddpref.data.XddPrefAbstractData},
  *     <li>Init: {@link #initAfterDataCreated(Context)}</li>
  *     <li>Mount UI: {@link #showDialog(Activity)}</li>
- *     <li>Use it: {@link XddPrefEnumData#getCachedValue()}</li>
  * </ol>
  */
 
@@ -47,9 +46,6 @@ public final class XddPrefUtils {
     public static void initAfterDataCreated(@NonNull final Context context) {
         if (!sIsInitialized) {
             NativePreferenceHelper.init(context);
-            for (Map.Entry<String, XddPrefAbstractData<?>> entry : sXddPrefs.entrySet()) {
-                entry.getValue().init();
-            }
             sIsInitialized = true;
         }
     }

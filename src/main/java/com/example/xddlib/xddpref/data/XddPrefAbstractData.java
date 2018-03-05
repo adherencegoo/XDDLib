@@ -19,9 +19,6 @@ import java.util.Locale;
 public abstract class XddPrefAbstractData<T> {
     private @NonNull final Class<T> kClass;
     private @NonNull final String kKey;
-    /**Should be the same as the valued stored in {@link android.content.SharedPreferences}*/
-    private @Nullable T mCachedValue = null;
-    /**Value to be used if {@link #mCachedValue} is not ready or not candidate*/
     private @NonNull final T mDefaultValue;
     private Method mMethodValueOf;
 
@@ -51,41 +48,27 @@ public abstract class XddPrefAbstractData<T> {
         XddPrefUtils.addPref(this);
     }
 
-    /** Must be called after {@link com.example.xddlib.xddpref.data.NativePreferenceHelper#init(Context)}*/
-    void init() {
-        boolean putToNativePreference = true;
-        if (NativePreferenceHelper.getInstance().contains(kKey)) {
-            mCachedValue = NativePreferenceHelper.get(kClass, kKey, mDefaultValue);
-            //if the value in NativePreference doesn't exist in mValues, abandon NativePreference
-            putToNativePreference = !givenValueIsCandidate(mCachedValue);
-        }
-        if (putToNativePreference) {
-            saveToNativePreference(mDefaultValue);
-        }
-        Assert.assertTrue(givenValueIsCandidate(mCachedValue));
-    }
-
     @Override
     public String toString() {
-        return String.format(Locale.getDefault(), "key:%s, %s, cachedValue:%s", kKey, kClass, mCachedValue);
+        return String.format(Locale.getDefault(), "key:%s, %s, SharedValue:%s",
+                kKey, kClass, NativePreferenceHelper.get(kClass, kKey, mDefaultValue));
     }
 
     public @NonNull String getKey() {
         return kKey;
     }
 
-    public @NonNull T getCachedValue(final boolean showLog) {
-        Assert.assertNotNull(mCachedValue);
+    public @NonNull T get(final boolean showLog) {
         if (showLog) XDD.Lg.printStackTrace(this);
-        return mCachedValue;
+        return NativePreferenceHelper.get(kClass, kKey, mDefaultValue);
     }
 
-    public @NonNull T getCachedValue() {
-        return getCachedValue(true);
+    public @NonNull T get() {
+        return get(true);
     }
 
-    public boolean cachedValueIsEqualTo(@NonNull final Object valueAsObject) {
-        return convertToTemplateType(valueAsObject).equals(mCachedValue);
+    public boolean sharedValueIsEqualTo(@NonNull final Object valueAsObject) {
+        return convertToTemplateType(valueAsObject).equals(get());
     }
 
     private @NonNull T convertToTemplateType(@NonNull Object value) {
@@ -112,14 +95,7 @@ public abstract class XddPrefAbstractData<T> {
     }
 
     public void saveToNativePreference(@NonNull final Object valueAsObject) {
-        final T valueAsTemplateType = convertToTemplateType(valueAsObject);
-
-        if (!valueAsTemplateType.equals(mCachedValue)) {
-            //do save
-            Assert.assertTrue("Value to be saved must be candidate", givenValueIsCandidate(valueAsTemplateType));
-            mCachedValue = valueAsTemplateType;
-            NativePreferenceHelper.put(kKey, mCachedValue);
-        }
+        NativePreferenceHelper.put(kKey, convertToTemplateType(valueAsObject));
     }
 
     abstract boolean givenValueIsCandidate(@NonNull final T givenValue);

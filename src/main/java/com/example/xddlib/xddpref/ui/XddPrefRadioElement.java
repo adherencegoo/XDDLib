@@ -52,7 +52,7 @@ public class XddPrefRadioElement extends XddPrefAbstractElement {
             mRadioGroup.addView(radioButton); //the RadioButtons are added to the radioGroup instead of the layout
             radioButton.setText(object.toString());
 
-            if (mPrefData.cachedValueIsEqualTo(radioButton.getText())) {
+            if (mPrefData.sharedValueIsEqualTo(radioButton.getText())) {
                 radioButton.setChecked(true);
                 radioButton.setTextColor(sColorPrimary);
             }
@@ -65,10 +65,10 @@ public class XddPrefRadioElement extends XddPrefAbstractElement {
     }
 
     @Override
-    void resetToCachedValue() {
+    void resetToSharedValue() {
         for (int i = 0; i < mRadioGroup.getChildCount(); i++) {
             final RadioButton button = (RadioButton) mRadioGroup.getChildAt(i);
-            if (mPrefData.cachedValueIsEqualTo(button.getText())) {
+            if (mPrefData.sharedValueIsEqualTo(button.getText())) {
                 button.setChecked(true);
                 break;
             }

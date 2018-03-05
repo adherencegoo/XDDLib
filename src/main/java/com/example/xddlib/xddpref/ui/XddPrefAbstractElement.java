@@ -38,21 +38,21 @@ abstract class XddPrefAbstractElement extends LinearLayout {
         mResetButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                resetToCachedValue();
+                resetToSharedValue();
             }
         });
     }
 
-    /**@return true if UiValue == CachedValue */
+    /**@return true if UiValue == SharedValue */
     boolean onUiValueChanged(final @NonNull Object uiValue) {
-        final boolean equalToCached = mPrefData.cachedValueIsEqualTo(uiValue);
-        mResetButton.setEnabled(!equalToCached);
-        return equalToCached;
+        final boolean equalToShared = mPrefData.sharedValueIsEqualTo(uiValue);
+        mResetButton.setEnabled(!equalToShared);
+        return equalToShared;
     }
 
     abstract @NonNull Object getUiValue();
 
-    abstract void resetToCachedValue();
+    abstract void resetToSharedValue();
 
     void saveToNative() {
         mPrefData.saveToNativePreference(getUiValue());
