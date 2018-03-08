@@ -68,7 +68,7 @@ public abstract class XddPrefAbstractData<T> {
     }
 
     public boolean sharedValueIsEqualTo(@NonNull final Object valueAsObject) {
-        return convertToTemplateType(valueAsObject).equals(get());
+        return convertToTemplateType(valueAsObject).equals(get(false));
     }
 
     private @NonNull T convertToTemplateType(@NonNull Object value) {

@@ -47,12 +47,13 @@ public class XddPrefRadioElement extends XddPrefAbstractElement {
         });
 
         //create radio buttons based on values in pref
+        final String prefValueAsString = String.valueOf(mPrefData.get(false));
         for (final Object object : enumData.getValues()) {
             final RadioButton radioButton  = new RadioButton(this.getContext());
             mRadioGroup.addView(radioButton); //the RadioButtons are added to the radioGroup instead of the layout
             radioButton.setText(object.toString());
 
-            if (mPrefData.sharedValueIsEqualTo(radioButton.getText())) {
+            if (prefValueAsString.equals(radioButton.getText())) {
                 radioButton.setChecked(true);
                 radioButton.setTextColor(sColorPrimary);
             }
