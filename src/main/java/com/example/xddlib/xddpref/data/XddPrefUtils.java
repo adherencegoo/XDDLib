@@ -10,14 +10,13 @@ import android.support.annotation.NonNull;
 import com.example.xddlib.xddpref.ui.XddPrefContainer;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Created by adher on 2017/7/14.
  * Usage:<br/>
  * <ol>
  *     <li>Create data: Child class of {@link com.example.xddlib.xddpref.data.XddPrefAbstractData},
- *     <li>Init: {@link #initAfterDataCreated(Context)}</li>
+ *     <li>Init: {@link #init(Context)}</li>
  *     <li>Mount UI: {@link #showDialog(Activity)}</li>
  * </ol>
  */
@@ -43,7 +42,7 @@ public final class XddPrefUtils {
     }
 
     private static boolean sIsInitialized = false;
-    public static void initAfterDataCreated(@NonNull final Context context) {
+    public static void init(@NonNull final Context context) {
         if (!sIsInitialized) {
             NativePreferenceHelper.init(context);
             sIsInitialized = true;

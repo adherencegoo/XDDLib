@@ -25,6 +25,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.xddlib.xddpref.data.XddPrefUtils;
+
 import junit.framework.Assert;
 
 import java.io.File;
@@ -55,6 +57,7 @@ public final class XDD {
 
     public static void init(final Context context) {
         mMainHandler = new Handler(context.getMainLooper());
+        XddPrefUtils.init(context);
     }
 
     private enum BracketType {
