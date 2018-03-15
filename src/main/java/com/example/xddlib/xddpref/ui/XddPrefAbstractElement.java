@@ -7,7 +7,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
+import android.widget.HorizontalScrollView;
 
 import com.example.xddlib.R;
 import com.example.xddlib.XddInternalUtils;
@@ -17,7 +17,7 @@ import com.example.xddlib.xddpref.data.XddPrefAbstractData;
  * Created by adher on 2017/7/20.
  */
 
-abstract class XddPrefAbstractElement extends LinearLayout {
+abstract class XddPrefAbstractElement extends HorizontalScrollView {
     static @ColorInt int sColorPrimary = -1;
 
     XddPrefAbstractData<?> mPrefData;

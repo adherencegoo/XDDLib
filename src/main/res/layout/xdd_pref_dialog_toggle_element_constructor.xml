@@ -2,8 +2,11 @@
 <com.example.xddlib.xddpref.ui.XddPrefToggleElement
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
     <include layout="@layout/xdd_pref_dialog_abstract_element"/>
 
@@ -13,5 +16,5 @@
         android:layout_gravity="center"
         android:id="@+id/toggleButton"
         android:textAllCaps="false"/>
-
+    </LinearLayout>
 </com.example.xddlib.xddpref.ui.XddPrefToggleElement>
