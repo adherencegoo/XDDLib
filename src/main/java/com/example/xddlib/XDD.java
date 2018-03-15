@@ -50,7 +50,6 @@ import java.util.regex.Pattern;
 @SuppressWarnings("WeakerAccess")
 public final class XDD {
     private XDD(){}
-    private static final String THIS_FILE_NAME = XDD.class.getSimpleName() + ".java";//immutable
     private static final int DEFAULT_REPEAT_COUNT = 30;
 
     private static Handler mMainHandler;
@@ -484,7 +483,7 @@ public final class XDD {
             final StackTraceElement[] elements = Thread.currentThread().getStackTrace();//smaller index, called more recently
 
             for (int idx=elements.length-1 ; idx>=0; idx--) {//search from the farthest to the recent
-                if (THIS_FILE_NAME.equals(elements[idx].getFileName())) {//fileName may be null
+                if (elements[idx].getClassName().startsWith(BuildConfig.APPLICATION_ID)) {
                     for (int jdx=idx+1+offset ; jdx < elements.length ; jdx++) {
                         if (!ACCESS_METHOD_PATTERN.matcher(elements[jdx].getMethodName()).matches()) {//skip access method like "access$000"
                             return elements[jdx];
@@ -492,40 +491,13 @@ public final class XDD {
                     }
                 }
             }
-            //Should not enter here!!!
-            printStackTraceElements(elements);
-            Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + (new Throwable().getStackTrace()[0].getMethodName()) + " fails !!! firstOuterElement not found");
-            return elements[0];//unreachable
-        }
 
-        private static void printStackTraceElements(@NonNull final StackTraceElement[] elements) {
-            final String tag = PRIMITIVE_LOG_TAG + (new Throwable().getStackTrace()[0].getMethodName()) + TAG_END;
-            w(tag, getSeparator("start", 'v'));
-            for (int idx=0 ; idx<elements.length ; idx++) {
-                StackTraceElement element = elements[idx];
-                w(tag, String.format(Locale.getDefault(), "element[%d]: %s.%s (%s line:%d)",
-                        idx, element.getClassName(), element.getMethodName(), element.getFileName(), element.getLineNumber()));
-            }
+            Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + " Internal method failed!");
+            return elements[0];//unreachable
         }
 
         /** (FileName.java:LineNumber)->OuterClass$InnerClass.MethodName */
         private static String getMethodTag(@NonNull final StackTraceElement targetElement) {
-            /*final StringBuilder methodTagBuilder = new StringBuilder(50);
-            methodTagBuilder.append("(")
-                    .append(targetElement.getFileName())
-                    .append(":")
-                    .append(targetElement.getLineNumber())
-                    .append(")");
-
-            //OuterClass$InnerClass.MethodName
-            final String classFullName = targetElement.getClassName();//PACKAGE_NAME.OuterClass$InnerClass
-            methodTagBuilder.append(ObjectArrayParser.Settings.PrioritizedMsg.mDelimiter)
-                    .append(classFullName.substring(classFullName.lastIndexOf('.') +1))//remove package name
-                    .append(".")
-                    .append(targetElement.getMethodName());
-
-            return methodTagBuilder.toString();*/
-
             final String string = targetElement.toString();
             //remove package name
             //ex: packageName.ClassName.methodName(FileName.java:LineNumber)
