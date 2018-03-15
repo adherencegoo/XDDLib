@@ -26,8 +26,8 @@ public final class XddPrefBinaryData extends XddPrefEnumData<Boolean> {
                              @NonNull final String trueDescription,
                              @NonNull final String falseDescription ) {
         super(Boolean.class, key, false, true);
-        kTrueDescription = trueDescription + " (True)";
-        kFalseDescription = falseDescription + " (False)";
+        kTrueDescription = "(True) " +trueDescription;
+        kFalseDescription = "(False) " + falseDescription;
     }
 
     @SuppressWarnings("unused")
