@@ -26,7 +26,7 @@ abstract class XddPrefAbstractElement extends HorizontalScrollView {
     public XddPrefAbstractElement(Context context, @Nullable AttributeSet attributeSet) {
         super(context, attributeSet);
         if (sColorPrimary == -1) {
-            sColorPrimary = XddInternalUtils.StyleUtils.getColorAttr(context, android.R.attr.colorAccent);
+            sColorPrimary = XddInternalUtils.INSTANCE.getColorAttr(context, android.R.attr.colorAccent);
         }
     }
 

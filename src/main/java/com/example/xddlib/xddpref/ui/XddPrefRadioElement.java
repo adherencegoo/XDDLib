@@ -27,7 +27,7 @@ public class XddPrefRadioElement extends XddPrefAbstractElement {
     }
 
     public static XddPrefRadioElement inflate(@NonNull final XddPrefContainer parent) {
-        return XddInternalUtils.UiUtils.inflate(XddPrefRadioElement.class, R.layout.xdd_pref_dialog_radio_element_constructor, parent);
+        return XddInternalUtils.INSTANCE.inflate(XddPrefRadioElement.class, R.layout.xdd_pref_dialog_radio_element_constructor, parent);
     }
 
     @Override

@@ -68,7 +68,7 @@ public class XddPrefToggleElement extends XddPrefAbstractElement {
     }
 
     public static XddPrefToggleElement inflate(@NonNull final XddPrefContainer parent) {
-        return XddInternalUtils.UiUtils.inflate(XddPrefToggleElement.class, R.layout.xdd_pref_dialog_toggle_element_constructor, parent);
+        return XddInternalUtils.INSTANCE.inflate(XddPrefToggleElement.class, R.layout.xdd_pref_dialog_toggle_element_constructor, parent);
     }
 
 }

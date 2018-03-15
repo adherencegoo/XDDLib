@@ -24,7 +24,7 @@ public final class XddPrefContainer extends LinearLayout {
     }
 
     public static XddPrefContainer inflate(@NonNull final Context context, @Nullable final ViewGroup parent) {
-        return XddInternalUtils.UiUtils.inflate(XddPrefContainer.class, R.layout.xdd_pref_dialog_container_constructor, context, parent);
+        return XddInternalUtils.INSTANCE.inflate(XddPrefContainer.class, R.layout.xdd_pref_dialog_container_constructor, context, parent);
     }
 
     public XddPrefContainer init(@NonNull final Map<String, XddPrefAbstractData<?>> prefs) {
