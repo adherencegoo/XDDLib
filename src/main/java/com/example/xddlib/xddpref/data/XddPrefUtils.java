@@ -36,15 +36,13 @@ public final class XddPrefUtils {
     @SuppressWarnings("unused")
     static void removeAllPref() {
         sXddPrefs.clear();
-        final SharedPreferences.Editor editor = NativePreferenceHelper.getInstance().edit();
-        editor.clear();
-        editor.apply();
+        NativePreferenceHelper.INSTANCE.clearAll();
     }
 
     private static boolean sIsInitialized = false;
     public static void init(@NonNull final Context context) {
         if (!sIsInitialized) {
-            NativePreferenceHelper.init(context);
+            NativePreferenceHelper.INSTANCE.init(context);
             sIsInitialized = true;
         }
     }

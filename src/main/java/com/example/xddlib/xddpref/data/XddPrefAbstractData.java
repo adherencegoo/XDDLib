@@ -1,8 +1,6 @@
 package com.example.xddlib.xddpref.data;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 import com.example.xddlib.XDD;
 
@@ -23,13 +21,13 @@ public abstract class XddPrefAbstractData<T> {
     private Method mMethodValueOf;
 
     /**
-     * @param klass See {@link com.example.xddlib.xddpref.data.NativePreferenceHelper#sValidType}
+     * @param klass See {@link com.example.xddlib.xddpref.data.NativePreferenceHelper#sValidKClasses}
      * @param defaultValue See {@link #mDefaultValue}
      * */
     XddPrefAbstractData(@NonNull final Class<T> klass,
                         @NonNull final String key,
                         @NonNull final T defaultValue) {
-        NativePreferenceHelper.checkTypeValid(klass);
+        NativePreferenceHelper.INSTANCE.checkClassValid(klass);
         kClass = klass;
         kKey = key;
         mDefaultValue = defaultValue;
@@ -51,7 +49,7 @@ public abstract class XddPrefAbstractData<T> {
     @Override
     public String toString() {
         return String.format(Locale.getDefault(), "key:%s, %s, SharedValue:%s",
-                kKey, kClass, NativePreferenceHelper.get(kClass, kKey, mDefaultValue));
+                kKey, kClass, NativePreferenceHelper.INSTANCE.get(kClass, kKey, mDefaultValue));
     }
 
     public @NonNull String getKey() {
@@ -60,7 +58,7 @@ public abstract class XddPrefAbstractData<T> {
 
     public @NonNull T get(final boolean showLog) {
         if (showLog) XDD.Lg.printStackTrace(this);
-        return NativePreferenceHelper.get(kClass, kKey, mDefaultValue);
+        return NativePreferenceHelper.INSTANCE.get(kClass, kKey, mDefaultValue);
     }
 
     public @NonNull T get() {
@@ -95,7 +93,7 @@ public abstract class XddPrefAbstractData<T> {
     }
 
     public void saveToNativePreference(@NonNull final Object valueAsObject) {
-        NativePreferenceHelper.put(kKey, convertToTemplateType(valueAsObject));
+        NativePreferenceHelper.INSTANCE.put(kKey, convertToTemplateType(valueAsObject));
     }
 
     abstract boolean givenValueIsCandidate(@NonNull final T givenValue);
