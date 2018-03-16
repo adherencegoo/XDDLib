@@ -43,7 +43,7 @@ public abstract class XddPrefAbstractData<T> {
             Assert.fail("[valueOf] not found in " + kClass);
         }
 
-        XddPrefUtils.addPref(this);
+        XddPrefUtils.INSTANCE.addPref(this);
     }
 
     @Override
