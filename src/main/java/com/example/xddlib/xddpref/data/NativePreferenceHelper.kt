@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
  */
 
 internal object NativePreferenceHelper {
-    private val sValidKClasses = Collections.unmodifiableList(ArrayList<KClass<*>>(Arrays.asList(
+    internal val sValidKClasses = Collections.unmodifiableList(ArrayList<KClass<*>>(Arrays.asList(
             Boolean::class,
             Float::class,
             Int::class,
@@ -25,26 +25,27 @@ internal object NativePreferenceHelper {
         sSingleton = context.getSharedPreferences(NativePreferenceHelper::class.java.simpleName, Context.MODE_PRIVATE)
     }
 
-    fun checkClassValid(jClass: Class<*>) {
-        if (!sValidKClasses.contains(jClass.kotlin)) {
-            throw IllegalArgumentException("Wrong type: $jClass, expected: $sValidKClasses")
+    fun checkClassValid(kClass: KClass<*>) {
+        if (!sValidKClasses.contains(kClass)) {
+            throw IllegalArgumentException("Wrong type: $kClass, expected: $sValidKClasses")
         }
     }
 
-    operator fun <T : Any> get(jClass: Class<T>, key: String, defaultValue: T): T {
+    operator fun <T : Any> get(key: String, defaultValue: T): T {
         Assert.assertNotNull(sSingleton)
 
-        return when (jClass.kotlin) {
-            Boolean::class -> jClass.cast(sSingleton.getBoolean(key, defaultValue as Boolean))
-            Float::class -> jClass.cast(sSingleton.getFloat(key, defaultValue as Float))
-            Int::class -> jClass.cast(sSingleton.getInt(key, defaultValue as Int))
-            Long::class -> jClass.cast(sSingleton.getLong(key, defaultValue as Long))
-            String::class -> jClass.cast(sSingleton.getString(key, defaultValue as String))
-            else -> throw IllegalArgumentException("Wrong type: $jClass, expected: $sValidKClasses")
+        val kClass = defaultValue::class
+        return when (kClass) {
+            Boolean::class -> kClass.java.cast(sSingleton.getBoolean(key, defaultValue as Boolean))
+            Float::class -> kClass.java.cast(sSingleton.getFloat(key, defaultValue as Float))
+            Int::class -> kClass.java.cast(sSingleton.getInt(key, defaultValue as Int))
+            Long::class -> kClass.java.cast(sSingleton.getLong(key, defaultValue as Long))
+            String::class -> kClass.java.cast(sSingleton.getString(key, defaultValue as String))
+            else -> throw IllegalArgumentException("Wrong type: $kClass, expected: $sValidKClasses")
         }
     }
 
-    fun <T : Any> put(key: String, defaultValue: T) {
+    operator fun <T : Any> set(key: String, defaultValue: T) {
         Assert.assertNotNull(sSingleton)
         val jClass = defaultValue::class.java
         val editor = sSingleton.edit()
