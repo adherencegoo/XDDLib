@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Context
-import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -43,11 +42,11 @@ import java.util.regex.Pattern
 
 /** Created by Owen_Chen on 2017/3/15.  */
 
-//@SuppressWarnings("unused")
+@Suppress("unused")
 object XDD {
-    private val DEFAULT_REPEAT_COUNT = 30
+    private const val DEFAULT_REPEAT_COUNT = 30
 
-    private var mMainHandler: Handler? = null
+    private lateinit var mMainHandler: Handler
 
     val isMainThread: Boolean
         get() = if (Build.VERSION.SDK_INT >= 23) {
@@ -58,12 +57,13 @@ object XDD {
 
     private val sIsActionDialogShowing = AtomicBoolean(false)
 
+    @JvmStatic
     fun init(context: Context) {
         mMainHandler = Handler(context.mainLooper)
         NativePreferenceHelper.init(context)
     }
 
-    private enum class BracketType private constructor(val mLeft: String, val mRight: String) {
+    private enum class BracketType constructor(val mLeft: String, val mRight: String) {
         NONE("", ""),
         ROUND("(", ")"),
         BRACKET("[", "]"),
@@ -92,6 +92,7 @@ object XDD {
         }
     }
 
+    @Suppress("KDocUnresolvedReference")
     /**
      * Abbreviation of Log,
      * FinalMsg: (Abc.java:123)->testMethod->[abc]->[def]: ABC, DEF
@@ -100,22 +101,27 @@ object XDD {
      */
     object Lg {
         val PRIMITIVE_LOG_TAG = XDD::class.java.simpleName + "D"//mutable
-        val LF = "\n"
-        val TAB = "\t"
-        private val TAG_END = ": "
+        const val LF = "\n"
+        const val TAB = "\t"
+        internal const val TAG_END = ": "
         private val PRIORITIZED_MSG_PATTERN = Pattern.compile("^->\\[.+\\]$")//->[ANYTHING]
         private val ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$")//->[ANYTHING]
-        private val MAX_PRIMITIVE_LOG_LENGTH = 3500
-        private val DEFAULT_INTERNAL_LG_TYPE = Type.V
+        private const val MAX_PRIMITIVE_LOG_LENGTH = 3500
+        internal val DEFAULT_INTERNAL_LG_TYPE = Type.V
 
         private val TYPES = arrayOf(Type.V, Type.D, Type.I, Type.W, Type.E)
         private val COLORS = intArrayOf(Color.WHITE, Color.BLUE, Color.GREEN, Color.YELLOW, Color.RED)
 
         private var sRefCachedToast: WeakReference<Toast>? = null
 
-        enum class Type private constructor(val mValue: Int) {
-            V(Log.VERBOSE), D(Log.DEBUG), I(Log.INFO), W(Log.WARN), E(Log.ERROR),
-            NONE(0), UNKNOWN(-1)
+        enum class Type constructor(val mNativeType: Int, val mNativeFunction: ((String, String) -> Int)?) {
+            V(Log.VERBOSE, Log::v),
+            D(Log.DEBUG, Log::d),
+            I(Log.INFO, Log::i),
+            W(Log.WARN, Log::w),
+            E(Log.ERROR, Log::e),
+            NONE(0, null),
+            UNKNOWN(-1, null)
         }
 
         fun types(idx: Int): Type {
@@ -126,39 +132,44 @@ object XDD {
             return COLORS[idx % COLORS.size]
         }
 
-        fun v(vararg objects: Any): ObjectArrayParser {
+        @JvmStatic
+        fun v(vararg objects: Any?): ObjectArrayParser {
             return _log(Type.V, *objects)
         }
 
-        fun d(vararg objects: Any): ObjectArrayParser {
+        @JvmStatic
+        fun d(vararg objects: Any?): ObjectArrayParser {
             return _log(Type.D, *objects)
         }
 
-        fun i(vararg objects: Any): ObjectArrayParser {
+        @JvmStatic
+        fun i(vararg objects: Any?): ObjectArrayParser {
             return _log(Type.I, *objects)
         }
 
-        fun w(vararg objects: Any): ObjectArrayParser {
+        @JvmStatic
+        fun w(vararg objects: Any?): ObjectArrayParser {
             return _log(Type.W, *objects)
         }
 
-        fun e(vararg objects: Any): ObjectArrayParser {
+        @JvmStatic
+        fun e(vararg objects: Any?): ObjectArrayParser {
             return _log(Type.E, *objects)
         }
 
         /** @param objects: must contain Lg.Type
          */
-        fun log(vararg objects: Any): ObjectArrayParser {
+        @JvmStatic
+        fun log(vararg objects: Any?): ObjectArrayParser {
             return _log(Type.UNKNOWN, *objects)
         }
 
-        class ObjectArrayParser private constructor(//settings =====================================================
-                private val mSettings: Settings) {
-            private var mNeedMethodTag: Boolean = false
+        class ObjectArrayParser internal constructor(private val mSettings: Settings) {
+            internal var mNeedMethodTag: Boolean = false
             private var mInsertMainMsgDelimiter: Boolean = false
 
             //parsed results =====================================================
-            private var mMethodTagSource: StackTraceElement? = null//cache the first found StackTraceElement
+            internal var mMethodTagSource: StackTraceElement? = null//cache the first found StackTraceElement
             private var mTrArray: ArrayList<Throwable>? = null
             private var mPrioritizedMsgBuilder: StringBuilder? = null
             private var mMainMsgBuilder: StringBuilder? = null
@@ -167,16 +178,19 @@ object XDD {
             //others =====================================================
             private var mIsParsed = false
             private var mShouldOutputNull = true
-            private val mPrimitiveLogReturn = -1
+            internal var mPrimitiveLogReturn = -1
 
-            private enum class Settings private constructor(private val mNeedMethodTag: Boolean,
-                                                            private val mInsertFirstMainMsgDelimiter: Boolean,
-                                                            private val mDelimiter: String,
-                                                            private val mBracket: BracketType) {
+            internal enum class Settings constructor(internal val mNeedMethodTag: Boolean,
+                                                     internal val mInsertFirstMainMsgDelimiter: Boolean,
+                                                     internal val mDelimiter: String,
+                                                     internal val mBracket: BracketType) {
+                @Suppress("KDocUnresolvedReference")
                 /** ->[a]->[b]->[c]  */
                 PrioritizedMsg(false, true, "->", BracketType.BRACKET),
+                @Suppress("KDocUnresolvedReference")
                 /** ->[a]->[b]->[c]: a, b, c  */
                 FinalMsgWithoutTag(false, false, ", ", BracketType.NONE),
+                @Suppress("KDocUnresolvedReference")
                 /** ClassName.methodName(FileName.java:LineNumber)->[a]->[b]->[c]: a, b, c  */
                 FinalMsg(true, false, ", ", BracketType.NONE)
             }
@@ -212,7 +226,7 @@ object XDD {
                 return this
             }
 
-            fun parse(vararg objects: Any): ObjectArrayParser {
+            fun parse(vararg objects: Any?): ObjectArrayParser {
 
                 for (obj in objects) {
                     if (obj == null && !mShouldOutputNull) continue
@@ -235,7 +249,7 @@ object XDD {
                         //process the data======================================================
                     } else if (obj is ObjectArrayParser) {
                         parseAnotherParser(obj)
-                    } else if (obj is Array<Any>) {//recursively parse Object[] in Object[], including native with any class type
+                    } else if (obj is Array<*>) {//recursively parse Object[] in Object[], including native with any class type
                         val origOutputNull = mShouldOutputNull
                         mShouldOutputNull = true
                         this.parse('[')
@@ -245,13 +259,10 @@ object XDD {
                     } else if (obj !is CtrlKey) {
                         //transform obj into string
                         //ArrayList is acceptable
-                        val objStr: String
-                        if (obj is String) {
-                            objStr = obj
-                        } else if (obj != null && obj.javaClass.isArray) {//array with primitive type (array with class type has been processed in advance)
-                            objStr = primitiveTypeArrayToString(obj)
+                        val objStr: String = obj as? String ?: if (obj != null && obj.javaClass.isArray) {//array with primitive type (array with class type has been processed in advance)
+                            primitiveTypeArrayToString(obj)
                         } else {//Can't be Object[] or array with native type
-                            objStr = toSimpleString(obj)
+                            toSimpleString(obj)
                         }
 
                         if (objStr.isEmpty()) continue
@@ -298,13 +309,11 @@ object XDD {
                 if (mMainMsgBuilder != null) resultBuilder.append(mMainMsgBuilder)
 
                 //tr must be at the end
-                if (mTrArray != null && mTrArray!!.size != 0) {
+                if (mTrArray?.isNotEmpty() == true) {
                     resultBuilder.append('\n')
-                    var idx = 0
-                    for (tr in mTrArray!!) {
+                    for ((idx, tr) in mTrArray!!.withIndex()) {
                         resultBuilder.append(getSeparator("[" + idx + "] " + tr.toString(), '-')).append('\n')
                         resultBuilder.append(Log.getStackTraceString(tr))
-                        idx++
                     }
                     resultBuilder.append(getSeparator("Throwable end", '='))
                 }
@@ -320,7 +329,7 @@ object XDD {
 
                 private fun needDelimiterBasedOnPostfix(builder: StringBuilder?): Boolean {
                     return (builder != null
-                            && builder.length != 0
+                            && builder.isNotEmpty()
                             && !sDelimiterKillerPostfix.contains(builder[builder.length - 1]))
                 }
 
@@ -335,36 +344,32 @@ object XDD {
 
         /**@param type: if unknown, use the result parsed from objects; if still unknown, assertion fails
          */
-        private fun _log(type: Type, vararg objects: Any): ObjectArrayParser {
+        @Suppress("FunctionName")
+        private fun _log(type: Type, vararg objects: Any?): ObjectArrayParser {
             val parser = ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(*objects)
             parser.mLgType = if (type == Type.UNKNOWN) parser.mLgType else type
 
             val remainingString = StringBuilder(parser.toString())
             var iteration = 0
-            while (remainingString.length > 0) {
+            while (remainingString.isNotEmpty()) {
                 val end: Int
-                if (remainingString.length > MAX_PRIMITIVE_LOG_LENGTH) {
+                end = if (remainingString.length > MAX_PRIMITIVE_LOG_LENGTH) {
                     val lastLineFeed = remainingString.lastIndexOf("\n", MAX_PRIMITIVE_LOG_LENGTH)
-                    end = if (lastLineFeed == -1) MAX_PRIMITIVE_LOG_LENGTH else lastLineFeed + 1
+                    if (lastLineFeed == -1) MAX_PRIMITIVE_LOG_LENGTH else lastLineFeed + 1
                 } else {
-                    end = remainingString.length
+                    remainingString.length
                 }
 
                 val shownString = (if (iteration == 0) "" else "<Continuing ($iteration)...>\n") + remainingString.substring(0, end)
                 remainingString.delete(0, end)
-                when (parser.mLgType) {
-                    XDD.Lg.Type.V -> parser.mPrimitiveLogReturn = Log.v(PRIMITIVE_LOG_TAG, shownString)
-                    XDD.Lg.Type.D -> parser.mPrimitiveLogReturn = Log.d(PRIMITIVE_LOG_TAG, shownString)
-                    XDD.Lg.Type.I -> parser.mPrimitiveLogReturn = Log.i(PRIMITIVE_LOG_TAG, shownString)
-                    XDD.Lg.Type.W -> parser.mPrimitiveLogReturn = Log.w(PRIMITIVE_LOG_TAG, shownString)
-                    XDD.Lg.Type.E -> parser.mPrimitiveLogReturn = Log.e(PRIMITIVE_LOG_TAG, shownString)
+                parser.mPrimitiveLogReturn = parser.mLgType.mNativeFunction?.invoke(PRIMITIVE_LOG_TAG, shownString) ?: when (parser.mLgType) {
                     XDD.Lg.Type.NONE -> {
-                        parser.mPrimitiveLogReturn = -1
                         remainingString.setLength(0)
+                        -1
                     }
                     else -> {
                         Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + "[UsageError] Unknown Lg.Type: " + parser.mLgType)
-                        parser.mPrimitiveLogReturn = -1
+                        -1
                     }
                 }
                 iteration++
@@ -372,19 +377,14 @@ object XDD {
             return parser
         }
 
-        /** @return true if toString method of the object is not ever overridden
+        /** @return true if toString method of the any is not ever overridden
          */
-        private fun isToStringFromObjectClass(`object`: Any): Boolean {
+        private fun isToStringFromObjectClass(any: Any): Boolean {
             try {
-                return //add some common cases to avoid the last condition
-                (`object` !is CharSequence //including String
-
-                        && `object` !is Throwable //including Exception
-
-                        && `object` !is AbstractCollection<*> //including ArrayList, LinkedList ...
-
-                        && `object`.javaClass.getMethod("toString").declaringClass
-                        .canonicalName == Any::class.java.canonicalName)
+                return (any !is CharSequence //including String
+                        && any !is Throwable //including Exception
+                        && any !is AbstractCollection<*> //including ArrayList, LinkedList ...
+                        && any.javaClass.getMethod("toString").declaringClass.canonicalName == Any::class.java.canonicalName)
             } catch (e: NoSuchMethodException) {
                 e.printStackTrace()
             }
@@ -394,60 +394,61 @@ object XDD {
 
         /** @return equivalent call to NON-OVERRIDDEN Object.toString without package name
          */
-        fun toNativeSimpleString(`object`: Any?): String {
-            return if (`object` == null) "null" else removePackageNameIfNeeded(`object`.javaClass.name + "@" + Integer.toHexString(`object`.hashCode()))
+        fun toNativeSimpleString(any: Any?): String {
+            return if (any == null) "null" else removePackageNameIfNeeded(any.javaClass.name + "@" + Integer.toHexString(any.hashCode()))
 
         }
 
         /** @return toString without package name if toString is not overridden
          */
-        fun toSimpleString(`object`: Any?): String {
-            if (`object` == null) return "null"
+        fun toSimpleString(any: Any?): String {
+            if (any == null) return "null"
 
-            var objStr = `object`.toString()
-            if (isToStringFromObjectClass(`object`)) {
+            var objStr = any.toString()
+            if (isToStringFromObjectClass(any)) {
                 objStr = removePackageNameIfNeeded(objStr)
             }
             return objStr
         }
 
-        private fun removePackageNameIfNeeded(`in`: String): String {
-            val dotPos: Int
-            var out = `in`
-            if ((dotPos = `in`.lastIndexOf('.')) != -1) {
-                out = out.substring(dotPos + 1)//OuterClass$InnerClass
+        private fun removePackageNameIfNeeded(string: String): String {
+            val dotPos: Int = string.lastIndexOf('.')
+            return if (dotPos != -1) {
+                string.substring(dotPos + 1)//OuterClass$InnerClass
+            } else {
+                string
             }
-            return out
         }
 
         fun primitiveTypeArrayToString(obj: Any?): String {
             if (obj == null) return "null"
             Assert.assertTrue(obj.javaClass.isArray)
-            val componentType = obj.javaClass.componentType
-            when (componentType.toString()) {
-                "byte" -> return Arrays.toString(obj as ByteArray?)
-                "short" -> return Arrays.toString(obj as ShortArray?)
-                "int" -> return Arrays.toString(obj as IntArray?)
-                "long" -> return Arrays.toString(obj as LongArray?)
-                "float" -> return Arrays.toString(obj as FloatArray?)
-                "double" -> return Arrays.toString(obj as DoubleArray?)
-                "char" -> return Arrays.toString(obj as CharArray?)
-                "boolean" -> return Arrays.toString(obj as BooleanArray?)
+            val componentType = obj.javaClass.componentType.kotlin
+            return when (componentType) {
+                Byte::class -> Arrays.toString(obj as ByteArray?)
+                Short::class -> Arrays.toString(obj as ShortArray?)
+                Int::class -> Arrays.toString(obj as IntArray?)
+                Long::class -> Arrays.toString(obj as LongArray?)
+                Float::class -> Arrays.toString(obj as FloatArray?)
+                Double::class -> Arrays.toString(obj as DoubleArray?)
+                Char::class -> Arrays.toString(obj as CharArray?)
+                Boolean::class -> Arrays.toString(obj as BooleanArray?)
+                else -> throw UnsupportedOperationException(PRIMITIVE_LOG_TAG + TAG_END
+                        + ObjectArrayParser::class.java.canonicalName
+                        + "." + object : Any() {}.javaClass.enclosingMethod.name
+                        + "(): can't parse native array with primitive type yet: "
+                        + componentType + "[]")
             }
-            throw UnsupportedOperationException(PRIMITIVE_LOG_TAG + TAG_END
-                    + ObjectArrayParser::class.java.canonicalName
-                    + "." + object : Any() {
-
-            }.javaClass.enclosingMethod.name
-                    + "(): can't parse native array with primitive type yet: "
-                    + componentType + "[]")
         }
 
-        fun getPrioritizedMessage(vararg messages: Any): ObjectArrayParser {
+        @JvmStatic
+        fun getPrioritizedMessage(vararg messages: Any?): ObjectArrayParser {
             return ObjectArrayParser(ObjectArrayParser.Settings.PrioritizedMsg).parse(*messages)
         }
 
-        fun getFinalNoTagMessage(vararg messages: Any): ObjectArrayParser {
+        @JvmStatic
+        @Suppress("MemberVisibilityCanBePrivate")
+        fun getFinalNoTagMessage(vararg messages: Any?): ObjectArrayParser {
             return ObjectArrayParser(ObjectArrayParser.Settings.FinalMsgWithoutTag).parse(*messages)
         }
 
@@ -455,7 +456,7 @@ object XDD {
          * Special strings for AndroidMonitor filtering: [.PRIMITIVE_LOG_TAG], "`printStackTrace`", "`at`"
          * @param objects if containing Lg.Type and it's not UNKNOWN, print stack trace according to that Lg.Type using Lg.log; else print stack trace normally
          */
-        fun printStackTrace(vararg objects: Any) {
+        fun printStackTrace(vararg objects: Any?) {
             val self = object : Any() {
 
             }.javaClass.enclosingMethod.name
@@ -472,22 +473,20 @@ object XDD {
             }
         }
 
-        fun showToast(context: Context, vararg objects: Any) {
+        fun showToast(context: Context, vararg objects: Any?) {
             val parser = getFinalNoTagMessage(DEFAULT_INTERNAL_LG_TYPE,
                     "(" + Throwable().stackTrace[0].methodName + ")",
                     objects)
             log(parser)
 
-            mMainHandler!!.post {
-                var toast: Toast
-                if (sRefCachedToast != null && (toast = sRefCachedToast!!.get()) != null) toast.cancel()
-                toast = Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG)
-                toast.show()
-                sRefCachedToast = WeakReference(toast)
+            mMainHandler.post {
+                sRefCachedToast?.get()?.cancel()
+                sRefCachedToast = WeakReference(
+                        Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG).apply { show() })
             }
         }
 
-        private fun findInvokerOfDeepestInnerElementWithOffset(offset: Int): StackTraceElement {
+        internal fun findInvokerOfDeepestInnerElementWithOffset(offset: Int): StackTraceElement {
             Assert.assertTrue(offset >= 0)
             val elements = Thread.currentThread().stackTrace//smaller index, called more recently
 
@@ -523,9 +522,9 @@ object XDD {
 
         private val sManager = TimelineManager()
 
-        private class Timing private constructor(private val mId: Any, private val mInfo: Lg.ObjectArrayParser) {
-            private val t1 = java.lang.Long.MAX_VALUE
-            private val t2 = java.lang.Long.MIN_VALUE
+        private class Timing internal constructor(internal val mId: Any, internal val mInfo: Lg.ObjectArrayParser) {
+            internal var t1 = java.lang.Long.MAX_VALUE
+            internal var t2 = java.lang.Long.MIN_VALUE
 
             private val internalElapsedTime: Long
                 get() {
@@ -538,17 +537,17 @@ object XDD {
                 return "internal: " + internalElapsedTime + "ms, " + mInfo
             }
 
-            private fun subtract(past: Timing): Long {
+            internal fun subtract(past: Timing): Long {
                 val result = t1 - past.t2
                 Assert.assertTrue(result >= 0)
                 return result
             }
         }
 
-        private class Timeline private constructor(private val mId: Any) {
+        private class Timeline internal constructor(internal val mId: Any) {
             private val mTimings = ArrayList<Timing>()
 
-            private fun tick(info: Lg.ObjectArrayParser): Timing {
+            internal fun tick(info: Lg.ObjectArrayParser): Timing {
                 val timing = Timing(mId, info)
                 mTimings.add(timing)
                 return timing
@@ -588,15 +587,13 @@ object XDD {
                 val builder = StringBuilder(mTimings.size * 80)
 
                 var previous: Timing? = null
-                var idx = 0
-                for (current in mTimings) {
+                for ((idx, current) in mTimings.withIndex()) {
                     if (previous != null) {
                         builder.append("\n\t\t↓ ").append(current.subtract(previous)).append("ms")
                     }
                     builder.append("\n[").append(idx).append("] ").append(current)
 
                     previous = current
-                    idx++
                 }
 
                 val interestingElapsed = calculateInterestingElapsedTime()
@@ -611,17 +608,17 @@ object XDD {
                 return builder.toString()
             }
 
-            private fun clear() {
+            internal fun clear() {
                 mTimings.clear()
             }
 
-            private fun size(): Int {
+            internal fun size(): Int {
                 return mTimings.size
             }
         }
 
         private class TimelineManager {
-            private val mTimelines = HashMap<Any, Timeline>(3)
+            private val mTimelineCollection = HashMap<Any, Timeline>(3)
 
             /**
              * If id==null:<br></br>
@@ -630,21 +627,21 @@ object XDD {
              * else:<br></br>
              * If target found: return it<br></br>
              * else: create a new timeline using given id */
-            private fun getTargetTimeline(id: Any?, asNew: Boolean): Timeline {
+            internal fun getTargetTimeline(id: Any?, asNew: Boolean): Timeline {
                 if (asNew) Assert.assertTrue(id != null)
 
                 var target: Timeline? = null
                 if (id == null) {
-                    if (mTimelines.size == 1) {//get the only timeline
-                        target = mTimelines.values.iterator().next()
+                    if (mTimelineCollection.size == 1) {//get the only timeline
+                        target = mTimelineCollection.values.iterator().next()
                     } else {
-                        Assert.fail(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END + "There are " + mTimelines.size + " Timelines, but no id is given")
+                        Assert.fail(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END + "There are " + mTimelineCollection.size + " Timelines, but no id is given")
                     }
                 } else {
-                    target = mTimelines[id]
+                    target = mTimelineCollection[id]
                     if (target == null) {//Create a timeline using given id
                         target = Timeline(id)
-                        mTimelines[id] = target
+                        mTimelineCollection[id] = target
                     }
                 }
 
@@ -657,8 +654,8 @@ object XDD {
                 return target
             }
 
-            private fun remove(id: Any) {
-                val removed = mTimelines.remove(id)
+            internal fun remove(id: Any) {
+                val removed = mTimelineCollection.remove(id)
                 removed?.clear()
             }
         }
@@ -669,7 +666,7 @@ object XDD {
          * @param id used as the identifier of new timeline, leave null to use current timestamp for default
          * @return id
          */
-        fun begin(id: Any?, vararg objects: Any): Any {
+        fun begin(id: Any?, vararg objects: Any?): Any {
             val t1 = System.currentTimeMillis()
 
             val timeline = sManager.getTargetTimeline(id ?: t1, true)
@@ -686,7 +683,7 @@ object XDD {
          * else, throw exception
          * @return id
          */
-        fun tick(id: Any?, vararg objects: Any): Any {
+        fun tick(id: Any?, vararg objects: Any?): Any {
             val t1 = System.currentTimeMillis()
 
             val timeline = sManager.getTargetTimeline(id, false)
@@ -700,7 +697,7 @@ object XDD {
         /**
          * @param id see [.tick]
          */
-        fun end(id: Any?, vararg objects: Any): Lg.ObjectArrayParser {
+        fun end(id: Any?, vararg objects: Any?): Lg.ObjectArrayParser {
             val t1 = System.currentTimeMillis()
 
             val timeline = sManager.getTargetTimeline(id, false)
@@ -712,18 +709,19 @@ object XDD {
             timing.t2 = System.currentTimeMillis()
 
             //about 1ms for the following actions
-            val `object` = Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline)//output the elapsed time
+            val parser = Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline)//output the elapsed time
             sManager.remove(timeline.mId)
-            return `object`
+            return parser
         }
 
-        fun sleep(ms: Long, vararg objects: Any) {
+        fun sleep(ms: Long, vararg objects: Any?) {
             sleepManyTimes(ms, 1, *objects)
         }
 
+        @Suppress("MemberVisibilityCanBePrivate")
         fun sleepManyTimes(ms: Long,
                            @IntRange(from = 1, to = Integer.MAX_VALUE.toLong()) count: Int,
-                           vararg objects: Any) {
+                           vararg objects: Any?) {
             val timestamp = System.currentTimeMillis()
 
             val parser = Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg)
@@ -742,6 +740,7 @@ object XDD {
         }
     }
 
+    @JvmStatic
     fun drawCross(bitmap: Bitmap, @ColorInt color: Int, msg: String?): Bitmap {
 
         val imageWidth = bitmap.width
@@ -762,8 +761,9 @@ object XDD {
         return bitmap
     }
 
+    @JvmStatic
     fun saveBitmap(context: Context, bitmap: Bitmap?, fileName: String,
-                   vararg objects: Any) {
+                   vararg objects: Any?) {
         val tag = object : Any() {
 
         }.javaClass.enclosingMethod.name
@@ -807,6 +807,7 @@ object XDD {
         }
     }
 
+    @JvmStatic
     @JvmOverloads
     fun getSeparator(message: String?, separator: Char, count: Int = DEFAULT_REPEAT_COUNT): String {
         val stringBuilder = StringBuilder(count * 2 + 4 + (message?.length ?: 0))
@@ -821,14 +822,18 @@ object XDD {
         return stringBuilder.toString()
     }
 
+    @JvmStatic
     fun stringRepeat(str: String): String {
         return stringRepeat(DEFAULT_REPEAT_COUNT, str)
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")
+    @JvmStatic
     fun stringRepeat(count: Int, str: String): String {
         return TextUtils.join("", Collections.nCopies(count, str))
     }
 
+    @JvmStatic
     fun dbUpdate(context: Context,
                  uri: Uri,
                  values: ContentValues,
@@ -839,10 +844,12 @@ object XDD {
         Lg.d("updated row count:$rowCount")
     }
 
+    @JvmStatic
     fun argbIntToHexString(@ColorInt color: Int): String {
         return String.format("#%08x", color)
     }
 
+    @JvmStatic
     fun showActionDialog(activity: Activity, //can't be ApplicationContext
                          action: Runnable,
                          vararg objects: Any) {
@@ -905,14 +912,12 @@ object XDD {
 
         constructor(fileName: String?,
                     klass: Class<*>,
-                    methodName: String?) : this(fileName, klass.name, methodName) {
-        }
+                    methodName: String?) : this(fileName, klass.name, methodName)
 
         constructor(fileName: String?,
                     klass: Class<*>,
                     methodName: String?,
-                    lineNumber: Int) : this(fileName, klass.name, methodName, lineNumber) {
-        }
+                    lineNumber: Int) : this(fileName, klass.name, methodName, lineNumber)
 
         init {
             //All illegal -> fail! (At least one element must be legal)
@@ -921,7 +926,7 @@ object XDD {
             kFileName = if (fileName != null && !fileName.endsWith(".java")) "$fileName.java" else fileName
         }
 
-        private fun isMatched(element: StackTraceElement): Boolean {
+        internal fun isMatched(element: StackTraceElement): Boolean {
             var matched = true
             if (/*found && */kFileName != null) matched = element.fileName == kFileName
             if (matched && kPartialClassName != null) matched = element.className.contains(kPartialClassName)
@@ -933,6 +938,7 @@ object XDD {
 
     /**@return true if all descriptions are matched in current stack trace
      */
+    @JvmStatic
     fun isInvokedFrom(vararg descriptions: StackTraceElementDescription): Boolean {
         val kUnmatchedDescriptions = ArrayList(Arrays.asList(*descriptions))
 
@@ -950,8 +956,8 @@ object XDD {
         return false
     }
 
+    @JvmStatic
     fun vibrate(context: Context, ms: Long) {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator?.vibrate(ms)
+        (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(ms)
     }
 }
