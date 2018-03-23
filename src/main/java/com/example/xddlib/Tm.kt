@@ -9,8 +9,6 @@ import java.util.*
 /**
  * Created by Owen_Chen on 2018/3/23.
  */
-private val sManager = TimelineManager()
-
 private class Timing internal constructor(internal val mId: Any, internal val mInfo: XDD.Lg.ObjectArrayParser) {
     internal var t1 = java.lang.Long.MAX_VALUE
     internal var t2 = java.lang.Long.MIN_VALUE
@@ -27,9 +25,7 @@ private class Timing internal constructor(internal val mId: Any, internal val mI
     }
 
     internal fun subtract(past: Timing): Long {
-        val result = t1 - past.t2
-        Assert.assertTrue(result >= 0)
-        return result
+        return (t1 - past.t2).also { Assert.assertTrue(it >= 0) }
     }
 }
 
@@ -37,9 +33,7 @@ private class Timeline internal constructor(internal val mId: Any) {
     private val mTimings = ArrayList<Timing>()
 
     internal fun tick(info: XDD.Lg.ObjectArrayParser): Timing {
-        val timing = Timing(mId, info)
-        mTimings.add(timing)
-        return timing
+        return Timing(mId, info).also { mTimings.add(it) }
     }
 
     /**Excluding the time of my own procedure */
@@ -49,7 +43,7 @@ private class Timeline internal constructor(internal val mId: Any) {
         var result: Long = 0
         var previous: Timing? = null
         for (current in mTimings) {
-            if (previous != null) result += current.subtract(previous)
+            previous?.let { result += current.subtract(it) }
             previous = current
         }
 
@@ -60,15 +54,11 @@ private class Timeline internal constructor(internal val mId: Any) {
     /**Including the time of my own procedure */
     private fun calculateRealElapsedTime(): Long {
         Assert.assertTrue(mTimings.size >= 2)
-        val result = mTimings[mTimings.size - 1].t2 - mTimings[0].t1
-        Assert.assertTrue(result >= 0)
-        return result
+        return (mTimings[mTimings.size - 1].t2 - mTimings[0].t1).also { Assert.assertTrue(it >= 0) }
     }
 
     private fun calculateInternalElapsedTime(): Long {
-        val result = calculateRealElapsedTime() - calculateInterestingElapsedTime()
-        Assert.assertTrue(result >= 0)
-        return result
+        return (calculateRealElapsedTime() - calculateInterestingElapsedTime()).also { Assert.assertTrue(it >= 0) }
     }
 
     override fun toString(): String {
@@ -77,9 +67,7 @@ private class Timeline internal constructor(internal val mId: Any) {
 
         var previous: Timing? = null
         for ((idx, current) in mTimings.withIndex()) {
-            if (previous != null) {
-                builder.append("\n\t\t↓ ").append(current.subtract(previous)).append("ms")
-            }
+            previous?.let { builder.append("\n\t\t↓ ").append(current.subtract(it)).append("ms") }
             builder.append("\n[").append(idx).append("] ").append(current)
 
             previous = current
@@ -106,7 +94,7 @@ private class Timeline internal constructor(internal val mId: Any) {
     }
 }
 
-private class TimelineManager {
+private object TimelineManager {
     private val mTimelineCollection = HashMap<Any, Timeline>(3)
 
     /**
@@ -144,8 +132,7 @@ private class TimelineManager {
     }
 
     internal fun remove(id: Any) {
-        val removed = mTimelineCollection.remove(id)
-        removed?.clear()
+        mTimelineCollection.remove(id)?.clear()
     }
 }
 
@@ -160,7 +147,7 @@ object Tm {
     fun begin(id: Any?, vararg objects: Any?): Any {
         val t1 = System.currentTimeMillis()
 
-        val timeline = sManager.getTargetTimeline(id ?: t1, true)
+        val timeline = TimelineManager.getTargetTimeline(id ?: t1, true)
         val timing = timeline.tick(XDD.Lg.log(XDD.Lg.DEFAULT_INTERNAL_LG_TYPE, XDD.Lg.getPrioritizedMessage("id:" + timeline.mId), "start timer~", objects))
 
         timing.t1 = t1
@@ -178,7 +165,7 @@ object Tm {
     fun tick(id: Any?, vararg objects: Any?): Any {
         val t1 = System.currentTimeMillis()
 
-        val timeline = sManager.getTargetTimeline(id, false)
+        val timeline = TimelineManager.getTargetTimeline(id, false)
         val timing = timeline.tick(XDD.Lg.log(XDD.Lg.DEFAULT_INTERNAL_LG_TYPE, XDD.Lg.getPrioritizedMessage("id:" + timeline.mId), "timer ticks", objects))
 
         timing.t1 = t1
@@ -193,7 +180,7 @@ object Tm {
     fun end(id: Any?, vararg objects: Any?): XDD.Lg.ObjectArrayParser {
         val t1 = System.currentTimeMillis()
 
-        val timeline = sManager.getTargetTimeline(id, false)
+        val timeline = TimelineManager.getTargetTimeline(id, false)
         val timing = timeline.tick(//need not output log at this moment
                 XDD.Lg.ObjectArrayParser(XDD.Lg.ObjectArrayParser.Settings.FinalMsg)
                         .parse(XDD.Lg.DEFAULT_INTERNAL_LG_TYPE, XDD.Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects))
@@ -201,11 +188,11 @@ object Tm {
         timing.t1 = t1
         timing.t2 = System.currentTimeMillis()
 
-        //about 1ms for the following actions
-        val parser = XDD.Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline)//output the elapsed time
-        sManager.remove(timeline.mId)
-        return parser
-    }
+    //about 1ms for the following actions
+    val parser = XDD.Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline)//output the elapsed time
+    TimelineManager.remove(timeline.mId)
+    return parser
+}
 
     @JvmStatic
     fun sleep(ms: Long, vararg objects: Any?) {
