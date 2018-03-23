@@ -9,7 +9,7 @@ import java.util.*
 /**
  * Created by Owen_Chen on 2018/3/23.
  */
-private class Timing internal constructor(internal val mId: Any, internal val mInfo: Lg.ObjectArrayParser) {
+private class Timing internal constructor(internal val mId: Any, internal val mInfo: Lg.VarargParser) {
     internal var t1 = java.lang.Long.MAX_VALUE
     internal var t2 = java.lang.Long.MIN_VALUE
 
@@ -32,7 +32,7 @@ private class Timing internal constructor(internal val mId: Any, internal val mI
 private class Timeline internal constructor(internal val mId: Any) {
     private val mTimings = ArrayList<Timing>()
 
-    internal fun tick(info: Lg.ObjectArrayParser): Timing {
+    internal fun tick(info: Lg.VarargParser): Timing {
         return Timing(mId, info).also { mTimings.add(it) }
     }
 
@@ -177,12 +177,12 @@ object Tm {
      * @param id see [.tick]
      */
     @JvmStatic
-    fun end(id: Any?, vararg objects: Any?): Lg.ObjectArrayParser {
+    fun end(id: Any?, vararg objects: Any?): Lg.VarargParser {
         val t1 = System.currentTimeMillis()
 
     val timeline = TimelineManager.getTargetTimeline(id, false)
     val timing = timeline.tick(//need not output log at this moment
-            Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg)
+            Lg.VarargParser(Lg.VarargParser.Settings.FinalMsg)
                     .parse(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects))
 
         timing.t1 = t1
@@ -206,7 +206,7 @@ object Tm {
                        vararg objects: Any?) {
         val timestamp = System.currentTimeMillis()
 
-        val parser = Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg)
+        val parser = Lg.VarargParser(Lg.VarargParser.Settings.FinalMsg)
                 .parse(Lg.DEFAULT_INTERNAL_LG_TYPE, "timestamp:$timestamp", objects)
 
     try {

@@ -177,7 +177,7 @@ object XDD {
             //if sIsActionDialogShowing is false originally: return true and update it to true
             if (sIsActionDialogShowing.compareAndSet(false, true)) {
                 //parse objects
-                val kParsedObjects = Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg).parse(*objects)
+                val kParsedObjects = Lg.VarargParser(Lg.VarargParser.Settings.FinalMsg).parse(*objects)
                 val kOuterMethodTagSource = kParsedObjects.mMethodTagSource
                 kParsedObjects.mNeedMethodTag = false
                 val kDialogMessage = kParsedObjects.toString()

@@ -65,38 +65,38 @@ object Lg {
     }
 
     @JvmStatic
-    fun v(vararg objects: Any?): ObjectArrayParser {
+    fun v(vararg objects: Any?): VarargParser {
         return _log(Type.V, *objects)
     }
 
     @JvmStatic
-    fun d(vararg objects: Any?): ObjectArrayParser {
+    fun d(vararg objects: Any?): VarargParser {
         return _log(Type.D, *objects)
     }
 
     @JvmStatic
-    fun i(vararg objects: Any?): ObjectArrayParser {
+    fun i(vararg objects: Any?): VarargParser {
         return _log(Type.I, *objects)
     }
 
     @JvmStatic
-    fun w(vararg objects: Any?): ObjectArrayParser {
+    fun w(vararg objects: Any?): VarargParser {
         return _log(Type.W, *objects)
     }
 
     @JvmStatic
-    fun e(vararg objects: Any?): ObjectArrayParser {
+    fun e(vararg objects: Any?): VarargParser {
         return _log(Type.E, *objects)
     }
 
     /** @param objects: must contain Lg.Type
      */
     @JvmStatic
-    fun log(vararg objects: Any?): ObjectArrayParser {
+    fun log(vararg objects: Any?): VarargParser {
         return _log(Type.UNKNOWN, *objects)
     }
 
-    class ObjectArrayParser internal constructor(private val mSettings: Settings) {
+    class VarargParser internal constructor(private val mSettings: Settings) {
         internal var mNeedMethodTag: Boolean = false
         private var mInsertMainMsgDelimiter: Boolean = false
 
@@ -133,7 +133,7 @@ object Lg {
             mInsertMainMsgDelimiter = mSettings.mInsertFirstMainMsgDelimiter
         }
 
-        private fun reset(): ObjectArrayParser {
+        private fun reset(): VarargParser {
             mMethodTagSource = null
             if (mTrArray != null) mTrArray!!.clear()
             if (mPrioritizedMsgBuilder != null) mPrioritizedMsgBuilder!!.setLength(0)
@@ -145,7 +145,7 @@ object Lg {
         }
 
         /** Ignore mMethodTagSource of another */
-        private fun parseAnotherParser(another: ObjectArrayParser): ObjectArrayParser {
+        private fun parseAnotherParser(another: VarargParser): VarargParser {
             val origNeedMethodTag = mNeedMethodTag
             val origOutputNull = mShouldOutputNull
             mNeedMethodTag = false
@@ -159,7 +159,7 @@ object Lg {
             return this
         }
 
-        fun parse(vararg objects: Any?): ObjectArrayParser {
+        fun parse(vararg objects: Any?): VarargParser {
 
             for (obj in objects) {
                 if (obj == null && !mShouldOutputNull) continue
@@ -180,7 +180,7 @@ object Lg {
                     }
 
                     //process the data======================================================
-                } else if (obj is ObjectArrayParser) {
+                } else if (obj is VarargParser) {
                     parseAnotherParser(obj)
                 } else if (obj is Array<*>) {//recursively parse Object[] in Object[], including native with any class type
                     val origOutputNull = mShouldOutputNull
@@ -279,8 +279,8 @@ object Lg {
     /**@param type: if unknown, use the result parsed from objects; if still unknown, assertion fails
      */
     @Suppress("FunctionName")
-    private fun _log(type: Type, vararg objects: Any?): ObjectArrayParser {
-        val parser = ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg).parse(*objects)
+    private fun _log(type: Type, vararg objects: Any?): VarargParser {
+        val parser = VarargParser(VarargParser.Settings.FinalMsg).parse(*objects)
         parser.mLgType = if (type == Type.UNKNOWN) parser.mLgType else type
 
         val remainingString = StringBuilder(parser.toString())
@@ -370,7 +370,7 @@ object Lg {
             Char::class -> Arrays.toString(obj as CharArray?)
             Boolean::class -> Arrays.toString(obj as BooleanArray?)
             else -> throw UnsupportedOperationException(PRIMITIVE_LOG_TAG + TAG_END
-                    + ObjectArrayParser::class.java.canonicalName
+                    + VarargParser::class.java.canonicalName
                     + "." + object : Any() {}.javaClass.enclosingMethod.name
                     + "(): can't parse native array with primitive type yet: "
                     + componentType + "[]")
@@ -378,14 +378,14 @@ object Lg {
     }
 
     @JvmStatic
-    fun getPrioritizedMessage(vararg messages: Any?): ObjectArrayParser {
-        return ObjectArrayParser(ObjectArrayParser.Settings.PrioritizedMsg).parse(*messages)
+    fun getPrioritizedMessage(vararg messages: Any?): VarargParser {
+        return VarargParser(VarargParser.Settings.PrioritizedMsg).parse(*messages)
     }
 
     @Suppress("MemberVisibilityCanBePrivate")
     @JvmStatic
-    fun getFinalNoTagMessage(vararg messages: Any?): ObjectArrayParser {
-        return ObjectArrayParser(ObjectArrayParser.Settings.FinalMsgWithoutTag).parse(*messages)
+    fun getFinalNoTagMessage(vararg messages: Any?): VarargParser {
+        return VarargParser(VarargParser.Settings.FinalMsgWithoutTag).parse(*messages)
     }
 
     /**
@@ -397,7 +397,7 @@ object Lg {
         val self = object : Any() {
 
         }.javaClass.enclosingMethod.name
-        val parser = ObjectArrayParser(ObjectArrayParser.Settings.FinalMsg)
+        val parser = VarargParser(VarargParser.Settings.FinalMsg)
                 .parse(objects, "\n\tdirect invoker: at " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)))
 
         if (parser.mLgType == Type.UNKNOWN) {
