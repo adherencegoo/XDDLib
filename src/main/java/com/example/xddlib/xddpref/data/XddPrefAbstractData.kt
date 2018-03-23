@@ -1,6 +1,6 @@
 package com.example.xddlib.xddpref.data
 
-import com.example.xddlib.XDD
+import com.example.xddlib.Lg
 import java.util.*
 
 /**
@@ -22,7 +22,7 @@ internal constructor(val key: String,
 
     @JvmOverloads
     operator fun get(showLog: Boolean = true): T {
-        if (showLog) XDD.Lg.printStackTrace(this)
+        if (showLog) Lg.printStackTrace(this)
         return NativePreferenceHelper[key, mDefaultValue]
     }
 

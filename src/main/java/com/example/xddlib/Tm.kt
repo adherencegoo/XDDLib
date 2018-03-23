@@ -9,7 +9,7 @@ import java.util.*
 /**
  * Created by Owen_Chen on 2018/3/23.
  */
-private class Timing internal constructor(internal val mId: Any, internal val mInfo: XDD.Lg.ObjectArrayParser) {
+private class Timing internal constructor(internal val mId: Any, internal val mInfo: Lg.ObjectArrayParser) {
     internal var t1 = java.lang.Long.MAX_VALUE
     internal var t2 = java.lang.Long.MIN_VALUE
 
@@ -32,7 +32,7 @@ private class Timing internal constructor(internal val mId: Any, internal val mI
 private class Timeline internal constructor(internal val mId: Any) {
     private val mTimings = ArrayList<Timing>()
 
-    internal fun tick(info: XDD.Lg.ObjectArrayParser): Timing {
+    internal fun tick(info: Lg.ObjectArrayParser): Timing {
         return Timing(mId, info).also { mTimings.add(it) }
     }
 
@@ -112,7 +112,7 @@ private object TimelineManager {
             if (mTimelineCollection.size == 1) {//get the only timeline
                 target = mTimelineCollection.values.iterator().next()
             } else {
-                Assert.fail(XDD.Lg.PRIMITIVE_LOG_TAG + XDD.Lg.TAG_END + "There are " + mTimelineCollection.size + " Timelines, but no id is given")
+                Assert.fail(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END + "There are " + mTimelineCollection.size + " Timelines, but no id is given")
             }
         } else {
             target = mTimelineCollection[id]
@@ -125,7 +125,7 @@ private object TimelineManager {
         if (asNew) {
             target!!.clear()
         } else {
-            Assert.assertTrue(XDD.Lg.PRIMITIVE_LOG_TAG + XDD.Lg.TAG_END + "Should not be empty, but it is actually", target!!.size() != 0)
+            Assert.assertTrue(Lg.PRIMITIVE_LOG_TAG + Lg.TAG_END + "Should not be empty, but it is actually", target!!.size() != 0)
         }
 
         return target
@@ -148,7 +148,7 @@ object Tm {
         val t1 = System.currentTimeMillis()
 
         val timeline = TimelineManager.getTargetTimeline(id ?: t1, true)
-        val timing = timeline.tick(XDD.Lg.log(XDD.Lg.DEFAULT_INTERNAL_LG_TYPE, XDD.Lg.getPrioritizedMessage("id:" + timeline.mId), "start timer~", objects))
+        val timing = timeline.tick(Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "start timer~", objects))
 
         timing.t1 = t1
         timing.t2 = System.currentTimeMillis()
@@ -166,7 +166,7 @@ object Tm {
         val t1 = System.currentTimeMillis()
 
         val timeline = TimelineManager.getTargetTimeline(id, false)
-        val timing = timeline.tick(XDD.Lg.log(XDD.Lg.DEFAULT_INTERNAL_LG_TYPE, XDD.Lg.getPrioritizedMessage("id:" + timeline.mId), "timer ticks", objects))
+        val timing = timeline.tick(Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "timer ticks", objects))
 
         timing.t1 = t1
         timing.t2 = System.currentTimeMillis()
@@ -177,19 +177,19 @@ object Tm {
      * @param id see [.tick]
      */
     @JvmStatic
-    fun end(id: Any?, vararg objects: Any?): XDD.Lg.ObjectArrayParser {
+    fun end(id: Any?, vararg objects: Any?): Lg.ObjectArrayParser {
         val t1 = System.currentTimeMillis()
 
-        val timeline = TimelineManager.getTargetTimeline(id, false)
-        val timing = timeline.tick(//need not output log at this moment
-                XDD.Lg.ObjectArrayParser(XDD.Lg.ObjectArrayParser.Settings.FinalMsg)
-                        .parse(XDD.Lg.DEFAULT_INTERNAL_LG_TYPE, XDD.Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects))
+    val timeline = TimelineManager.getTargetTimeline(id, false)
+    val timing = timeline.tick(//need not output log at this moment
+            Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg)
+                    .parse(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "end timer!", objects))
 
         timing.t1 = t1
         timing.t2 = System.currentTimeMillis()
 
     //about 1ms for the following actions
-    val parser = XDD.Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline)//output the elapsed time
+    val parser = Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline)//output the elapsed time
     TimelineManager.remove(timeline.mId)
     return parser
 }
@@ -206,18 +206,17 @@ object Tm {
                        vararg objects: Any?) {
         val timestamp = System.currentTimeMillis()
 
-        val parser = XDD.Lg.ObjectArrayParser(XDD.Lg.ObjectArrayParser.Settings.FinalMsg)
-                .parse(XDD.Lg.DEFAULT_INTERNAL_LG_TYPE, "timestamp:$timestamp", objects)
+        val parser = Lg.ObjectArrayParser(Lg.ObjectArrayParser.Settings.FinalMsg)
+                .parse(Lg.DEFAULT_INTERNAL_LG_TYPE, "timestamp:$timestamp", objects)
 
-        try {
-            for (i in 0 until count) {
-                XDD.Lg.log(parser, String.format(Locale.getDefault(), "[%d/%d] go to sleep %d ms", i, count, ms))
-                Thread.sleep(ms)
-            }
-        } catch (e: InterruptedException) {
-            XDD.Lg.e(e)
+    try {
+        for (i in 0 until count) {
+            Lg.log(parser, String.format(Locale.getDefault(), "[%d/%d] go to sleep %d ms", i, count, ms))
+            Thread.sleep(ms)
         }
-
-        XDD.Lg.log(parser, "wake up")
+    } catch (e: InterruptedException) {
+        Lg.e(e)
     }
+
+    Lg.log(parser, "wake up")}
 }
