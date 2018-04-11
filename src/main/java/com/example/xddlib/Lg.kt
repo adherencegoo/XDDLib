@@ -394,9 +394,7 @@ object Lg {
      */
     @JvmStatic
     fun printStackTrace(vararg objects: Any?) {
-        val self = object : Any() {
-
-        }.javaClass.enclosingMethod.name
+        val self = "printStackTrace"
         val parser = VarargParser(VarargParser.Settings.FinalMsg)
                 .parse(objects, "\n\tdirect invoker: at " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)))
 
