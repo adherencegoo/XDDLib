@@ -11,20 +11,26 @@ object LooperDumper {
     private val mFieldMessageFromMessageQueue = MessageQueue::class.java.getDeclaredField("mMessages").also { it.isAccessible = true }
     private val mFieldNextMessage = Message::class.java.getDeclaredField("next").also { it.isAccessible = true }
 
+    @Suppress("MemberVisibilityCanBePrivate")
     @JvmStatic
-    fun dump(handler: Handler) {
-        val parser = Lg.getFinalNoTagMessage(Lg.getPrioritizedMessage(handler))
-        parser.parse(Lg.LF, "Messages in looper:")
-
-        var index = 0
-        var messages = mFieldMessageFromMessageQueue.get(mFieldMessageQueueFromLooper.get(handler.looper))
-        while (messages != null) {
-            messages = messages.let {
-                parser.parse(Lg.LF, "[${index++}]:", it)
-                mFieldNextMessage.get(it)
+    fun getMessages(handler: Handler): List<Message> {
+        val messageList = mutableListOf<Message>()
+        var message = mFieldMessageFromMessageQueue.get(mFieldMessageQueueFromLooper.get(handler.looper)) as? Message
+        while (message != null) {
+            message = message.let {
+                messageList.add(it)
+                mFieldNextMessage.get(it) as? Message
             }
         }
+        return messageList
+    }
 
-        Lg.v(parser)
+    @JvmStatic
+    fun dump(handler: Handler) {
+        Lg.v(Lg.getPrioritizedMessage(handler),
+                "\nMessages in looper:\n",
+                getMessages(handler)
+                        .withIndex()
+                        .joinToString(separator = ",\n", prefix = "[ ", postfix = " ]") {"${it.index}: ${it.value}"})
     }
 }
