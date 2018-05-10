@@ -259,7 +259,7 @@ object Lg {
         companion object {
 
             /** When the previous ends with one of these chars, need no delimiter  */
-            private val sDelimiterKillerPostfix = ArrayList(Arrays.asList(':', '(', '[', '{'))
+            private val sDelimiterKillerPostfix = ArrayList(Arrays.asList(':', '(', '[', '{', '\n'))
 
             private fun needDelimiterBasedOnPostfix(builder: StringBuilder?): Boolean {
                 return (builder != null
