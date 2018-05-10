@@ -1,6 +1,9 @@
 package com.example.xddlib
 
 import android.app.Activity
+import android.graphics.Color
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.Menu
 import android.view.MenuItem
 import java.lang.ref.WeakReference
@@ -11,7 +14,9 @@ class XddMenuManager(activity: Activity) {
         val mItemId: Int
             get() = mTitle.hashCode()
         fun build(menu: Menu): MenuItem
-                = menu.add(Menu.NONE, mItemId, Menu.NONE, mTitle)
+                = menu.add(Menu.NONE, mItemId, Menu.NONE, mTitle).apply {
+            title = SpannableString(title).apply { setSpan(ForegroundColorSpan(Color.RED), 0, title.length, 0) }
+        }
     }
 
     private val mRefActivity = WeakReference<Activity>(activity)
