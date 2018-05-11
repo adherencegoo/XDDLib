@@ -2,13 +2,9 @@
 
 package com.example.xddlib
 
-import android.content.Context
 import android.graphics.Color
-import android.os.Handler
 import android.util.Log
-import android.widget.Toast
 import junit.framework.Assert
-import java.lang.ref.WeakReference
 import java.util.*
 import java.util.regex.Pattern
 
@@ -34,8 +30,6 @@ object Lg {
 
     private val TYPES = arrayOf(Type.V, Type.D, Type.I, Type.W, Type.E)
     private val COLORS = intArrayOf(Color.WHITE, Color.BLUE, Color.GREEN, Color.YELLOW, Color.RED)
-
-    private var sRefCachedToast: WeakReference<Toast>? = null
 
     enum class Type constructor(val mNativeType: Int, val mNativeFunction: ((String, String) -> Int)?) {
         V(Log.VERBOSE, Log::v),
@@ -406,20 +400,6 @@ object Lg {
             Log.v("System.err", prefix + XDD.getSeparator("$self end", '^'))
         } else if (parser.mLgType != Type.NONE) {//avoid redundant process
             log(parser, Exception(self))
-        }
-    }
-
-    @JvmStatic
-    fun showToast(context: Context, vararg objects: Any?) {
-        val parser = getFinalNoTagMessage(DEFAULT_INTERNAL_LG_TYPE,
-                "(" + Throwable().stackTrace[0].methodName + ")",
-                objects)
-        log(parser)
-
-        Handler(context.mainLooper).post {
-            sRefCachedToast?.get()?.cancel()
-            sRefCachedToast = WeakReference(
-                    Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG).apply { show() })
         }
     }
 
