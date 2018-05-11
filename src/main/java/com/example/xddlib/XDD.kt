@@ -57,7 +57,7 @@ object XDD {
         canvas.drawLine(0f, 0f, imageWidth.toFloat(), imageHeight.toFloat(), paint)
         canvas.drawLine(0f, imageHeight.toFloat(), imageWidth.toFloat(), 0f, paint)
         //draw text
-        if (msg != null && !msg.isEmpty()) {
+        if (!TextUtils.isEmpty(msg)) {
             paint.textSize = 22f
             canvas.drawText(msg, (imageWidth / 2).toFloat(), (imageHeight / 4).toFloat(), paint)
         }
@@ -67,9 +67,7 @@ object XDD {
     @JvmStatic
     fun saveBitmap(context: Context, bitmap: Bitmap?, fileName: String,
                    vararg objects: Any?) {
-        val tag = object : Any() {
-
-        }.javaClass.enclosingMethod.name
+        val tag = "saveBitmap"
 
         //produce full path for file
         var fileFullPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).absolutePath
@@ -112,11 +110,11 @@ object XDD {
 
     @JvmStatic
     @JvmOverloads
-    fun getSeparator(message: String?, separator: Char, count: Int = 30): String {
-        val stringBuilder = StringBuilder(count * 2 + 4 + (message?.length ?: 0))
+    fun getSeparator(message: String, separator: Char, count: Int = 30): String {
+        val stringBuilder = StringBuilder(count * 2 + 4 + (message.length))
         val halfSeparator = stringRepeat(count, separator.toString())
         stringBuilder.append(halfSeparator)
-        if (message != null && !message.isEmpty()) {
+        if (!message.isEmpty()) {
             stringBuilder.append(' ')
             stringBuilder.append(message)
             stringBuilder.append(' ')
@@ -149,34 +147,26 @@ object XDD {
 
     class StackTraceElementDescription
     /** All illegal -> fail! (At least one element must be legal)
-     * @param fileName will auto add postfix ".java" if missing
-     * @param partialClassName true if StackTraceElement.getClassName CONTAINS it
+     * @param kFileName without extension
+     * @param kPartialClassName true if StackTraceElement.getClassName CONTAINS it
      */
-    @JvmOverloads constructor(fileName: String?,
-                              internal val kPartialClassName: String?,
-                              internal val kMethodName: String?,
-                              internal val kLineNumber: Int = -1) {
-        internal val kFileName: String?
+    @JvmOverloads constructor(private val kFileName: String?,
+                              private val kPartialClassName: String?,
+                              private val kMethodName: String?,
+                              private val kLineNumber: Int = -1) {
 
         constructor(fileName: String?,
                     klass: Class<*>,
                     methodName: String?) : this(fileName, klass.name, methodName)
 
-        constructor(fileName: String?,
-                    klass: Class<*>,
-                    methodName: String?,
-                    lineNumber: Int) : this(fileName, klass.name, methodName, lineNumber)
-
         init {
             //All illegal -> fail! (At least one element must be legal)
-            Assert.assertFalse(fileName == null && kPartialClassName == null && kMethodName == null && kLineNumber <= 0)
-
-            kFileName = if (fileName != null && !fileName.endsWith(".java")) "$fileName.java" else fileName
+            Assert.assertFalse(kFileName == null && kPartialClassName == null && kMethodName == null && kLineNumber <= 0)
         }
 
         internal fun isMatched(element: StackTraceElement): Boolean {
             var matched = true
-            if (/*found && */kFileName != null) matched = element.fileName == kFileName
+            if (/*found && */kFileName != null) matched = element.fileName.startsWith(kFileName)
             if (matched && kPartialClassName != null) matched = element.className.contains(kPartialClassName)
             if (matched && kMethodName != null) matched = element.methodName == kMethodName
             if (matched && kLineNumber > 0) matched = element.lineNumber == kLineNumber
@@ -192,9 +182,9 @@ object XDD {
 
         val kElements = Thread.currentThread().stackTrace
         for (kElement in kElements) {
-            for (i in kUnmatchedDescriptions.indices) {
-                if (kUnmatchedDescriptions[i].isMatched(kElement)) {
-                    kUnmatchedDescriptions.removeAt(i)
+            for (element in kUnmatchedDescriptions.withIndex()) {
+                if (element.value.isMatched(kElement)) {
+                    kUnmatchedDescriptions.removeAt(element.index)
                     break//it's impossible to match 2 descriptions using the same element, so break to next element
                 }
             }
