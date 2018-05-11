@@ -1,7 +1,5 @@
 package com.example.xddlib
 
-import android.app.Activity
-import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
@@ -28,7 +26,6 @@ import java.io.OutputStream
 import java.util.ArrayList
 import java.util.Arrays
 import java.util.Collections
-import java.util.concurrent.atomic.AtomicBoolean
 
 /** Created by Owen_Chen on 2017/3/15.  */
 
@@ -40,8 +37,6 @@ object XDD {
         } else {
             Looper.getMainLooper() == Looper.myLooper()
         }
-
-    private val sIsActionDialogShowing = AtomicBoolean(false)
 
     @JvmStatic
     fun init(context: Context) {
@@ -150,56 +145,6 @@ object XDD {
     @JvmStatic
     fun argbIntToHexString(@ColorInt color: Int): String {
         return String.format("#%08x", color)
-    }
-
-    @JvmStatic
-    fun showActionDialog(activity: Activity, //can't be ApplicationContext
-                         action: Runnable,
-                         vararg objects: Any) {
-        val kInnerMethodTag = Lg.getPrioritizedMessage(
-                "showActionDialog",
-                "timestamp:" + System.currentTimeMillis())
-
-        try {
-            //if sIsActionDialogShowing is false originally: return true and update it to true
-            if (sIsActionDialogShowing.compareAndSet(false, true)) {
-                //parse objects
-                val kParsedObjects = Lg.VarargParser(Lg.VarargParser.Settings.FinalMsg).parse(*objects)
-                val kOuterMethodTagSource = kParsedObjects.mMethodTagSource
-                kParsedObjects.mNeedMethodTag = false
-                val kDialogMessage = kParsedObjects.toString()
-
-                //log for starting
-                Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kOuterMethodTagSource, kInnerMethodTag, kParsedObjects)
-
-                //build dialog
-                val dialogBuilder = AlertDialog.Builder(activity)
-                dialogBuilder.setTitle(Lg.PRIMITIVE_LOG_TAG)
-                        .setMessage(kDialogMessage)
-                        .setPositiveButton(android.R.string.yes) { _, _ -> action.run() }
-                        .setNegativeButton(android.R.string.no, null)
-                        .setCancelable(true)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                    dialogBuilder.setOnDismissListener {
-                        //log for ending
-                        Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kInnerMethodTag,
-                                kOuterMethodTagSource,
-                                "sIsActionDialogShowing=false due to dialog dismissed")
-                        sIsActionDialogShowing.set(false)
-                    }
-                }
-
-                //show dialog
-                activity.runOnUiThread { dialogBuilder.show() }
-            } else {//sIsActionDialogShowing is true
-                Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kInnerMethodTag, "Confirm dialog is showing, skip this request")
-            }
-        } catch (e: Exception) {
-            //log for ending
-            Lg.e(kInnerMethodTag, "sIsActionDialogShowing=false due to exception", e)
-            sIsActionDialogShowing.set(false)
-        }
-
     }
 
     class StackTraceElementDescription
