@@ -4,6 +4,7 @@ package com.example.xddlib
 
 import android.content.Context
 import android.graphics.Color
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import junit.framework.Assert
@@ -415,7 +416,7 @@ object Lg {
                 objects)
         log(parser)
 
-        XDD.mMainHandler.post {
+        Handler(context.mainLooper).post {
             sRefCachedToast?.get()?.cancel()
             sRefCachedToast = WeakReference(
                     Toast.makeText(context, PRIMITIVE_LOG_TAG + TAG_END + parser, Toast.LENGTH_LONG).apply { show() })

@@ -11,7 +11,6 @@ import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.os.Handler
 import android.os.Looper
 import android.os.Vibrator
 import android.provider.MediaStore
@@ -35,10 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("unused")
 object XDD {
-    private const val DEFAULT_REPEAT_COUNT = 30
-
-    internal lateinit var mMainHandler: Handler
-
     val isMainThread: Boolean
         get() = if (Build.VERSION.SDK_INT >= 23) {
             Looper.getMainLooper().isCurrentThread
@@ -50,7 +45,6 @@ object XDD {
 
     @JvmStatic
     fun init(context: Context) {
-        mMainHandler = Handler(context.mainLooper)
         NativePreferenceHelper.init(context)
     }
 
@@ -123,7 +117,7 @@ object XDD {
 
     @JvmStatic
     @JvmOverloads
-    fun getSeparator(message: String?, separator: Char, count: Int = DEFAULT_REPEAT_COUNT): String {
+    fun getSeparator(message: String?, separator: Char, count: Int = 30): String {
         val stringBuilder = StringBuilder(count * 2 + 4 + (message?.length ?: 0))
         val halfSeparator = stringRepeat(count, separator.toString())
         stringBuilder.append(halfSeparator)
@@ -134,11 +128,6 @@ object XDD {
         }
         stringBuilder.append(halfSeparator)
         return stringBuilder.toString()
-    }
-
-    @JvmStatic
-    fun stringRepeat(str: String): String {
-        return stringRepeat(DEFAULT_REPEAT_COUNT, str)
     }
 
     @Suppress("MemberVisibilityCanBePrivate")
@@ -168,9 +157,7 @@ object XDD {
                          action: Runnable,
                          vararg objects: Any) {
         val kInnerMethodTag = Lg.getPrioritizedMessage(
-                object : Any() {
-
-                }.javaClass.enclosingMethod.name,
+                "showActionDialog",
                 "timestamp:" + System.currentTimeMillis())
 
         try {
@@ -189,16 +176,18 @@ object XDD {
                 val dialogBuilder = AlertDialog.Builder(activity)
                 dialogBuilder.setTitle(Lg.PRIMITIVE_LOG_TAG)
                         .setMessage(kDialogMessage)
-                        .setPositiveButton(android.R.string.yes) { dialog, which -> action.run() }
+                        .setPositiveButton(android.R.string.yes) { _, _ -> action.run() }
                         .setNegativeButton(android.R.string.no, null)
                         .setCancelable(true)
-                        .setOnDismissListener {
-                            //log for ending
-                            Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kInnerMethodTag,
-                                    kOuterMethodTagSource,
-                                    "sIsActionDialogShowing=false due to dialog dismissed")
-                            sIsActionDialogShowing.set(false)
-                        }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    dialogBuilder.setOnDismissListener {
+                        //log for ending
+                        Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, kInnerMethodTag,
+                                kOuterMethodTagSource,
+                                "sIsActionDialogShowing=false due to dialog dismissed")
+                        sIsActionDialogShowing.set(false)
+                    }
+                }
 
                 //show dialog
                 activity.runOnUiThread { dialogBuilder.show() }
