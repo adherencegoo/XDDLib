@@ -1,4 +1,4 @@
-package com.example.xddlib.xddpref.ui
+package com.example.xddlib.userinput.xddpref.ui
 
 import android.content.Context
 import android.support.annotation.ColorInt
@@ -7,7 +7,7 @@ import android.widget.Button
 import android.widget.HorizontalScrollView
 import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
-import com.example.xddlib.xddpref.data.XddPrefAbstractData
+import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
 
 /**
  * Created by adher on 2017/7/20.

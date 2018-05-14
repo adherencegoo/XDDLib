@@ -1,12 +1,9 @@
-package com.example.xddlib.xddpref.data
+package com.example.xddlib.userinput.xddpref.data
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.Context
-import android.content.DialogInterface
-import android.content.SharedPreferences
 
-import com.example.xddlib.xddpref.ui.XddPrefContainer
+import com.example.xddlib.userinput.xddpref.ui.XddPrefContainer
 
 import java.util.LinkedHashMap
 

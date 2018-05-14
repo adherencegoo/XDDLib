@@ -1,8 +1,9 @@
-package com.example.xddlib
+package com.example.xddlib.userinput
 
 import android.app.Activity
 import android.app.AlertDialog
 import android.os.Build
+import com.example.xddlib.presentation.Lg
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("unused")

@@ -1,9 +1,10 @@
-package com.example.xddlib
+package com.example.xddlib.analysis
 
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.os.MessageQueue
+import com.example.xddlib.presentation.Lg
 
 @Suppress("unused")
 object LooperDumper {

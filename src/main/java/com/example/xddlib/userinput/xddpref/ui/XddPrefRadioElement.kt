@@ -1,4 +1,4 @@
-package com.example.xddlib.xddpref.ui
+package com.example.xddlib.userinput.xddpref.ui
 
 import android.content.Context
 import android.util.AttributeSet
@@ -7,8 +7,8 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
-import com.example.xddlib.xddpref.data.XddPrefAbstractData
-import com.example.xddlib.xddpref.data.XddPrefEnumData
+import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
+import com.example.xddlib.userinput.xddpref.data.XddPrefEnumData
 import junit.framework.Assert
 
 /**

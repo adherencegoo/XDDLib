@@ -1,4 +1,4 @@
-package com.example.xddlib.xddpref.ui
+package com.example.xddlib.userinput.xddpref.ui
 
 import android.content.Context
 import android.util.AttributeSet
@@ -7,8 +7,8 @@ import android.widget.LinearLayout
 
 import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
-import com.example.xddlib.xddpref.data.XddPrefAbstractData
-import com.example.xddlib.xddpref.data.XddPrefBinaryData
+import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
+import com.example.xddlib.userinput.xddpref.data.XddPrefBinaryData
 
 /**
  * Created by adher on 2017/7/20.

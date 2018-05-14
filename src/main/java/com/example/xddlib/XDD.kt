@@ -14,8 +14,9 @@ import android.os.Vibrator
 import android.provider.MediaStore
 import android.support.annotation.ColorInt
 import android.text.TextUtils
+import com.example.xddlib.presentation.Lg
 
-import com.example.xddlib.xddpref.data.NativePreferenceHelper
+import com.example.xddlib.userinput.xddpref.data.NativePreferenceHelper
 
 import junit.framework.Assert
 

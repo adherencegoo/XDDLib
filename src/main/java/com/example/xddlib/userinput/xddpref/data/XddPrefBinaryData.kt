@@ -1,4 +1,4 @@
-package com.example.xddlib.xddpref.data
+package com.example.xddlib.userinput.xddpref.data
 
 /**
  * Created by adher on 2017/7/20.

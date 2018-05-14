@@ -1,6 +1,6 @@
-package com.example.xddlib.xddpref.data
+package com.example.xddlib.userinput.xddpref.data
 
-import com.example.xddlib.Lg
+import com.example.xddlib.presentation.Lg
 import java.util.*
 
 /**

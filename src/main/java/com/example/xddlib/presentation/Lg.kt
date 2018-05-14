@@ -1,9 +1,11 @@
 @file:Suppress("unused")
 
-package com.example.xddlib
+package com.example.xddlib.presentation
 
 import android.graphics.Color
 import android.util.Log
+import com.example.xddlib.BuildConfig
+import com.example.xddlib.XDD
 import junit.framework.Assert
 import java.util.*
 import java.util.regex.Pattern
@@ -417,7 +419,7 @@ object Lg {
             }
         }
 
-        Assert.fail("$PRIMITIVE_LOG_TAG$TAG_END Internal method failed!")
+        Assert.fail("${PRIMITIVE_LOG_TAG}${TAG_END} Internal method failed!")
         return elements[0]//unreachable
     }
 

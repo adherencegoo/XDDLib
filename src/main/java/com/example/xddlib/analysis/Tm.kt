@@ -1,8 +1,9 @@
 @file:Suppress("unused")
 
-package com.example.xddlib
+package com.example.xddlib.analysis
 
 import android.support.annotation.IntRange
+import com.example.xddlib.presentation.Lg
 import junit.framework.Assert
 import java.util.*
 
@@ -190,7 +191,7 @@ object Tm {
 
     //about 1ms for the following actions
     val parser = Lg.log(timing.mInfo.mLgType/*reuse*/, timing.mInfo.mMethodTagSource/*reuse*/, timeline)//output the elapsed time
-    TimelineManager.remove(timeline.mId)
+        TimelineManager.remove(timeline.mId)
     return parser
 }
 

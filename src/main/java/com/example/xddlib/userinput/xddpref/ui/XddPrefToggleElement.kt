@@ -1,4 +1,4 @@
-package com.example.xddlib.xddpref.ui
+package com.example.xddlib.userinput.xddpref.ui
 
 import android.content.Context
 import android.content.res.ColorStateList
@@ -6,8 +6,8 @@ import android.util.AttributeSet
 import android.widget.ToggleButton
 import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
-import com.example.xddlib.xddpref.data.XddPrefAbstractData
-import com.example.xddlib.xddpref.data.XddPrefBinaryData
+import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
+import com.example.xddlib.userinput.xddpref.data.XddPrefBinaryData
 import junit.framework.Assert
 
 /**
