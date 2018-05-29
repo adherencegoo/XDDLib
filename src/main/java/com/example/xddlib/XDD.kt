@@ -2,6 +2,10 @@ package com.example.xddlib
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
+import android.database.DatabaseUtils
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -149,5 +153,103 @@ object XDD {
     @JvmStatic
     fun vibrate(context: Context, ms: Long) {
         (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(ms)
+    }
+
+    @JvmStatic
+    fun checkDatabaseEquality(fullPath1: String, fullPath2: String, vararg tables: String): Boolean {
+        Assert.assertTrue(tables.isNotEmpty())
+
+        val tagDb = Lg.getPrioritizedMessage(Lg.DEFAULT_INTERNAL_LG_TYPE)
+        Lg.log(tagDb, "Comparing databases:",
+                Lg.LF + Lg.TAB, fullPath1,
+                Lg.LF + Lg.TAB, fullPath2)
+
+        var db1: SQLiteDatabase? = null
+        var db2: SQLiteDatabase? = null
+        try {
+            db1 = SQLiteDatabase.openDatabase(fullPath1, null, SQLiteDatabase.OPEN_READONLY)
+            db2 = SQLiteDatabase.openDatabase(fullPath2, null, SQLiteDatabase.OPEN_READONLY)
+
+            tables.forEach { table ->
+                val tagTable = Lg.getPrioritizedMessage(tagDb, "table:$table")
+                Lg.log(tagTable, "Comparing ...")
+
+                var cursor1: Cursor? = null
+                var cursor2: Cursor? = null
+                try {
+                    cursor1 = db1.query(table, null, null, null, null, null, null)
+                    cursor2 = db2.query(table, null, null, null, null, null, null)
+
+                    if (cursor1 == null || cursor2 == null) {
+                        Lg.e(tagTable, "cursor1:$cursor1", "cursor2:$cursor2")
+                        return false
+                    } else if (cursor1.columnCount != cursor2.columnCount) {// Column count
+                        Lg.e(tagTable, "Column counts mismatch!",
+                                Lg.LF + Lg.TAB, cursor1.columnNames,
+                                Lg.LF + Lg.TAB, cursor2.columnNames)
+                        return false
+                    } else if (!(cursor1.columnNames contentDeepEquals cursor2.columnNames)) {
+                        Lg.e(tagTable, "Column names mismatches",
+                                Lg.LF + Lg.TAB, cursor1.columnNames,
+                                Lg.LF + Lg.TAB, cursor2.columnNames)
+                        return false
+                    } else if (cursor1.count != cursor2.count) {// Row count
+                        Lg.e(tagTable, "Row counts mismatch!",
+                                "${cursor1.count} v.s. ${cursor2.count}")
+                        return false
+                    } else {// Row content
+                        val values1 = ContentValues()
+                        val values2 = ContentValues()
+                        while (cursor1.moveToNext() and cursor2.moveToNext()) {// For each row
+                            val tagRow = Lg.getPrioritizedMessage(tagTable,
+                                    "Row contents not equal!",
+                                    "rowIndex:${cursor1.position}")
+
+                            DatabaseUtils.cursorRowToContentValues(cursor1, values1)
+                            DatabaseUtils.cursorRowToContentValues(cursor2, values2)
+
+                            /* Extract blob(byte array) form Cursor and compare them,
+                            Remove blob from ContentValues*/
+                            for (colIdx in 0 until cursor1.columnCount) {
+                                if (cursor1.getType(colIdx) == Cursor.FIELD_TYPE_BLOB
+                                        && cursor2.getType(colIdx) == Cursor.FIELD_TYPE_BLOB) {
+                                    val colName = cursor1.getColumnName(colIdx)
+                                    if (cursor1.getBlob(colIdx) contentEquals cursor2.getBlob(colIdx)) {
+                                        values1.remove(colName)
+                                        values2.remove(colName)
+                                    } else {
+                                        Lg.e(tagRow, "byteArray! colName:$colName")
+                                        return false
+                                    }
+                                }
+                            }
+
+                            if (values1 != values2) {// Doesn't handle byte array equality
+                                Lg.e(tagRow,
+                                        Lg.LF + Lg.TAB, values1,
+                                        Lg.LF + Lg.TAB, values2)
+                                return false
+                            }
+                        }
+                    }
+                } catch (e: SQLiteException) {
+                    Lg.e(tagDb, e)
+                    return false
+                } finally {
+                    cursor1?.close()
+                    cursor2?.close()
+                }
+            }
+        } catch (e: SQLiteException) {
+            Lg.e(tagDb, e)
+            return false
+        } finally {
+            db1?.close()
+            db2?.close()
+
+            Lg.log(tagDb, "All done")
+        }
+
+        return true
     }
 }
