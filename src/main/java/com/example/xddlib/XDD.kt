@@ -15,18 +15,13 @@ import android.provider.MediaStore
 import android.support.annotation.ColorInt
 import android.text.TextUtils
 import com.example.xddlib.presentation.Lg
-
 import com.example.xddlib.userinput.xddpref.data.NativePreferenceHelper
-
 import junit.framework.Assert
-
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.OutputStream
-import java.util.ArrayList
-import java.util.Arrays
-import java.util.Collections
+import java.util.*
 
 /** Created by Owen_Chen on 2017/3/15.  */
 
