@@ -159,7 +159,7 @@ object XDD {
 
     /**@return root cause of not equal*/
     @JvmStatic
-    fun checkDatabaseEquality(fullPath1: String, fullPath2: String, vararg tables: String): Throwable? {
+    fun checkDatabaseEquality(fullPath1: String, fullPath2: String, checkByteArray: Boolean = true, vararg tables: String): Throwable? {
         Assert.assertTrue(tables.isNotEmpty())
         if (!File(fullPath1).exists()) {
             return FileNotFoundException(fullPath1).also { Lg.e(it) }
@@ -228,7 +228,8 @@ object XDD {
                                 if (cursor1.getType(colIdx) == Cursor.FIELD_TYPE_BLOB
                                         && cursor2.getType(colIdx) == Cursor.FIELD_TYPE_BLOB) {
                                     val colName = cursor1.getColumnName(colIdx)
-                                    if (cursor1.getBlob(colIdx) contentEquals cursor2.getBlob(colIdx)) {
+                                    // If need not check byte array, directly remove Blob without comparison
+                                    if (!checkByteArray || cursor1.getBlob(colIdx) contentEquals cursor2.getBlob(colIdx)) {
                                         values1.remove(colName)
                                         values2.remove(colName)
                                     } else {
