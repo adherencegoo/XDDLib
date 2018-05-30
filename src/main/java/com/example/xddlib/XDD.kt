@@ -18,7 +18,9 @@ import android.os.Vibrator
 import android.provider.MediaStore
 import android.support.annotation.ColorInt
 import android.text.TextUtils
+import com.example.xddlib.analysis.XddException
 import com.example.xddlib.presentation.Lg
+import com.example.xddlib.presentation.XddToast
 import com.example.xddlib.userinput.xddpref.data.NativePreferenceHelper
 import junit.framework.Assert
 import java.io.File
@@ -155,14 +157,26 @@ object XDD {
         (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(ms)
     }
 
+    /**@return root cause of not equal*/
     @JvmStatic
-    fun checkDatabaseEquality(fullPath1: String, fullPath2: String, vararg tables: String): Boolean {
+    fun checkDatabaseEquality(fullPath1: String, fullPath2: String, vararg tables: String): Throwable? {
         Assert.assertTrue(tables.isNotEmpty())
+        if (!File(fullPath1).exists()) {
+            return FileNotFoundException(fullPath1).also { Lg.e(it) }
+        }
+        if (!File(fullPath2).exists()) {
+            return FileNotFoundException(fullPath2).also { Lg.e(it) }
+        }
 
         val tagDb = Lg.getPrioritizedMessage(Lg.DEFAULT_INTERNAL_LG_TYPE)
         Lg.log(tagDb, "Comparing databases:",
                 Lg.LF + Lg.TAB, fullPath1,
                 Lg.LF + Lg.TAB, fullPath2)
+
+        if (fullPath1 == fullPath2) {
+            Lg.w(tagDb, "*** same db file***")
+            return null
+        }
 
         var db1: SQLiteDatabase? = null
         var db2: SQLiteDatabase? = null
@@ -181,22 +195,22 @@ object XDD {
                     cursor2 = db2.query(table, null, null, null, null, null, null)
 
                     if (cursor1 == null || cursor2 == null) {
-                        Lg.e(tagTable, "cursor1:$cursor1", "cursor2:$cursor2")
-                        return false
+                        return XddException(tagTable, "cursor1:$cursor1", "cursor2:$cursor2")
+                                .also { Lg.e(it) }
                     } else if (cursor1.columnCount != cursor2.columnCount) {// Column count
-                        Lg.e(tagTable, "Column counts mismatch!",
+                        return XddException(tagTable, "Column counts mismatch!",
                                 Lg.LF + Lg.TAB, cursor1.columnNames,
                                 Lg.LF + Lg.TAB, cursor2.columnNames)
-                        return false
+                                .also { Lg.e(it) }
                     } else if (!(cursor1.columnNames contentDeepEquals cursor2.columnNames)) {
-                        Lg.e(tagTable, "Column names mismatches",
+                        return XddException(tagTable, "Column names mismatches",
                                 Lg.LF + Lg.TAB, cursor1.columnNames,
                                 Lg.LF + Lg.TAB, cursor2.columnNames)
-                        return false
+                                .also { Lg.e(it) }
                     } else if (cursor1.count != cursor2.count) {// Row count
-                        Lg.e(tagTable, "Row counts mismatch!",
+                        return XddException(tagTable, "Row counts mismatch!",
                                 "${cursor1.count} v.s. ${cursor2.count}")
-                        return false
+                                .also { Lg.e(it) }
                     } else {// Row content
                         val values1 = ContentValues()
                         val values2 = ContentValues()
@@ -218,31 +232,29 @@ object XDD {
                                         values1.remove(colName)
                                         values2.remove(colName)
                                     } else {
-                                        Lg.e(tagRow, "byteArray! colName:$colName")
-                                        return false
+                                        return XddException(tagRow, "byteArray! colName:$colName")
+                                                .also { Lg.e(it) }
                                     }
                                 }
                             }
 
                             if (values1 != values2) {// Doesn't handle byte array equality
-                                Lg.e(tagRow,
-                                        Lg.LF + Lg.TAB, values1,
-                                        Lg.LF + Lg.TAB, values2)
-                                return false
+                                return XddException(tagRow,
+                                        Lg.LF + Lg.TAB + "[values1]:", values1,
+                                        Lg.LF + Lg.TAB + "[values2]:", values2)
+                                        .also { Lg.e(it) }
                             }
                         }
                     }
                 } catch (e: SQLiteException) {
-                    Lg.e(tagDb, e)
-                    return false
+                    return XddException(tagDb, e.message).also { Lg.e(it) }
                 } finally {
                     cursor1?.close()
                     cursor2?.close()
                 }
             }
         } catch (e: SQLiteException) {
-            Lg.e(tagDb, e)
-            return false
+            return XddException(tagDb, e.message).also { Lg.e(it) }
         } finally {
             db1?.close()
             db2?.close()
@@ -250,6 +262,6 @@ object XDD {
             Lg.log(tagDb, "All done")
         }
 
-        return true
+        return null
     }
 }
