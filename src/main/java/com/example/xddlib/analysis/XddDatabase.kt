@@ -71,6 +71,7 @@ object XddDatabase {
                 var cursor2: Cursor? = null
                 try {
                     val columns = tableDetail.value?.toTypedArray() // Nullable
+                    columns?.let { Lg.w(tagTable, "Not comparing all columns, only:\n", it) }
                     cursor1 = db1.query(tableDetail.key, columns, null, null, null, null, null)
                     cursor2 = db2.query(tableDetail.key, columns, null, null, null, null, null)
 
