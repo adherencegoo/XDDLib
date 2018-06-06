@@ -66,6 +66,7 @@ object XddDatabase {
             tableDetailList.forEach { tableDetail ->
                 val tagTable = Lg.getPrioritizedMessage(tagDb, "tableDetail:$tableDetail")
                 Lg.log(tagTable, "Comparing ...")
+                var tableTheSame = true
 
                 var cursor1: Cursor? = null
                 var cursor2: Cursor? = null
@@ -152,6 +153,7 @@ object XddDatabase {
 
                             if (diffValue1 != null && diffValue2 != null) {
                                 differences.getOrPut(tableDetail.key) { mutableMapOf() }[cursor1.position] = Pair(diffValue1, diffValue2)
+                                tableTheSame = false
                             }
                         }
                     }
@@ -159,6 +161,10 @@ object XddDatabase {
                     cursor1?.close()
                     cursor2?.close()
                 }
+
+                Lg.log(tagTable,
+                        if (tableTheSame) Lg.Type.I else Lg.Type.W,
+                        "table comparison: ${if (tableTheSame) "same" else "different"}")
             }
         } finally {
             db1?.close()
