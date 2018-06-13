@@ -2,6 +2,8 @@ package com.example.xddlib.userinput
 
 import android.app.Activity
 import android.graphics.Color
+import android.os.Build
+import android.support.annotation.RequiresApi
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.view.Menu
@@ -20,20 +22,22 @@ class XddMenuManager(activity: Activity) {
     }
 
     private val mRefActivity = WeakReference<Activity>(activity)
-    private val mItemBuilders = ArrayList<MenuItemBuilder>()
+    private val mItemBuilders = HashMap<Int, MenuItemBuilder>()
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun addAction(title: String, action: Runnable) {
-        mItemBuilders.add(MenuItemBuilder(title, action))
-        mRefActivity.get()?.invalidateOptionsMenu()
+        // Return previous value
+        mItemBuilders.putIfAbsent(title.hashCode(), MenuItemBuilder(title, action))
+                ?: mRefActivity.get()?.invalidateOptionsMenu() // No previous value
     }
 
     fun onCreateOptionsMenu(menu: Menu) = mItemBuilders.let {
-        it.forEach {builder -> builder.build(menu)}
+        it.values.forEach {builder -> builder.build(menu)}
         it.size != 0
     }
 
     fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val found = mItemBuilders.find { builder -> item.itemId == builder.mItemId }
+        val found = mItemBuilders[item.itemId]
         found?.mAction?.run()
         return found != null
     }
