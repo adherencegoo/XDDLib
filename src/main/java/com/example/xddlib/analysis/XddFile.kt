@@ -40,12 +40,19 @@ object XddFile {
     }
 
     @JvmStatic
-    fun <T> readFromFile(filename: String, javaClass: Class<T>): T {
-        val finalFilename = if (filename.startsWith(File.separator)) filename else rootDirSlash + filename
+    fun <T> readFromFile(filenameWithExt: String, javaClass: Class<T>): T? {
+        val finalFilename = if (filenameWithExt.startsWith(File.separator)) filenameWithExt else rootDirSlash + filenameWithExt
 
-        val input = ObjectInputStream(FileInputStream(finalFilename))
-        val ret = javaClass.cast(input.readObject())
-        input.close()
+        var input: InputStream? = null
+        var ret: T? = null
+        try {
+            input = ObjectInputStream(FileInputStream(finalFilename))
+            ret = javaClass.cast(input.readObject())
+        } catch (e: FileNotFoundException) {
+            Lg.e(e)
+        } finally {
+            input?.close()
+        }
 
         return ret
 
