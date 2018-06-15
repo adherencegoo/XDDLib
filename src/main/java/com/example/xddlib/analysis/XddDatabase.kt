@@ -91,8 +91,9 @@ object XddDatabase {
                                 Lg.LF + Lg.TAB, cursor2.columnNames)
 
                     } else if (cursor1.count != cursor2.count) {// Row count
-                        throw XddException(tagTable, "Row counts mismatch",
-                                "${cursor1.count} v.s. ${cursor2.count}")
+                        differences[tableDetail.key] = mutableMapOf(-1 to Pair(ContentValues(), ContentValues()))
+                        Lg.e(XddException(tagTable, "Row counts mismatch",
+                                "${cursor1.count} v.s. ${cursor2.count}"))
 
                     } else {// Row content
                         var checkColType = true
