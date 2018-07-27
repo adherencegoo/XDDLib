@@ -6,8 +6,9 @@ package com.example.xddlib.userinput.xddpref.data
 
 class XddPrefBinaryData @JvmOverloads constructor(key: String,
                                                   trueDescription: String = key,
-                                                  falseDescription: String = "Not $trueDescription")
-    : XddPrefEnumData<Boolean>(key, false, true) {
+                                                  falseDescription: String = "Not $trueDescription",
+                                                  defaultBoolean: Boolean = false)
+    : XddPrefEnumData<Boolean>(key, defaultBoolean, !defaultBoolean) {
     private val kFalseDescription: String = "(False) $falseDescription"
     private val kTrueDescription: String = "(True) $trueDescription"
 
