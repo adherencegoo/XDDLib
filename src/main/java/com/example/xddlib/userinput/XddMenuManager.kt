@@ -27,7 +27,7 @@ class XddMenuManager(activity: Activity) {
     @RequiresApi(Build.VERSION_CODES.N)
     fun addAction(title: String, action: Runnable) {
         // Return previous value
-        mItemBuilders.putIfAbsent(title.hashCode(), MenuItemBuilder(title, action))
+        mItemBuilders.put(title.hashCode(), MenuItemBuilder(title, action))
                 ?: mRefActivity.get()?.invalidateOptionsMenu() // No previous value
     }
 
