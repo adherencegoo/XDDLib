@@ -3,7 +3,7 @@ package com.example.xddlib.userinput
 import android.app.Activity
 import android.graphics.Color
 import android.os.Build
-import android.support.annotation.RequiresApi
+import androidx.annotation.RequiresApi
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.view.Menu

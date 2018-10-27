@@ -10,7 +10,7 @@ import android.os.Build
 import android.os.Looper
 import android.os.Vibrator
 import android.provider.MediaStore
-import android.support.annotation.ColorInt
+import androidx.annotation.ColorInt
 import android.text.TextUtils
 import com.example.xddlib.presentation.Lg
 import com.example.xddlib.userinput.xddpref.data.NativePreferenceHelper

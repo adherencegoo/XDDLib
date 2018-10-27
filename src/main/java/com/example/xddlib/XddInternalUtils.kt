@@ -4,10 +4,10 @@ import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.support.annotation.AttrRes
-import android.support.annotation.ColorInt
-import android.support.annotation.LayoutRes
-import android.support.annotation.StyleableRes
+import androidx.annotation.AttrRes
+import androidx.annotation.ColorInt
+import androidx.annotation.LayoutRes
+import androidx.annotation.StyleableRes
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup

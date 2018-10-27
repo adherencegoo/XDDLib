@@ -2,7 +2,7 @@
 
 package com.example.xddlib.analysis
 
-import android.support.annotation.IntRange
+import androidx.annotation.IntRange
 import com.example.xddlib.presentation.Lg
 import junit.framework.Assert
 import java.util.*
