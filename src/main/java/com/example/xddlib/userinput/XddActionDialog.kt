@@ -11,9 +11,9 @@ object XddActionDialog {
     private val sIsActionDialogShowing = AtomicBoolean(false)
 
     @JvmStatic
-    fun show(activity: Activity, //can't be ApplicationContext
-                         action: Runnable,
-                         vararg messages: Any) {
+    fun show(activity: Activity,
+             action: Runnable?,
+             vararg messages: Any) {
         val kInnerMethodTag = Lg.getPrioritizedMessage(
                 "showActionDialog",
                 "timestamp:" + System.currentTimeMillis())
@@ -34,9 +34,11 @@ object XddActionDialog {
                 val dialogBuilder = AlertDialog.Builder(activity)
                 dialogBuilder.setTitle(Lg.PRIMITIVE_LOG_TAG)
                         .setMessage(kDialogMessage)
-                        .setPositiveButton(android.R.string.yes) { _, _ -> action.run() }
                         .setNegativeButton(android.R.string.no, null)
                         .setCancelable(true)
+                action?.let {
+                    dialogBuilder.setPositiveButton(android.R.string.yes) { _, _ -> it.run() }
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                     dialogBuilder.setOnDismissListener {
                         //log for ending
