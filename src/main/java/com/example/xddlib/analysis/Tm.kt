@@ -6,6 +6,8 @@ import androidx.annotation.IntRange
 import com.example.xddlib.presentation.Lg
 import junit.framework.Assert
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Created by Owen_Chen on 2018/3/23.
@@ -96,7 +98,7 @@ private class Timeline internal constructor(internal val mId: Any) {
 }
 
 private object TimelineManager {
-    private val mTimelineCollection = HashMap<Any, Timeline>(3)
+    private val mTimelineCollection = ConcurrentHashMap<Any, Timeline>(3)
 
     /**
      * If id==null:<br></br>
@@ -140,6 +142,8 @@ private object TimelineManager {
 //======================================================================
 
 object Tm {
+    private val counter = AtomicInteger()
+
     /**
      * @param id used as the identifier of new timeline, leave null to use current timestamp for default
      * @return id
@@ -148,7 +152,7 @@ object Tm {
     fun begin(id: Any?, vararg objects: Any?): Any {
         val t1 = System.currentTimeMillis()
 
-        val timeline = TimelineManager.getTargetTimeline(id ?: t1, true)
+        val timeline = TimelineManager.getTargetTimeline(id ?: "${t1}_${counter.getAndIncrement()}", true)
         val timing = timeline.tick(Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, Lg.getPrioritizedMessage("id:" + timeline.mId), "start timer~", objects))
 
         timing.t1 = t1
