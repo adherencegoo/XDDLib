@@ -92,7 +92,7 @@ object XddFile {
 
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os)
 
-            val stackTraceElement = Lg.findInvokerOfDeepestInnerElementWithOffset(0)
+            val stackTraceElement = Lg.findDisplayedStackTraceElement()
             //Note: Must scan file instead of folder
             MediaScannerConnection.scanFile(context, arrayOf(fileFullPath), null) { path, uri ->
                 Lg.log(Lg.DEFAULT_INTERNAL_LG_TYPE, stackTraceElement, tag, "onScanCompleted",

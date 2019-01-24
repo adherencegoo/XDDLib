@@ -219,7 +219,7 @@ object Lg {
             }
 
             if (mNeedMethodTag && mMethodTagSource == null) {
-                mMethodTagSource = findInvokerOfDeepestInnerElementWithOffset(0)
+                mMethodTagSource = findDisplayedStackTraceElement()
             }
 
             mIsParsed = true
@@ -392,8 +392,7 @@ object Lg {
     @JvmStatic
     fun printStackTrace(vararg objects: Any?) {
         val self = "printStackTrace"
-        val parser = VarargParser(VarargParser.Settings.FinalMsg)
-                .parse(objects, "\n\tdirect invoker: at " + getMethodTag(findInvokerOfDeepestInnerElementWithOffset(1)))
+        val parser = VarargParser(VarargParser.Settings.FinalMsg).parse(objects)
 
         if (parser.mLgType == Type.UNKNOWN) {
             val prefix = "\t at "
@@ -405,22 +404,13 @@ object Lg {
         }
     }
 
-    internal fun findInvokerOfDeepestInnerElementWithOffset(offset: Int): StackTraceElement {
-        Assert.assertTrue(offset >= 0)
-        val elements = Thread.currentThread().stackTrace//smaller index, called more recently
-
-        for (idx in elements.indices.reversed()) {//search from the farthest to the recent
-            if (elements[idx].className.startsWith(BuildConfig.APPLICATION_ID)) {
-                for (jdx in idx + 1 + offset until elements.size) {
-                    if (!ACCESS_METHOD_PATTERN.matcher(elements[jdx].methodName).matches()) {//skip access method like "access$000"
-                        return elements[jdx]
-                    }
-                }
-            }
+    internal fun findDisplayedStackTraceElement(): StackTraceElement {
+        return Thread.currentThread().stackTrace.first { // Smaller index, called more recently
+            !it.className.startsWith("dalvik.system.VMStack")
+                    && !it.className.startsWith("java.lang.Thread")
+                    && !it.className.startsWith(BuildConfig.APPLICATION_ID)
+                    && !ACCESS_METHOD_PATTERN.matcher(it.methodName).matches() // Skip access method like "access$000"
         }
-
-        Assert.fail("${PRIMITIVE_LOG_TAG}${TAG_END} Internal method failed!")
-        return elements[0]//unreachable
     }
 
     /** (FileName.java:LineNumber)->OuterClass$InnerClass.MethodName  */
