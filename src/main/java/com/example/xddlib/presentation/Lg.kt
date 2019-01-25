@@ -404,6 +404,18 @@ object Lg {
         }
     }
 
+    @JvmStatic
+    fun vPrintStackTrace(vararg objects: Any?) = printStackTrace(Type.V, *objects)
+    @JvmStatic
+    fun dPrintStackTrace(vararg objects: Any?) = printStackTrace(Type.D, *objects)
+    @JvmStatic
+    fun iPrintStackTrace(vararg objects: Any?) = printStackTrace(Type.I, *objects)
+    @JvmStatic
+    fun wPrintStackTrace(vararg objects: Any?) = printStackTrace(Type.W, *objects)
+    @JvmStatic
+    fun ePrintStackTrace(vararg objects: Any?) = printStackTrace(Type.E, *objects)
+
+
     internal fun findDisplayedStackTraceElement(): StackTraceElement {
         return Thread.currentThread().stackTrace.first { // Smaller index, called more recently
             !it.className.startsWith("dalvik.system.VMStack")
