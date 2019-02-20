@@ -15,9 +15,12 @@ class XddMenuManager(activity: Activity) {
     private class MenuItemBuilder(val mTitle: String, val mAction: Runnable) {
         val mItemId: Int
             get() = mTitle.hashCode()
-        fun build(menu: Menu): MenuItem
-                = menu.add(Menu.NONE, mItemId, Menu.NONE, mTitle).apply {
-            title = SpannableString(title).apply { setSpan(ForegroundColorSpan(Color.RED), 0, title.length, 0) }
+
+        fun build(menu: Menu): MenuItem {
+            menu.removeItem(mItemId)
+            return menu.add(Menu.NONE, mItemId, Menu.NONE, mTitle).apply {
+                title = SpannableString(title).apply { setSpan(ForegroundColorSpan(Color.RED), 0, title.length, 0) }
+            }
         }
     }
 
