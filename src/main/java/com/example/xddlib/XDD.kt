@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
 import android.os.Looper
+import android.os.VibrationEffect
 import android.os.Vibrator
 import android.provider.MediaStore
 import androidx.annotation.ColorInt
@@ -140,8 +141,19 @@ object XDD {
         return false
     }
 
+    /**
+     * @param msOnOff durationOn, durationOff, durationOn, durationOff, ...*/
     @JvmStatic
-    fun vibrate(context: Context, ms: Long) {
-        (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(ms)
+    fun vibrate(context: Context, vararg msOnOff: Long) {
+        if (msOnOff.isEmpty()) return
+
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(
+                    if (msOnOff.size == 1) VibrationEffect.createOneShot(msOnOff[0], VibrationEffect.DEFAULT_AMPLITUDE)
+                    else VibrationEffect.createWaveform(longArrayOf(0, *msOnOff), -1))
+        } else {
+            vibrator.vibrate(msOnOff[0])
+        }
     }
 }
