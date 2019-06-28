@@ -2,8 +2,6 @@ package com.example.xddlib.userinput
 
 import android.app.Activity
 import android.graphics.Color
-import android.os.Build
-import androidx.annotation.RequiresApi
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.view.Menu
@@ -27,7 +25,6 @@ class XddMenuManager(activity: Activity) {
     private val mRefActivity = WeakReference<Activity>(activity)
     private val mItemBuilders = HashMap<Int, MenuItemBuilder>()
 
-    @RequiresApi(Build.VERSION_CODES.N)
     fun addAction(title: String, action: Runnable) {
         // Return previous value
         mItemBuilders.put(title.hashCode(), MenuItemBuilder(title, action))
