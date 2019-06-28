@@ -1,6 +1,8 @@
 package com.example.xddlib.userinput.xddpref.data
 
+import android.content.Context
 import com.example.xddlib.presentation.Lg
+import java.lang.ref.WeakReference
 import java.util.*
 
 /**
@@ -8,22 +10,27 @@ import java.util.*
  */
 
 abstract class XddPrefAbstractData<out T : Any>
-internal constructor(val key: String,
+internal constructor(context: Context,
+                     val key: String,
                      private val mDefaultValue: T) {
     init {
         NativePreferenceHelper.checkClassValid(mDefaultValue::class)
         XddPrefUtils.addPref(this)
     }
 
+    private val refContext = WeakReference(context)
+
     override fun toString(): String {
         return String.format(Locale.getDefault(), "key:%s, %s, SharedValue:%s",
-                key, mDefaultValue::class, NativePreferenceHelper[key, mDefaultValue])
+                key,
+                mDefaultValue::class,
+                NativePreferenceHelper[refContext.get(), key, mDefaultValue])
     }
 
     @JvmOverloads
     operator fun get(showLog: Boolean = true): T {
         if (showLog) Lg.printStackTrace(this)
-        return NativePreferenceHelper[key, mDefaultValue]
+        return NativePreferenceHelper[refContext.get(), key, mDefaultValue]
     }
 
     fun sharedValueIsEqualTo(valueAsObject: Any): Boolean {
@@ -52,10 +59,10 @@ internal constructor(val key: String,
             }
         }
 
-        return kClass.java.cast(valueMutable)
+        return kClass.java.cast(valueMutable)!!
     }
 
     fun saveToNativePreference(valueAsObject: Any) {
-        NativePreferenceHelper[key] = convertToTemplateType(valueAsObject)
+        NativePreferenceHelper[refContext.get(), key] = convertToTemplateType(valueAsObject)
     }
 }

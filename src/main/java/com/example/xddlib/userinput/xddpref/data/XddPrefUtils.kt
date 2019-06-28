@@ -2,6 +2,7 @@ package com.example.xddlib.userinput.xddpref.data
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 
 import com.example.xddlib.userinput.xddpref.ui.XddPrefContainer
 
@@ -28,9 +29,9 @@ object XddPrefUtils {
     }
 
     /**Must be invoked after [com.example.xddlib.xddpref.data.NativePreferenceHelper.init] */
-    fun removeAllPref() {
+    fun removeAllPref(context: Context) {
         sXddPrefs.clear()
-        NativePreferenceHelper.clearAll()
+        NativePreferenceHelper.clearAll(context)
     }
 
     fun showDialog(activity: Activity/*Dialog must be created via ActivityContext*/) {

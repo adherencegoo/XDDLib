@@ -1,9 +1,8 @@
 package com.example.xddlib.userinput.xddpref.data
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.example.xddlib.presentation.Lg
 
-import junit.framework.Assert
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -19,11 +18,8 @@ internal object NativePreferenceHelper {
             Long::class,
             String::class)))
 
-    private lateinit var sSingleton : SharedPreferences
-
-    fun init(context: Context) {
-        sSingleton = context.getSharedPreferences(NativePreferenceHelper::class.java.simpleName, Context.MODE_PRIVATE)
-    }
+    private fun getSharedPreference(context: Context)
+            = context.getSharedPreferences(NativePreferenceHelper::class.java.simpleName, Context.MODE_PRIVATE)
 
     fun checkClassValid(kClass: KClass<*>) {
         if (!sValidKClasses.contains(kClass)) {
@@ -31,24 +27,32 @@ internal object NativePreferenceHelper {
         }
     }
 
-    operator fun <T : Any> get(key: String, defaultValue: T): T {
-        Assert.assertNotNull(sSingleton)
+    operator fun <T : Any> get(context: Context?, key: String, defaultValue: T): T {
+        if (context == null) {
+            Lg.wPrintStackTrace("null context, return defaultValue:$defaultValue", "key:$key")
+            return defaultValue
+        }
 
-        val kClass = defaultValue::class
-        return when (kClass) {
-            Boolean::class -> kClass.java.cast(sSingleton.getBoolean(key, defaultValue as Boolean))
-            Float::class -> kClass.java.cast(sSingleton.getFloat(key, defaultValue as Float))
-            Int::class -> kClass.java.cast(sSingleton.getInt(key, defaultValue as Int))
-            Long::class -> kClass.java.cast(sSingleton.getLong(key, defaultValue as Long))
-            String::class -> kClass.java.cast(sSingleton.getString(key, defaultValue as String))
+        val preferences = getSharedPreference(context)
+
+        return when (val kClass = defaultValue::class) {
+            Boolean::class -> kClass.java.cast(preferences.getBoolean(key, defaultValue as Boolean))!!
+            Float::class -> kClass.java.cast(preferences.getFloat(key, defaultValue as Float))!!
+            Int::class -> kClass.java.cast(preferences.getInt(key, defaultValue as Int))!!
+            Long::class -> kClass.java.cast(preferences.getLong(key, defaultValue as Long))!!
+            String::class -> kClass.java.cast(preferences.getString(key, defaultValue as String))!!
             else -> throw IllegalArgumentException("Wrong type: $kClass, expected: $sValidKClasses")
         }
     }
 
-    operator fun <T : Any> set(key: String, defaultValue: T) {
-        Assert.assertNotNull(sSingleton)
+    operator fun <T : Any> set(context: Context?, key: String, defaultValue: T) {
+        if (context == null) {
+            Lg.wPrintStackTrace("null Context, do nothing")
+            return
+        }
+
         val jClass = defaultValue::class.java
-        val editor = sSingleton.edit()
+        val editor = getSharedPreference(context).edit()
         when (jClass.kotlin) {
             Boolean::class -> editor.putBoolean(key, defaultValue as Boolean)
             Float::class -> editor.putFloat(key, defaultValue as Float)
@@ -60,7 +64,7 @@ internal object NativePreferenceHelper {
         editor.apply()
     }
 
-    fun clearAll() {
-        sSingleton.edit().clear().apply()
+    fun clearAll(context: Context) {
+        getSharedPreference(context).edit().clear().apply()
     }
 }

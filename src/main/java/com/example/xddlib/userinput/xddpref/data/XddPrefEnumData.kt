@@ -1,5 +1,6 @@
 package com.example.xddlib.userinput.xddpref.data
 
+import android.content.Context
 import junit.framework.Assert
 
 import java.util.Arrays
@@ -11,10 +12,11 @@ import java.util.LinkedHashSet
 
 open class XddPrefEnumData<T : Any>
 /**"defaultValue", "value2", "otherValues": duplicated values will be ignored */
-(key: String,
+(context: Context,
+ key: String,
  defaultValue: T,
  value2: T,
- vararg otherValues: T) : XddPrefAbstractData<T>(key, defaultValue) {
+ vararg otherValues: T) : XddPrefAbstractData<T>(context, key, defaultValue) {
     val values: LinkedHashSet<T>//LinkedHashSet: no duplicated values, persist original order
 
     init {

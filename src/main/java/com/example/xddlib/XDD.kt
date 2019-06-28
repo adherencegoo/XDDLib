@@ -30,11 +30,6 @@ object XDD {
         }
 
     @JvmStatic
-    fun init(context: Context) {
-        NativePreferenceHelper.init(context)
-    }
-
-    @JvmStatic
     fun drawCross(bitmap: Bitmap, @ColorInt color: Int, msg: String?): Bitmap {
 
         val imageWidth = bitmap.width
