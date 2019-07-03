@@ -25,7 +25,7 @@ Enhanced log and other utilities for android programming
 - Usages
   - 
   ```
-  private val chosenName = XddPrefEnumData(this/*context*/, "chosenName", "Owen", "Mary", "Charlie")
+  private val chosenName = XddPrefEnumData(this/*context*/, "chosenName", "Tony", "Thor", "Steve")
   private val int = XddPrefEnumData(this/*context*/, "int", 1, 2, 3, 4)
   private val boolean = XddPrefBinaryData(this/*context*/, "boolean")
   
