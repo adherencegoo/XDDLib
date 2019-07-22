@@ -24,6 +24,7 @@ object Lg {
     val PRIMITIVE_LOG_TAG = XDD::class.java.simpleName + "D"//mutable
     const val LF = "\n"
     const val TAB = "\t"
+    const val BECOME = " --> "
     internal const val TAG_END = ": "
     private val PRIORITIZED_MSG_PATTERN = Pattern.compile("^->\\[.+\\]$")//->[ANYTHING]
     private val ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$")//->[ANYTHING]
@@ -92,6 +93,11 @@ object Lg {
     fun log(vararg objects: Any?): VarargParser {
         return _log(Type.UNKNOWN, *objects)
     }
+
+    @JvmStatic
+    @JvmOverloads
+    fun<T : Any?> become(varName: String = "", before: T, after: T)
+            = getFinalNoTagMessage("$varName:", before, BECOME, if (before == after) "(same)" else after)
 
     class VarargParser internal constructor(private val mSettings: Settings) {
         internal var mNeedMethodTag: Boolean = false
@@ -213,7 +219,7 @@ object Lg {
                         mMainMsgBuilder!!.append(objStr)
                         mMainMsgBuilder!!.append(mSettings.mBracket.mRight)
 
-                        mInsertMainMsgDelimiter = needDelimiterBasedOnPostfix(mMainMsgBuilder)
+                        mInsertMainMsgDelimiter = needDelimiterBasedOnPostfix(mMainMsgBuilder!!)
                     }
                 }
             }
@@ -243,7 +249,7 @@ object Lg {
             if (mTrArray?.isNotEmpty() == true) {
                 resultBuilder.append('\n')
                 for ((idx, tr) in mTrArray!!.withIndex()) {
-                    resultBuilder.append(XDD.getSeparator("[" + idx + "] " + tr.toString(), '-')).append('\n')
+                    resultBuilder.append(XDD.getSeparator("[$idx] $tr", '-')).append('\n')
                     resultBuilder.append(Log.getStackTraceString(tr))
                 }
                 resultBuilder.append(XDD.getSeparator("Throwable end", '='))
@@ -256,20 +262,14 @@ object Lg {
         companion object {
 
             /** When the previous ends with one of these chars, need no delimiter  */
-            private val sDelimiterKillerPostfix = ArrayList(Arrays.asList(':', '(', '[', '{', '\n'))
+            private val sDelimiterKillerPostfix: List<String> = listOf(":", "(", "[", "{", "\n", BECOME)
 
-            private fun needDelimiterBasedOnPostfix(builder: StringBuilder?): Boolean {
-                return (builder != null
-                        && builder.isNotEmpty()
-                        && !sDelimiterKillerPostfix.contains(builder[builder.length - 1]))
-            }
+            private fun needDelimiterBasedOnPostfix(builder: StringBuilder) = sDelimiterKillerPostfix.none { builder.endsWith(it) }
 
             /** When the current string starts with one of these chars, need no delimiter  */
-            private val sDelimiterKillerPrefix = ArrayList(Arrays.asList(':', ')', ']', '}'))
+            private val sDelimiterKillerPrefix: List<String> = listOf(":", ")", "]", "}", BECOME)
 
-            private fun needDelimiterBasedOnPrefix(currentString: String): Boolean {
-                return !currentString.isEmpty() && !sDelimiterKillerPrefix.contains(currentString[0])
-            }
+            private fun needDelimiterBasedOnPrefix(currentString: String) = sDelimiterKillerPrefix.none { currentString.startsWith(it) }
         }
     }
 
