@@ -105,9 +105,9 @@ object Lg {
 
         //parsed results =====================================================
         internal var mMethodTagSource: StackTraceElement? = null//cache the first found StackTraceElement
-        private var mTrArray: ArrayList<Throwable>? = null
-        private var mPrioritizedMsgBuilder: StringBuilder? = null
-        private var mMainMsgBuilder: StringBuilder? = null
+        private val mTrArray = mutableListOf<Throwable>()
+        private val mPrioritizedMsgBuilder = StringBuilder()
+        private val mMainMsgBuilder = StringBuilder(120)
         @JvmField
         var mLgType = Type.UNKNOWN//cache the LAST found one
 
@@ -138,9 +138,9 @@ object Lg {
 
         private fun reset(): VarargParser {
             mMethodTagSource = null
-            if (mTrArray != null) mTrArray!!.clear()
-            if (mPrioritizedMsgBuilder != null) mPrioritizedMsgBuilder!!.setLength(0)
-            if (mMainMsgBuilder != null) mMainMsgBuilder!!.setLength(0)
+            mTrArray.clear()
+            mPrioritizedMsgBuilder.setLength(0)
+            mMainMsgBuilder.setLength(0)
             mLgType = Type.UNKNOWN
 
             mIsParsed = false
@@ -153,7 +153,7 @@ object Lg {
             val origOutputNull = mShouldOutputNull
             mNeedMethodTag = false
             mShouldOutputNull = false
-            parse(if (another.mTrArray == null) null else another.mTrArray!!.toTypedArray(),
+            parse(if (another.mTrArray.isEmpty()) null else another.mTrArray.toTypedArray(),
                     another.mPrioritizedMsgBuilder,
                     another.mMainMsgBuilder,
                     if (another.mLgType == Type.UNKNOWN) null else another.mLgType)
@@ -171,8 +171,7 @@ object Lg {
                 if (mNeedMethodTag && mMethodTagSource == null && obj is StackTraceElement) {
                     mMethodTagSource = obj
                 } else if (obj is Throwable) {
-                    if (mTrArray == null) mTrArray = ArrayList()
-                    mTrArray!!.add(obj)
+                    mTrArray.add(obj)
                 } else if (obj is List<*>
                         && obj.size > 0
                         && obj[0] is Throwable) {//List<Throwable>
@@ -205,21 +204,18 @@ object Lg {
                     if (objStr.isEmpty()) continue
 
                     if (PRIORITIZED_MSG_PATTERN.matcher(objStr).matches()) {
-                        if (mPrioritizedMsgBuilder == null) mPrioritizedMsgBuilder = StringBuilder(30)
-                        mPrioritizedMsgBuilder!!.append(objStr)
+                        mPrioritizedMsgBuilder.append(objStr)
                     } else {//normal string
-                        if (mMainMsgBuilder == null) mMainMsgBuilder = StringBuilder(120)
-
                         //output the result
                         mInsertMainMsgDelimiter = mInsertMainMsgDelimiter and needDelimiterBasedOnPrefix(objStr)
                         if (mInsertMainMsgDelimiter) {
-                            mMainMsgBuilder!!.append(mSettings.mDelimiter)
+                            mMainMsgBuilder.append(mSettings.mDelimiter)
                         }
-                        mMainMsgBuilder!!.append(mSettings.mBracket.mLeft)
-                        mMainMsgBuilder!!.append(objStr)
-                        mMainMsgBuilder!!.append(mSettings.mBracket.mRight)
+                        mMainMsgBuilder.append(mSettings.mBracket.mLeft)
+                        mMainMsgBuilder.append(objStr)
+                        mMainMsgBuilder.append(mSettings.mBracket.mRight)
 
-                        mInsertMainMsgDelimiter = needDelimiterBasedOnPostfix(mMainMsgBuilder!!)
+                        mInsertMainMsgDelimiter = needDelimiterBasedOnPostfix(mMainMsgBuilder)
                     }
                 }
             }
@@ -241,14 +237,14 @@ object Lg {
                 resultBuilder.append(getMethodTag(mMethodTagSource!!))
             }
 
-            if (mPrioritizedMsgBuilder != null) resultBuilder.append(mPrioritizedMsgBuilder)
+            resultBuilder.append(mPrioritizedMsgBuilder)
             if (mNeedMethodTag) resultBuilder.append(TAG_END)
-            if (mMainMsgBuilder != null) resultBuilder.append(mMainMsgBuilder)
+            resultBuilder.append(mMainMsgBuilder)
 
             //tr must be at the end
-            if (mTrArray?.isNotEmpty() == true) {
+            if (mTrArray.isNotEmpty()) {
                 resultBuilder.append('\n')
-                for ((idx, tr) in mTrArray!!.withIndex()) {
+                for ((idx, tr) in mTrArray.withIndex()) {
                     resultBuilder.append(XDD.getSeparator("[$idx] $tr", '-')).append('\n')
                     resultBuilder.append(Log.getStackTraceString(tr))
                 }
