@@ -26,7 +26,6 @@ object Lg {
     const val TAB = "\t"
     const val BECOME = " --> "
     internal const val TAG_END = ": "
-    private val PRIORITIZED_MSG_PATTERN = Pattern.compile("^->\\[.+\\]$")//->[ANYTHING]
     private val ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$")//->[ANYTHING]
     private const val MAX_PRIMITIVE_LOG_LENGTH = 3500
     internal val DEFAULT_INTERNAL_LG_TYPE = Type.V
@@ -44,7 +43,7 @@ object Lg {
         UNKNOWN(-1, null)
     }
 
-    private enum class BracketType constructor(val mLeft: String, val mRight: String) {
+    internal enum class BracketType constructor(val mLeft: String, val mRight: String) {
         NONE("", ""),
         ROUND("(", ")"),
         BRACKET("[", "]"),
@@ -100,21 +99,14 @@ object Lg {
             = getFinalNoTagMessage("$varName:", before, BECOME, if (before == after) "(same)" else after)
 
     class VarargParser internal constructor(private val mSettings: Settings) {
-        internal var mNeedMethodTag: Boolean = false
-        private var mInsertMainMsgDelimiter: Boolean = false
+        internal var mNeedMethodTag = mSettings.mNeedMethodTag
+        private var mInsertMainMsgDelimiter = mSettings.mInsertFirstMainMsgDelimiter
 
         //parsed results =====================================================
         internal var mMethodTagSource: StackTraceElement? = null//cache the first found StackTraceElement
-        private val mTrArray = mutableListOf<Throwable>()
-        private val mPrioritizedMsgBuilder = StringBuilder()
         private val mMainMsgBuilder = StringBuilder(120)
         @JvmField
         var mLgType = Type.UNKNOWN//cache the LAST found one
-
-        //others =====================================================
-        private var mIsParsed = false
-        private var mShouldOutputNull = true
-        internal var mPrimitiveLogReturn = -1
 
         internal enum class Settings constructor(internal val mNeedMethodTag: Boolean,
                                                  internal val mInsertFirstMainMsgDelimiter: Boolean,
@@ -131,50 +123,35 @@ object Lg {
             FinalMsg(true, false, ", ", BracketType.NONE)
         }
 
-        init {
-            mNeedMethodTag = mSettings.mNeedMethodTag
-            mInsertMainMsgDelimiter = mSettings.mInsertFirstMainMsgDelimiter
-        }
-
         private fun reset(): VarargParser {
             mMethodTagSource = null
-            mTrArray.clear()
-            mPrioritizedMsgBuilder.setLength(0)
             mMainMsgBuilder.setLength(0)
             mLgType = Type.UNKNOWN
 
-            mIsParsed = false
             return this
         }
 
         /** Ignore mMethodTagSource of another */
         private fun parseAnotherParser(another: VarargParser): VarargParser {
             val origNeedMethodTag = mNeedMethodTag
-            val origOutputNull = mShouldOutputNull
             mNeedMethodTag = false
-            mShouldOutputNull = false
-            parse(if (another.mTrArray.isEmpty()) null else another.mTrArray.toTypedArray(),
-                    another.mPrioritizedMsgBuilder,
-                    another.mMainMsgBuilder,
-                    if (another.mLgType == Type.UNKNOWN) null else another.mLgType)
+
+            another.mMainMsgBuilder.takeIf { it.isNotEmpty() }?.let { parse(it) }
+            another.mLgType.takeIf { it !== Type.UNKNOWN }?.let { parse(it) }
+
             mNeedMethodTag = origNeedMethodTag
-            mShouldOutputNull = origOutputNull
             return this
         }
 
         fun parse(vararg objects: Any?): VarargParser {
 
             for (obj in objects) {
-                if (obj == null && !mShouldOutputNull) continue
-
                 //cache some info--------------------------------------
                 if (mNeedMethodTag && mMethodTagSource == null && obj is StackTraceElement) {
                     mMethodTagSource = obj
-                } else if (obj is Throwable) {
-                    mTrArray.add(obj)
-                } else if (obj is List<*>
-                        && obj.size > 0
-                        && obj[0] is Throwable) {//List<Throwable>
+                } else if (obj is Collection<*>
+                        && obj.isNotEmpty()
+                        && obj.first() is Throwable) {//List<Throwable>
                     this.parse(*obj.toTypedArray())
                 } else if (obj is Type) {
                     if (obj !== Type.UNKNOWN) {
@@ -185,38 +162,34 @@ object Lg {
                 } else if (obj is VarargParser) {
                     parseAnotherParser(obj)
                 } else if (obj is Array<*>) {//recursively parse Object[] in Object[], including native with any class type
-                    val origOutputNull = mShouldOutputNull
-                    mShouldOutputNull = true
                     this.parse('[')
                     this.parse(*obj)
                     this.parse(']')
-                    mShouldOutputNull = origOutputNull
                 } else {
                     //transform obj into string
                     //ArrayList is acceptable
                     val objStr: String = obj as? String
                             ?: if (obj != null && obj.javaClass.isArray) {//array with primitive type (array with class type has been processed in advance)
                                 primitiveTypeArrayToString(obj)
+                            } else if (obj is Throwable) {
+                                "\n" + XDD.getSeparator("$obj", '-') +
+                                        "\n" + Log.getStackTraceString(obj)
                             } else {//Can't be Object[] or array with native type
                                 toSimpleString(obj)
                             }
 
                     if (objStr.isEmpty()) continue
 
-                    if (PRIORITIZED_MSG_PATTERN.matcher(objStr).matches()) {
-                        mPrioritizedMsgBuilder.append(objStr)
-                    } else {//normal string
-                        //output the result
-                        mInsertMainMsgDelimiter = mInsertMainMsgDelimiter and needDelimiterBasedOnPrefix(objStr)
-                        if (mInsertMainMsgDelimiter) {
-                            mMainMsgBuilder.append(mSettings.mDelimiter)
-                        }
-                        mMainMsgBuilder.append(mSettings.mBracket.mLeft)
-                        mMainMsgBuilder.append(objStr)
-                        mMainMsgBuilder.append(mSettings.mBracket.mRight)
-
-                        mInsertMainMsgDelimiter = needDelimiterBasedOnPostfix(mMainMsgBuilder)
+                    //output the result
+                    mInsertMainMsgDelimiter = mInsertMainMsgDelimiter and needDelimiterBasedOnPrefix(objStr)
+                    if (mInsertMainMsgDelimiter) {
+                        mMainMsgBuilder.append(mSettings.mDelimiter)
                     }
+                    mMainMsgBuilder.append(mSettings.mBracket.mLeft)
+                    mMainMsgBuilder.append(objStr)
+                    mMainMsgBuilder.append(mSettings.mBracket.mRight)
+
+                    mInsertMainMsgDelimiter = needDelimiterBasedOnPostfix(mMainMsgBuilder)
                 }
             }
 
@@ -224,34 +197,20 @@ object Lg {
                 mMethodTagSource = findDisplayedStackTraceElement()
             }
 
-            mIsParsed = true
             return this
         }
 
         override fun toString(): String {
-            Assert.assertTrue(mIsParsed)
             val resultBuilder = StringBuilder(200)
 
             //MethodTag
             if (mNeedMethodTag) {
                 resultBuilder.append(getMethodTag(mMethodTagSource!!))
+                        .append(TAG_END)
             }
 
-            resultBuilder.append(mPrioritizedMsgBuilder)
-            if (mNeedMethodTag) resultBuilder.append(TAG_END)
             resultBuilder.append(mMainMsgBuilder)
 
-            //tr must be at the end
-            if (mTrArray.isNotEmpty()) {
-                resultBuilder.append('\n')
-                for ((idx, tr) in mTrArray.withIndex()) {
-                    resultBuilder.append(XDD.getSeparator("[$idx] $tr", '-')).append('\n')
-                    resultBuilder.append(Log.getStackTraceString(tr))
-                }
-                resultBuilder.append(XDD.getSeparator("Throwable end", '='))
-            }
-
-            //tag must be at the beginning
             return resultBuilder.toString()
         }
 
@@ -289,7 +248,7 @@ object Lg {
 
             val shownString = (if (iteration == 0) "" else "<Continuing ($iteration)...>\n") + remainingString.substring(0, end)
             remainingString.delete(0, end)
-            parser.mPrimitiveLogReturn = parser.mLgType.mNativeFunction?.invoke(PRIMITIVE_LOG_TAG, shownString) ?: when (parser.mLgType) {
+            parser.mLgType.mNativeFunction?.invoke(PRIMITIVE_LOG_TAG, shownString) ?: when (parser.mLgType) {
                 Type.NONE -> {
                     remainingString.setLength(0)
                     -1
