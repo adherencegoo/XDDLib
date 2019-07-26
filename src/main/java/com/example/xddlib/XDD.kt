@@ -13,10 +13,11 @@ import android.os.Vibrator
 import android.provider.MediaStore
 import androidx.annotation.ColorInt
 import android.text.TextUtils
+import androidx.annotation.RequiresApi
 import com.example.xddlib.presentation.Lg
-import com.example.xddlib.userinput.xddpref.data.NativePreferenceHelper
 import junit.framework.Assert
 import java.util.*
+import java.util.function.Predicate
 
 /** Created by Owen_Chen on 2017/3/15.  */
 
@@ -150,5 +151,20 @@ object XDD {
         } else {
             vibrator.vibrate(msOnOff[0])
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @JvmStatic
+    fun<T> getConstantFieldNames(ownerClass: Class<*>,
+                                 fieldClass: Class<T>,
+                                 fieldNameFilter: Predicate<String>): Map<T, String> {
+        return ownerClass.declaredFields
+                .filter {
+                    it.isAccessible = true
+                    fieldNameFilter.test(it.name) && fieldClass.isInstance(it.get(ownerClass))
+                }.map {
+                    @Suppress("UNCHECKED_CAST")
+                    it.get(ownerClass) as T to it.name
+                }.toMap()
     }
 }
