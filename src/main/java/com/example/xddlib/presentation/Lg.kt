@@ -226,41 +226,59 @@ object Lg {
 
             private fun needDelimiterBasedOnPrefix(currentString: String) = sDelimiterKillerPrefix.none { currentString.startsWith(it) }
         }
+
+        fun printLog(type: Type = Type.UNKNOWN) {
+            type.takeIf { it !== Type.UNKNOWN }?.let { mLgType = it }
+
+            val nativeLogFunction = when (mLgType) {
+                Type.NONE -> return
+                Type.UNKNOWN -> {
+                    Assert.fail("$PRIMITIVE_LOG_TAG$TAG_END[UsageError] Unknown Lg.Type: $mLgType")
+                    return
+                }
+                else -> mLgType.mNativeFunction!!
+            }
+
+            val remainingString = StringBuilder(toString())
+            var iteration = 0
+            while (remainingString.isNotEmpty()) {
+                val end: Int = if (remainingString.length > MAX_PRIMITIVE_LOG_LENGTH) {
+                    val lastLineFeed = remainingString.lastIndexOf("\n", MAX_PRIMITIVE_LOG_LENGTH)
+                    if (lastLineFeed == -1) MAX_PRIMITIVE_LOG_LENGTH else lastLineFeed + 1
+                } else {
+                    remainingString.length
+                }
+
+                val shownString = (if (iteration == 0) "" else "<Continuing ($iteration)...>\n") + remainingString.substring(0, end)
+                remainingString.delete(0, end)
+                nativeLogFunction.invoke(PRIMITIVE_LOG_TAG, shownString)
+                iteration++
+            }
+        }
+
+        @JvmOverloads
+        fun printStackTrace(type: Type = Type.UNKNOWN) {
+            type.takeIf { it !== Type.UNKNOWN }?.let { mLgType = it }
+
+            val funName = "printStackTrace"
+            if (mLgType === Type.UNKNOWN) {
+                val prefix = "\t at "
+                Exception((PRIMITIVE_LOG_TAG + TAG_END + this)
+                        .replace("\n", "\n$prefix\t$funName: ")).printStackTrace()
+                Log.v("System.err", prefix + XDD.getSeparator("$funName end", '^'))
+            } else if (mLgType !== Type.NONE) {//avoid redundant process
+                parse(Exception(funName)).printLog()
+            }
+        }
     }
 
     /**@param type: if unknown, use the result parsed from objects; if still unknown, assertion fails
      */
     @Suppress("FunctionName")
-    private fun _log(type: Type, vararg objects: Any?): VarargParser {
-        val parser = VarargParser(VarargParser.Settings.FinalMsg).parse(*objects)
-        parser.mLgType = if (type == Type.UNKNOWN) parser.mLgType else type
-
-        val remainingString = StringBuilder(parser.toString())
-        var iteration = 0
-        while (remainingString.isNotEmpty()) {
-            val end: Int
-            end = if (remainingString.length > MAX_PRIMITIVE_LOG_LENGTH) {
-                val lastLineFeed = remainingString.lastIndexOf("\n", MAX_PRIMITIVE_LOG_LENGTH)
-                if (lastLineFeed == -1) MAX_PRIMITIVE_LOG_LENGTH else lastLineFeed + 1
-            } else {
-                remainingString.length
-            }
-
-            val shownString = (if (iteration == 0) "" else "<Continuing ($iteration)...>\n") + remainingString.substring(0, end)
-            remainingString.delete(0, end)
-            parser.mLgType.mNativeFunction?.invoke(PRIMITIVE_LOG_TAG, shownString) ?: when (parser.mLgType) {
-                Type.NONE -> {
-                    remainingString.setLength(0)
-                    -1
-                }
-                else -> {
-                    Assert.fail(PRIMITIVE_LOG_TAG + TAG_END + "[UsageError] Unknown Lg.Type: " + parser.mLgType)
-                    -1
-                }
-            }
-            iteration++
-        }
-        return parser
+    private fun _log(type: Type, vararg objects: Any?): VarargParser
+            = VarargParser(VarargParser.Settings.FinalMsg).apply {
+        parse(*objects)
+        printLog(type)
     }
 
     /** @return true if toString method of the any is not ever overridden
@@ -345,18 +363,10 @@ object Lg {
      * @param objects if containing Lg.Type and it's not UNKNOWN, print stack trace according to that Lg.Type using Lg.log; else print stack trace normally
      */
     @JvmStatic
-    fun printStackTrace(vararg objects: Any?) {
-        val self = "printStackTrace"
-        val parser = VarargParser(VarargParser.Settings.FinalMsg).parse(objects)
-
-        if (parser.mLgType == Type.UNKNOWN) {
-            val prefix = "\t at "
-            Exception((PRIMITIVE_LOG_TAG + TAG_END + parser)
-                    .replace("\n", "\n$prefix\t$self: ")).printStackTrace()
-            Log.v("System.err", prefix + XDD.getSeparator("$self end", '^'))
-        } else if (parser.mLgType != Type.NONE) {//avoid redundant process
-            log(parser, Exception(self))
-        }
+    fun printStackTrace(vararg objects: Any?): VarargParser
+            = VarargParser(VarargParser.Settings.FinalMsg).apply {
+        parse(*objects)
+        printStackTrace()
     }
 
     @JvmStatic
