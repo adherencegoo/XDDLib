@@ -3,7 +3,9 @@
 package com.example.xddlib.presentation
 
 import android.graphics.Color
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.example.xddlib.BuildConfig
 import com.example.xddlib.XDD
 import junit.framework.Assert
@@ -24,7 +26,9 @@ object Lg {
     val PRIMITIVE_LOG_TAG = XDD::class.java.simpleName + "D"//mutable
     const val LF = "\n"
     const val TAB = "\t"
-    const val BECOME = " --> "
+    const val BECOME = " → "
+    const val ASCEND = " ↗ "
+    const val DESCEND = " ↘ "
     val DELIMITER_KILLER = this
     internal const val TAG_END = ": "
     private val ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$")//->[ANYTHING]
@@ -94,10 +98,47 @@ object Lg {
         return _log(Type.UNKNOWN, *objects)
     }
 
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     @JvmStatic
     @JvmOverloads
-    fun<T : Any?> become(varName: String = "", before: T, after: T)
-            = getFinalNoTagMessage("$varName:", before, BECOME, if (before == after) "(same)" else after)
+    fun<T : Any?> become(varName: String = "", before: T, after: T): VarargParser {
+        val change = if (before is Number && after is Number) {
+            val compareResult = when (after) {
+                is Byte -> after.compareTo(before.toByte())
+                is Double -> after.compareTo(before.toDouble())
+                is Float -> after.compareTo(before.toFloat())
+                is Int -> after.compareTo(before.toInt())
+                is Long -> after.compareTo(before.toLong())
+                is Short -> after.compareTo(before.toShort())
+                else -> 0
+            }
+
+            val diff = when (after) {
+                is Byte -> after.minus(before.toByte())
+                is Double -> after.minus(before.toDouble())
+                is Float -> after.minus(before.toFloat())
+                is Int -> after.minus(before.toInt())
+                is Long -> after.minus(before.toLong())
+                is Short -> after.minus(before.toShort())
+                else -> 0
+            }
+
+            when {
+                compareResult > 0 -> ASCEND
+                compareResult < 0 -> DESCEND
+                else -> BECOME
+            } + "(" + (if (diff == 0) "-" else diff) + ") "
+        } else {
+            BECOME
+        }
+
+        return getFinalNoTagMessage(if (varName.isEmpty()) "" else "$varName:",
+                "[",
+                before,
+                change, DELIMITER_KILLER,
+                if (before == after) "-".repeat(Objects.toString(before).length) else after,
+                "]")
+    }
 
     class VarargParser internal constructor(private val mSettings: Settings) {
         internal var mNeedMethodTag = mSettings.mNeedMethodTag
@@ -220,12 +261,12 @@ object Lg {
         companion object {
 
             /** When the previous ends with one of these chars, need no delimiter  */
-            private val sDelimiterKillerPostfix: List<String> = listOf(":", "(", "[", "{", "\n", BECOME)
+            private val sDelimiterKillerPostfix: List<String> = listOf(":", "(", "[", "{", "\n", BECOME, ASCEND, DESCEND)
 
             private fun needDelimiterBasedOnPostfix(builder: StringBuilder) = sDelimiterKillerPostfix.none { builder.endsWith(it) }
 
             /** When the current string starts with one of these chars, need no delimiter  */
-            private val sDelimiterKillerPrefix: List<String> = listOf(":", ")", "]", "}", BECOME)
+            private val sDelimiterKillerPrefix: List<String> = listOf(":", ")", "]", "}", BECOME, ASCEND, DESCEND)
 
             private fun needDelimiterBasedOnPrefix(currentString: String) = sDelimiterKillerPrefix.none { currentString.startsWith(it) }
         }
