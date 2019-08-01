@@ -25,6 +25,7 @@ object Lg {
     const val LF = "\n"
     const val TAB = "\t"
     const val BECOME = " --> "
+    val DELIMITER_KILLER = this
     internal const val TAG_END = ": "
     private val ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$")//->[ANYTHING]
     private const val MAX_PRIMITIVE_LOG_LENGTH = 3500
@@ -149,6 +150,8 @@ object Lg {
                 //cache some info--------------------------------------
                 if (mNeedMethodTag && mMethodTagSource == null && obj is StackTraceElement) {
                     mMethodTagSource = obj
+                } else if (obj === DELIMITER_KILLER) {
+                    mInsertMainMsgDelimiter = false
                 } else if (obj is Collection<*>
                         && obj.isNotEmpty()
                         && obj.first() is Throwable) {//List<Throwable>
