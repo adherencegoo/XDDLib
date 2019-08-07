@@ -9,6 +9,7 @@ import androidx.annotation.RequiresApi
 import com.example.xddlib.BuildConfig
 import com.example.xddlib.XDD
 import junit.framework.Assert
+import java.lang.reflect.Field
 import java.util.*
 import java.util.regex.Pattern
 
@@ -37,6 +38,16 @@ object Lg {
 
     private val TYPES = arrayOf(Type.V, Type.D, Type.I, Type.W, Type.E)
     private val COLORS = intArrayOf(Color.WHITE, Color.BLUE, Color.GREEN, Color.YELLOW, Color.RED)
+
+    interface FieldDescriptor {
+        @Throws(IllegalAccessException::class)
+        fun describe(field: Field, any: Any): String
+    }
+
+    private val defaultFieldDescriptor = object : FieldDescriptor {
+        @RequiresApi(Build.VERSION_CODES.KITKAT)
+        override fun describe(field: Field, any: Any): String = Objects.toString(field.get(any))
+    }
 
     enum class Type constructor(val mNativeType: Int, val mNativeFunction: ((String, String) -> Int)?) {
         V(Log.VERBOSE, Log::v),
@@ -338,6 +349,28 @@ object Lg {
         }
 
         return true
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @JvmStatic
+    @JvmOverloads
+    fun toFieldsString(any: Any?,
+                       newLinePerField: Boolean = false,
+                       fieldDescriptors: Map<String/*fieldName*/, FieldDescriptor> = emptyMap()): String {
+        val parser = getFinalNoTagMessage(toNativeSimpleString(any), ":{")
+
+        any?.javaClass?.declaredFields?.forEach {field ->
+            if (newLinePerField) {
+                parser.parse(LF)
+            }
+
+            field.isAccessible = true
+            val fieldDescriptor = fieldDescriptors.getOrDefault(field.name, defaultFieldDescriptor)
+            parser.parse(field.name, ":", fieldDescriptor.describe(field, any))
+        }
+
+        parser.parse("}")
+        return parser.toString()
     }
 
     /** @return equivalent call to NON-OVERRIDDEN Object.toString without package name
