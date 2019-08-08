@@ -8,7 +8,7 @@ import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
 import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
 import com.example.xddlib.userinput.xddpref.data.XddPrefBinaryData
-import junit.framework.Assert
+import org.junit.Assert
 
 /**
  * Created by adher on 2017/7/21.
@@ -20,7 +20,7 @@ internal class XddPrefToggleElement(context: Context, attributeSet: AttributeSet
     override val uiValue: Any
         get() = mToggleButton.isChecked
 
-    /**@param prefData must be [com.example.xddlib.xddpref.data.XddPrefBinaryData]
+    /**@param prefData must be [com.example.xddlib.userinput.xddpref.data.XddPrefBinaryData]
      */
     override fun init(prefData: XddPrefAbstractData<*>) {
         Assert.assertEquals(XddPrefBinaryData::class.java, prefData.javaClass)
@@ -30,12 +30,12 @@ internal class XddPrefToggleElement(context: Context, attributeSet: AttributeSet
         mToggleButton = findViewById(R.id.toggleButton)
         mToggleButton.textOn = binaryData.getDescription(true)
         mToggleButton.textOff = binaryData.getDescription(false)
-        mToggleButton.setOnCheckedChangeListener { buttonView, isChecked -> onUiValueChanged(isChecked) }
+        mToggleButton.setOnCheckedChangeListener { _, isChecked -> onUiValueChanged(isChecked) }
 
         val binary = binaryData[false]
         mToggleButton.setTextColor(ColorStateList(
                 arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked/*unchecked*/)),
-                intArrayOf(if (binary) XddPrefAbstractElement.Companion.sColorPrimary else mToggleButton.textColors.defaultColor, if (binary) mToggleButton.textColors.defaultColor else XddPrefAbstractElement.Companion.sColorPrimary)))
+                intArrayOf(if (binary) sColorPrimary else mToggleButton.textColors.defaultColor, if (binary) mToggleButton.textColors.defaultColor else XddPrefAbstractElement.Companion.sColorPrimary)))
 
         resetToSharedValue()
         //manually call listener, because when ToggleButton is just created, it's false for default; setChecked(false) won't invoke listener

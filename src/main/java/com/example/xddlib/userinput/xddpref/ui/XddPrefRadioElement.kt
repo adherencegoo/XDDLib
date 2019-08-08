@@ -9,7 +9,7 @@ import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
 import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
 import com.example.xddlib.userinput.xddpref.data.XddPrefEnumData
-import junit.framework.Assert
+import org.junit.Assert
 
 /**
  * Created by adher on 2017/7/21.
@@ -40,7 +40,7 @@ internal class XddPrefRadioElement(context: Context, attributeSet: AttributeSet?
 
             if (prefValueAsString == radioButton.text) {
                 radioButton.isChecked = true
-                radioButton.setTextColor(XddPrefAbstractElement.Companion.sColorPrimary)
+                radioButton.setTextColor(sColorPrimary)
             }
         }
     }

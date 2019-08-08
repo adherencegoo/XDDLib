@@ -1,10 +1,8 @@
 package com.example.xddlib.userinput.xddpref.data
 
 import android.content.Context
-import junit.framework.Assert
-
-import java.util.Arrays
-import java.util.LinkedHashSet
+import org.junit.Assert
+import java.util.*
 
 /**
  * Created by adher on 2017/7/20.
@@ -29,6 +27,6 @@ open class XddPrefEnumData<T : Any>
         values = LinkedHashSet(otherValues.size + 2)
         values.add(defaultValue)
         values.add(value2)
-        if (otherValues.isNotEmpty()) values.addAll(Arrays.asList(*otherValues))
+        if (otherValues.isNotEmpty()) values.addAll(listOf(*otherValues))
     }
 }

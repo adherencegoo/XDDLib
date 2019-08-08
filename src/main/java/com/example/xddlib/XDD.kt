@@ -15,7 +15,7 @@ import androidx.annotation.ColorInt
 import android.text.TextUtils
 import androidx.annotation.RequiresApi
 import com.example.xddlib.presentation.Lg
-import junit.framework.Assert
+import org.junit.Assert
 import java.util.*
 import java.util.function.Predicate
 
@@ -31,7 +31,7 @@ object XDD {
         }
 
     @JvmStatic
-    fun drawCross(bitmap: Bitmap, @ColorInt color: Int, msg: String?): Bitmap {
+    fun drawCross(bitmap: Bitmap, @ColorInt color: Int, msg: String): Bitmap {
 
         val imageWidth = bitmap.width
         val imageHeight = bitmap.height
@@ -44,7 +44,7 @@ object XDD {
         canvas.drawLine(0f, 0f, imageWidth.toFloat(), imageHeight.toFloat(), paint)
         canvas.drawLine(0f, imageHeight.toFloat(), imageWidth.toFloat(), 0f, paint)
         //draw text
-        if (!TextUtils.isEmpty(msg)) {
+        if (msg.isNotEmpty()) {
             paint.textSize = 22f
             canvas.drawText(msg, (imageWidth / 2).toFloat(), (imageHeight / 4).toFloat(), paint)
         }
@@ -57,7 +57,7 @@ object XDD {
         val stringBuilder = StringBuilder(count * 2 + 4 + (message.length))
         val halfSeparator = stringRepeat(count, separator.toString())
         stringBuilder.append(halfSeparator)
-        if (!message.isEmpty()) {
+        if (message.isNotEmpty()) {
             stringBuilder.append(' ')
             stringBuilder.append(message)
             stringBuilder.append(' ')
@@ -78,7 +78,7 @@ object XDD {
                  values: ContentValues,
                  id: Long) {
         val whereClause = if (id > 0) MediaStore.Video.Media._ID + " = ?" else null
-        val whereContent = if (id > 0) arrayOf(java.lang.Long.toString(id)) else null
+        val whereContent = if (id > 0) arrayOf(id.toString()) else null
         val rowCount = context.contentResolver.update(uri, values, whereClause, whereContent)
         Lg.d("updated row count:$rowCount")
     }
@@ -121,7 +121,7 @@ object XDD {
      */
     @JvmStatic
     fun isInvokedFrom(vararg descriptions: StackTraceElementDescription): Boolean {
-        val kUnmatchedDescriptions = ArrayList(Arrays.asList(*descriptions))
+        val kUnmatchedDescriptions = ArrayList(listOf(*descriptions))
 
         val kElements = Thread.currentThread().stackTrace
         for (kElement in kElements) {
@@ -149,6 +149,7 @@ object XDD {
                     if (msOnOff.size == 1) VibrationEffect.createOneShot(msOnOff[0], VibrationEffect.DEFAULT_AMPLITUDE)
                     else VibrationEffect.createWaveform(longArrayOf(0, *msOnOff), -1))
         } else {
+            @Suppress("DEPRECATION")
             vibrator.vibrate(msOnOff[0])
         }
     }

@@ -4,7 +4,7 @@ package com.example.xddlib.analysis
 
 import androidx.annotation.IntRange
 import com.example.xddlib.presentation.Lg
-import junit.framework.Assert
+import org.junit.Assert
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger

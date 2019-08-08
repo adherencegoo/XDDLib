@@ -30,7 +30,7 @@ internal object XddInternalUtils {
         //Note: if parent is null, inflate() returns inflated view; else, it returns parent
         val inflateReturn = LayoutInflater.from(context).inflate(layoutId, parent)
         val inflatedView = if (parent == null) inflateReturn else parent.getChildAt(parent.childCount - 1)
-        return uiClass.cast(inflatedView)
+        return uiClass.cast(inflatedView)!!
     }
 
     /**

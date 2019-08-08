@@ -6,7 +6,7 @@ import android.media.MediaScannerConnection
 import android.os.Environment
 import com.example.xddlib.presentation.Lg
 import com.example.xddlib.presentation.XddToast
-import junit.framework.Assert
+import org.junit.Assert
 import java.io.*
 import java.util.*
 
@@ -33,8 +33,9 @@ object XddFile {
 
         MediaScannerConnection.scanFile(context,
                 arrayOf(newFilename),
-                null,
-                {path, _ -> XddToast.show(context, "file scanned: $path")})
+                null) { path, _ ->
+            XddToast.show(context, "file scanned: $path")
+        }
 
         return newFilename
     }

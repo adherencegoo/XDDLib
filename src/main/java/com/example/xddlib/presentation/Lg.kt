@@ -8,7 +8,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.xddlib.BuildConfig
 import com.example.xddlib.XDD
-import junit.framework.Assert
+import org.junit.Assert
 import java.lang.reflect.Field
 import java.util.*
 import java.util.regex.Pattern
@@ -406,8 +406,7 @@ object Lg {
     private fun primitiveTypeArrayToString(obj: Any?): String {
         if (obj == null) return "null"
         Assert.assertTrue(obj.javaClass.isArray)
-        val componentType = obj.javaClass.componentType.kotlin
-        return when (componentType) {
+        return when (val componentType = obj.javaClass.componentType?.kotlin) {
             Byte::class -> Arrays.toString(obj as ByteArray?)
             Short::class -> Arrays.toString(obj as ShortArray?)
             Int::class -> Arrays.toString(obj as IntArray?)
@@ -417,9 +416,7 @@ object Lg {
             Char::class -> Arrays.toString(obj as CharArray?)
             Boolean::class -> Arrays.toString(obj as BooleanArray?)
             else -> throw UnsupportedOperationException(PRIMITIVE_LOG_TAG + TAG_END
-                    + VarargParser::class.java.canonicalName
-                    + "." + object : Any() {}.javaClass.enclosingMethod.name
-                    + "(): can't parse native array with primitive type yet: "
+                    + "primitiveTypeArrayToString(): can't parse native array with primitive type yet: "
                     + componentType + "[]")
         }
     }
