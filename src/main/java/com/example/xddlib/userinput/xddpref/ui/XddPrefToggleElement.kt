@@ -32,7 +32,7 @@ internal class XddPrefToggleElement(context: Context, attributeSet: AttributeSet
         mToggleButton.textOff = binaryData.getDescription(false)
         mToggleButton.setOnCheckedChangeListener { _, isChecked -> onUiValueChanged(isChecked) }
 
-        val binary = binaryData[false]
+        val binary = binaryData.get()
         mToggleButton.setTextColor(ColorStateList(
                 arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked/*unchecked*/)),
                 intArrayOf(if (binary) sColorPrimary else mToggleButton.textColors.defaultColor, if (binary) mToggleButton.textColors.defaultColor else XddPrefAbstractElement.Companion.sColorPrimary)))
@@ -43,7 +43,7 @@ internal class XddPrefToggleElement(context: Context, attributeSet: AttributeSet
     }
 
     override fun resetToSharedValue() {
-        mToggleButton.isChecked = (mPrefData as XddPrefBinaryData)[false]
+        mToggleButton.isChecked = (mPrefData as XddPrefBinaryData).get()
     }
 
     companion object {

@@ -9,7 +9,7 @@ import java.util.*
  * Created by adher on 2017/7/28.
  */
 
-abstract class XddPrefAbstractData<out T : Any>
+abstract class XddPrefAbstractData<T : Any>
 internal constructor(context: Context,
                      val key: String,
                      private val mDefaultValue: T) {
@@ -28,13 +28,22 @@ internal constructor(context: Context,
     }
 
     @JvmOverloads
-    operator fun get(showLog: Boolean = true): T {
+    fun get(showLog: Boolean = false): T {
         if (showLog) Lg.printStackTrace(this)
         return NativePreferenceHelper[refContext.get(), key, mDefaultValue]
     }
 
-    fun sharedValueIsEqualTo(valueAsObject: Any): Boolean {
-        return convertToTemplateType(valueAsObject) == get(false)
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun set(valueAsTemplate: T) {
+        if (isValueValid(valueAsTemplate)) {
+            NativePreferenceHelper[refContext.get(), key] = valueAsTemplate
+        }
+    }
+
+    protected abstract fun isValueValid(valueAsTemplate: T): Boolean
+
+    internal fun sharedValueIsEqualTo(valueAsObject: Any): Boolean {
+        return convertToTemplateType(valueAsObject) == get()
     }
 
     private fun convertToTemplateType(value: Any): T {
@@ -62,7 +71,5 @@ internal constructor(context: Context,
         return kClass.java.cast(valueMutable)!!
     }
 
-    fun saveToNativePreference(valueAsObject: Any) {
-        NativePreferenceHelper[refContext.get(), key] = convertToTemplateType(valueAsObject)
-    }
+    internal fun setUsingAny(valueAsObject: Any) = set(convertToTemplateType(valueAsObject))
 }

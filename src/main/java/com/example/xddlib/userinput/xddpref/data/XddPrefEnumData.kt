@@ -29,4 +29,6 @@ open class XddPrefEnumData<T : Any>
         values.add(value2)
         if (otherValues.isNotEmpty()) values.addAll(listOf(*otherValues))
     }
+
+    override fun isValueValid(valueAsTemplate: T): Boolean = values.contains(valueAsTemplate)
 }

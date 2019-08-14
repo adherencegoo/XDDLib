@@ -45,7 +45,7 @@ internal abstract class XddPrefAbstractElement(context: Context, attributeSet: A
     internal abstract fun resetToSharedValue()
 
     fun saveToNative() {
-        mPrefData.saveToNativePreference(uiValue)
+        mPrefData.setUsingAny(uiValue)
     }
 
     companion object {

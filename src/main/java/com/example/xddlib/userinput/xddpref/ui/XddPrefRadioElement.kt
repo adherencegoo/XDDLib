@@ -32,7 +32,7 @@ internal class XddPrefRadioElement(context: Context, attributeSet: AttributeSet?
         mRadioGroup.setOnCheckedChangeListener { group, checkedId -> onUiValueChanged((group.findViewById<View>(checkedId) as RadioButton).text) }
 
         //create radio buttons based on values in pref
-        val prefValueAsString = mPrefData[false].toString()
+        val prefValueAsString = mPrefData.get().toString()
         for (oneEnum in enumData.values) {
             val radioButton = RadioButton(this.context)
             mRadioGroup.addView(radioButton) //the RadioButtons are added to the radioGroup instead of the layout
