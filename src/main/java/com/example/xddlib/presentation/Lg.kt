@@ -7,7 +7,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.xddlib.BuildConfig
-import com.example.xddlib.PrimitiveTypeConverter
+import com.example.xddlib.GenericType
 import com.example.xddlib.XDD
 import org.junit.Assert
 import java.lang.reflect.Field
@@ -226,7 +226,7 @@ object Lg {
                     //ArrayList is acceptable
                     val objStr: String = obj as? String
                             ?: if (obj != null && obj.javaClass.isArray) {//array with primitive type (array with class type has been processed in advance)
-                                PrimitiveTypeConverter.arrayToString(obj)
+                                GenericType.primitiveArrayToString(obj)
                             } else if (obj is Throwable) {
                                 "\n" + XDD.getSeparator("$obj", '-') +
                                         "\n" + Log.getStackTraceString(obj)

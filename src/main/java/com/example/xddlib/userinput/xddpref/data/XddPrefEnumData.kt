@@ -1,33 +1,31 @@
+@file:Suppress("unused")
+
 package com.example.xddlib.userinput.xddpref.data
 
 import android.content.Context
 import org.junit.Assert
-import java.util.*
+import kotlin.reflect.KClass
 
 /**
  * Created by adher on 2017/7/20.
  */
 
-open class XddPrefEnumData<T : Any>
-/**"defaultValue", "value2", "otherValues": duplicated values will be ignored */
-(context: Context,
- key: String,
- defaultValue: T,
- value2: T,
- vararg otherValues: T) : XddPrefAbstractData<T>(context, key, defaultValue) {
-    val values: LinkedHashSet<T>//LinkedHashSet: no duplicated values, persist original order
+open class XddPrefEnumData<T : Any>(klass: KClass<T>,
+                                    context: Context,
+                                    key: String,
+                                    internal val values: Set<T>) : XddPrefAbstractData<T>(klass, context, key, values.first()) {
+    // This still doesn't work in Java code
+//    constructor(klass: Class<T>,
+//                context: Context,
+//                key: String,
+//                vararg args: T) : this(klass.kotlin, context, key, setOf(*args))
 
     init {
-        if (defaultValue is Boolean) {
-            Assert.assertTrue(otherValues.isEmpty())
-            Assert.assertTrue(defaultValue != value2)
+        if (klass == Boolean::class) {
+            Assert.assertTrue(values.size == 2)
+        } else {
+            Assert.assertTrue(values.isNotEmpty())
         }
-
-        //prepare list of values
-        values = LinkedHashSet(otherValues.size + 2)
-        values.add(defaultValue)
-        values.add(value2)
-        if (otherValues.isNotEmpty()) values.addAll(listOf(*otherValues))
     }
 
     override fun isValueValid(valueAsTemplate: T): Boolean = values.contains(valueAsTemplate)

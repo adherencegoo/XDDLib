@@ -1,21 +1,23 @@
 package com.example.xddlib.userinput.xddpref.data
 
 import android.content.Context
-import com.example.xddlib.PrimitiveTypeConverter
+import com.example.xddlib.GenericType
 import com.example.xddlib.presentation.Lg
 import java.lang.ref.WeakReference
 import java.util.*
+import kotlin.reflect.KClass
 
 /**
  * Created by adher on 2017/7/28.
  */
 
 abstract class XddPrefAbstractData<T : Any>
-internal constructor(context: Context,
+internal constructor(private val klass: KClass<T>,
+                     context: Context,
                      val key: String,
                      private val mDefaultValue: T) {
     init {
-        NativePreferenceHelper.checkClassValid(mDefaultValue::class)
+        NativePreferenceHelper.checkClassValid(klass)
         XddPrefUtils.addPref(this)
     }
 
@@ -24,28 +26,28 @@ internal constructor(context: Context,
     override fun toString(): String {
         return String.format(Locale.getDefault(), "key:%s, %s, SharedValue:%s",
                 key,
-                mDefaultValue::class,
-                NativePreferenceHelper[refContext.get(), key, mDefaultValue])
+                klass,
+                NativePreferenceHelper[klass, refContext.get(), key, mDefaultValue])
     }
 
     @JvmOverloads
     fun get(showLog: Boolean = false): T {
         if (showLog) Lg.printStackTrace(this)
-        return NativePreferenceHelper[refContext.get(), key, mDefaultValue]
+        return NativePreferenceHelper[klass, refContext.get(), key, mDefaultValue]
     }
 
     @Suppress("MemberVisibilityCanBePrivate")
     fun set(valueAsTemplate: T) {
         if (isValueValid(valueAsTemplate)) {
-            NativePreferenceHelper[refContext.get(), key] = valueAsTemplate
+            NativePreferenceHelper[klass, refContext.get(), key] = valueAsTemplate
         }
     }
 
     protected abstract fun isValueValid(valueAsTemplate: T): Boolean
 
     internal fun sharedValueIsEqualTo(valueAsObject: Any): Boolean {
-        return PrimitiveTypeConverter.toGenericType(mDefaultValue::class, valueAsObject) == get()
+        return GenericType.toPrimitiveGenericType(klass, valueAsObject) == get()
     }
 
-    internal fun setUsingAny(valueAsObject: Any) = set(PrimitiveTypeConverter.toGenericType(mDefaultValue::class, valueAsObject))
+    internal fun setUsingAny(valueAsObject: Any) = set(GenericType.toPrimitiveGenericType(klass, valueAsObject))
 }
