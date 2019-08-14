@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.xddlib.BuildConfig
+import com.example.xddlib.PrimitiveTypeConverter
 import com.example.xddlib.XDD
 import org.junit.Assert
 import java.lang.reflect.Field
@@ -225,7 +226,7 @@ object Lg {
                     //ArrayList is acceptable
                     val objStr: String = obj as? String
                             ?: if (obj != null && obj.javaClass.isArray) {//array with primitive type (array with class type has been processed in advance)
-                                primitiveTypeArrayToString(obj)
+                                PrimitiveTypeConverter.arrayToString(obj)
                             } else if (obj is Throwable) {
                                 "\n" + XDD.getSeparator("$obj", '-') +
                                         "\n" + Log.getStackTraceString(obj)
@@ -400,24 +401,6 @@ object Lg {
             string.substring(dotPos + 1)//OuterClass$InnerClass
         } else {
             string
-        }
-    }
-
-    private fun primitiveTypeArrayToString(obj: Any?): String {
-        if (obj == null) return "null"
-        Assert.assertTrue(obj.javaClass.isArray)
-        return when (val componentType = obj.javaClass.componentType?.kotlin) {
-            Byte::class -> Arrays.toString(obj as ByteArray?)
-            Short::class -> Arrays.toString(obj as ShortArray?)
-            Int::class -> Arrays.toString(obj as IntArray?)
-            Long::class -> Arrays.toString(obj as LongArray?)
-            Float::class -> Arrays.toString(obj as FloatArray?)
-            Double::class -> Arrays.toString(obj as DoubleArray?)
-            Char::class -> Arrays.toString(obj as CharArray?)
-            Boolean::class -> Arrays.toString(obj as BooleanArray?)
-            else -> throw UnsupportedOperationException(PRIMITIVE_LOG_TAG + TAG_END
-                    + "primitiveTypeArrayToString(): can't parse native array with primitive type yet: "
-                    + componentType + "[]")
         }
     }
 
