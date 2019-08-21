@@ -5,6 +5,7 @@ package com.example.xddlib.presentation
 import android.graphics.Color
 import android.os.Build
 import android.util.Log
+import android.view.View
 import androidx.annotation.RequiresApi
 import com.example.xddlib.BuildConfig
 import com.example.xddlib.GenericType
@@ -391,21 +392,25 @@ object Lg {
      */
     @JvmStatic
     fun toSimpleString(any: Any?): String {
-        if (any == null) return "null"
-
-        var objStr = any.toString()
-        if (isToStringFromObjectClass(any)) {
-            objStr = removePackageNameIfNeeded(objStr)
+        return if (any == null) {
+            "null"
+        } else if (isToStringFromObjectClass(any) || any is View) {
+            removePackageNameIfNeeded(any)
+        } else {
+            any.toString()
         }
-        return objStr
     }
 
-    private fun removePackageNameIfNeeded(string: String): String {
+    private fun removePackageNameIfNeeded(any: Any): String {
+        val string = any.toString()
         val dotPos: Int = string.lastIndexOf('.')
-        return if (dotPos != -1) {
-            string.substring(dotPos + 1)//OuterClass$InnerClass
-        } else {
-            string
+        return when {
+            any is View -> {
+                // example: package.name.ViewClassName{bee6f7b V.ED..... ........ 0,0-1080,1882 #7f090296 app:id/viewId}
+                string.substring(string.lastIndexOf('.', string.indexOf('{')) + 1)
+            }
+            dotPos != -1 -> string.substring(dotPos + 1)//OuterClass$InnerClass
+            else -> string
         }
     }
 
