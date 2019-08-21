@@ -31,7 +31,6 @@ object Lg {
     const val BECOME = " → "
     const val ASCEND = " ↗ "
     const val DESCEND = " ↘ "
-    val DELIMITER_KILLER = this
     internal const val TAG_END = ": "
     private val ACCESS_METHOD_PATTERN = Pattern.compile("^access[$][0-9]+$")//->[ANYTHING]
     private const val MAX_PRIMITIVE_LOG_LENGTH = 3500
@@ -147,7 +146,7 @@ object Lg {
         return getFinalNoTagMessage(if (varName.isEmpty()) "" else "$varName:",
                 "[",
                 before,
-                change, DELIMITER_KILLER,
+                change, VarargParser.Control.KILL_DELIMITER,
                 if (before == after) "-".repeat(Objects.toString(before).length) else after,
                 "]")
     }
@@ -177,6 +176,12 @@ object Lg {
             FinalMsg(true, false, ", ", BracketType.NONE)
         }
 
+        enum class Control(private val varargConsumer: (VarargParser) -> Unit) {
+            KILL_DELIMITER({ it.mInsertMainMsgDelimiter = false });
+
+            internal fun perform(parser: VarargParser) = varargConsumer.invoke(parser)
+        }
+
         private fun reset(): VarargParser {
             mMethodTagSource = null
             mMainMsgBuilder.setLength(0)
@@ -203,8 +208,8 @@ object Lg {
                 //cache some info--------------------------------------
                 if (mNeedMethodTag && mMethodTagSource == null && obj is StackTraceElement) {
                     mMethodTagSource = obj
-                } else if (obj === DELIMITER_KILLER) {
-                    mInsertMainMsgDelimiter = false
+                } else if (obj is Control) {
+                    obj.perform(this)
                 } else if (obj is Collection<*>
                         && obj.isNotEmpty()
                         && obj.first() is Throwable) {//List<Throwable>
@@ -413,6 +418,11 @@ object Lg {
     @JvmStatic
     fun getFinalNoTagMessage(vararg messages: Any?): VarargParser {
         return VarargParser(VarargParser.Settings.FinalMsgWithoutTag).parse(*messages)
+    }
+
+    @JvmStatic
+    fun getFinalMessage(vararg messages: Any?): VarargParser {
+        return VarargParser(VarargParser.Settings.FinalMsg).parse(*messages)
     }
 
     /**
