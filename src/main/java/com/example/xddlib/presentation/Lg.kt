@@ -237,7 +237,7 @@ object Lg {
                                 "\n" + XDD.getSeparator("$obj", '-') +
                                         "\n" + Log.getStackTraceString(obj)
                             } else {//Can't be Object[] or array with native type
-                                toSimpleString(obj)
+                                toNoPackageSimpleString(obj)
                             }
 
                     if (objStr.isEmpty()) continue
@@ -267,7 +267,7 @@ object Lg {
 
             //MethodTag
             if (mNeedMethodTag) {
-                resultBuilder.append(getMethodTag(mMethodTagSource!!))
+                resultBuilder.append(toNoPackageSimpleString(mMethodTagSource))
                         .append(TAG_END)
             }
 
@@ -364,7 +364,7 @@ object Lg {
     fun toFieldsString(any: Any?,
                        newLinePerField: Boolean = false,
                        fieldDescriptors: Map<String/*fieldName*/, FieldDescriptor> = emptyMap()): String {
-        val parser = getFinalNoTagMessage(toNativeSimpleString(any), ":{")
+        val parser = getFinalNoTagMessage(toNoPackageSimpleString(any, true), ":{")
 
         any?.javaClass?.declaredFields?.forEach {field ->
             if (newLinePerField) {
@@ -380,36 +380,34 @@ object Lg {
         return parser.toString()
     }
 
-    /** @return equivalent call to NON-OVERRIDDEN Object.toString without package name
+    /** @param forceNative `true`: call to NON-OVERRIDDEN Object.toString without package name
      */
     @JvmStatic
-    fun toNativeSimpleString(any: Any?): String {
-        return if (any == null) "null" else removePackageNameIfNeeded(any.javaClass.name + "@" + Integer.toHexString(any.hashCode()))
-
-    }
-
-    /** @return toString without package name if toString is not overridden
-     */
-    @JvmStatic
-    fun toSimpleString(any: Any?): String {
-        return if (any == null) {
-            "null"
-        } else if (isToStringFromObjectClass(any) || any is View) {
-            removePackageNameIfNeeded(any)
+    fun toNoPackageSimpleString(any: Any?, forceNative: Boolean = false): String {
+        val string = if (any != null && forceNative) {
+            any.javaClass.name + "@" + Integer.toHexString(any.hashCode())
         } else {
             any.toString()
         }
-    }
 
-    private fun removePackageNameIfNeeded(any: Any): String {
-        val string = any.toString()
-        val dotPos: Int = string.lastIndexOf('.')
         return when {
+            any == null -> string
+            forceNative || isToStringFromObjectClass(any) -> {
+                // example: packageName.OuterClass$InnerClass
+                string.substring(string.lastIndexOf('.') + 1)
+            }
             any is View -> {
                 // example: package.name.ViewClassName{bee6f7b V.ED..... ........ 0,0-1080,1882 #7f090296 app:id/viewId}
                 string.substring(string.lastIndexOf('.', string.indexOf('{')) + 1)
             }
-            dotPos != -1 -> string.substring(dotPos + 1)//OuterClass$InnerClass
+            any is StackTraceElement -> {
+                // example: packageName.ClassName.methodName(FileName.java:LineNumber)
+                var dotIdx = string.length
+                for (idx in 0..2) {//find the 3rd dot starting from the end
+                    dotIdx = string.lastIndexOf('.', dotIdx - 1)
+                }
+                string.substring(dotIdx + 1)
+            }
             else -> string
         }
     }
@@ -460,17 +458,5 @@ object Lg {
                     && !it.className.startsWith(BuildConfig.APPLICATION_ID)
                     && !ACCESS_METHOD_PATTERN.matcher(it.methodName).matches() // Skip access method like "access$000"
         }
-    }
-
-    /** (FileName.java:LineNumber)->OuterClass$InnerClass.MethodName  */
-    private fun getMethodTag(targetElement: StackTraceElement): String {
-        val string = targetElement.toString()
-        //remove package name
-        //ex: packageName.ClassName.methodName(FileName.java:LineNumber)
-        var dotIdx = string.length
-        for (idx in 0..2) {//find the 3rd dot starting from the end
-            dotIdx = string.lastIndexOf('.', dotIdx - 1)
-        }
-        return string.substring(dotIdx + 1)
     }
 }
