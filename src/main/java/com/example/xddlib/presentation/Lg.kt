@@ -144,7 +144,7 @@ object Lg {
             BECOME
         }
 
-        return getFinalNoTagMessage(if (varName.isEmpty()) "" else "$varName:",
+        return getFinalMessage(if (varName.isEmpty()) "" else "$varName:",
                 "[",
                 before,
                 change, VarargParser.Control.KILL_DELIMITER,
@@ -153,7 +153,7 @@ object Lg {
     }
 
     class VarargParser internal constructor(private val mSettings: Settings) {
-        internal var mNeedMethodTag = mSettings.mNeedMethodTag
+        private var mNeedMethodTag = true
         private var mInsertMainMsgDelimiter = mSettings.mInsertFirstMainMsgDelimiter
 
         //parsed results =====================================================
@@ -162,23 +162,20 @@ object Lg {
         @JvmField
         var mLgType = Type.UNKNOWN//cache the LAST found one
 
-        internal enum class Settings constructor(internal val mNeedMethodTag: Boolean,
-                                                 internal val mInsertFirstMainMsgDelimiter: Boolean,
+        internal enum class Settings constructor(internal val mInsertFirstMainMsgDelimiter: Boolean,
                                                  internal val mDelimiter: String,
                                                  internal val mBracket: BracketType) {
             @Suppress("KDocUnresolvedReference")
             /** ->[a]->[b]->[c]  */
-            PrioritizedMsg(false, true, "->", BracketType.BRACKET),
-            @Suppress("KDocUnresolvedReference")
-            /** ->[a]->[b]->[c]: a, b, c  */
-            FinalMsgWithoutTag(false, false, ", ", BracketType.NONE),
+            PrioritizedMsg(true, "->", BracketType.BRACKET),
             @Suppress("KDocUnresolvedReference")
             /** ClassName.methodName(FileName.java:LineNumber)->[a]->[b]->[c]: a, b, c  */
-            FinalMsg(true, false, ", ", BracketType.NONE)
+            FinalMsg(false, ", ", BracketType.NONE)
         }
 
         enum class Control(private val varargConsumer: (VarargParser) -> Unit) {
-            KILL_DELIMITER({ it.mInsertMainMsgDelimiter = false });
+            KILL_DELIMITER({ it.mInsertMainMsgDelimiter = false }),
+            KILL_METHOD_TAG({ it.mNeedMethodTag = false });
 
             internal fun perform(parser: VarargParser) = varargConsumer.invoke(parser)
         }
@@ -193,13 +190,8 @@ object Lg {
 
         /** Ignore mMethodTagSource of another */
         private fun parseAnotherParser(another: VarargParser): VarargParser {
-            val origNeedMethodTag = mNeedMethodTag
-            mNeedMethodTag = false
-
             another.mMainMsgBuilder.takeIf { it.isNotEmpty() }?.let { parse(it) }
             another.mLgType.takeIf { it !== Type.UNKNOWN }?.let { parse(it) }
-
-            mNeedMethodTag = origNeedMethodTag
             return this
         }
 
@@ -207,9 +199,7 @@ object Lg {
 
             for (obj in objects) {
                 //cache some info--------------------------------------
-                if (mNeedMethodTag && mMethodTagSource == null && obj is StackTraceElement) {
-                    mMethodTagSource = obj
-                } else if (obj is Control) {
+                if (obj is Control) {
                     obj.perform(this)
                 } else if (obj is Collection<*>
                         && obj.isNotEmpty()
@@ -364,7 +354,7 @@ object Lg {
     fun toFieldsString(any: Any?,
                        newLinePerField: Boolean = false,
                        fieldDescriptors: Map<String/*fieldName*/, FieldDescriptor> = emptyMap()): String {
-        val parser = getFinalNoTagMessage(toNoPackageSimpleString(any, true), ":{")
+        val parser = getFinalMessage(Lg.VarargParser.Control.KILL_METHOD_TAG, toNoPackageSimpleString(any, true), ":{")
 
         any?.javaClass?.declaredFields?.forEach {field ->
             if (newLinePerField) {
@@ -415,12 +405,6 @@ object Lg {
     @JvmStatic
     fun getPrioritizedMessage(vararg messages: Any?): VarargParser {
         return VarargParser(VarargParser.Settings.PrioritizedMsg).parse(*messages)
-    }
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    @JvmStatic
-    fun getFinalNoTagMessage(vararg messages: Any?): VarargParser {
-        return VarargParser(VarargParser.Settings.FinalMsgWithoutTag).parse(*messages)
     }
 
     @JvmStatic

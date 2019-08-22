@@ -24,7 +24,7 @@ object XddActionDialog {
                 //parse objects
                 val kParsedObjects = Lg.VarargParser(Lg.VarargParser.Settings.FinalMsg).parse(*messages)
                 val kOuterMethodTagSource = kParsedObjects.mMethodTagSource
-                kParsedObjects.mNeedMethodTag = false
+                kParsedObjects.mMethodTagSource = null
                 val kDialogMessage = kParsedObjects.toString()
 
                 //log for starting

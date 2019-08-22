@@ -11,7 +11,9 @@ object XddToast {
 
     @JvmStatic
     fun show(context: Context, vararg objects: Any?) {
-        val parser = Lg.getFinalNoTagMessage(Lg.DEFAULT_INTERNAL_LG_TYPE,
+        val parser = Lg.getFinalMessage(
+                Lg.DEFAULT_INTERNAL_LG_TYPE,
+                Lg.VarargParser.Control.KILL_METHOD_TAG,
                 "(" + Throwable().stackTrace[0].methodName + ")",
                 objects)
         Lg.log(parser)
