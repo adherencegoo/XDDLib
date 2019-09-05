@@ -60,6 +60,13 @@ object Lg {
         UNKNOWN(-1, null)
     }
 
+    enum class TypeAssignmentRule(private val assignmentRule: (Type, Type) -> Boolean) {
+        ASSIGN_IF_ORIG_IS_UNKNOWN({orig, _  -> orig === Type.UNKNOWN}),
+        ASSIGN_IF_NEW_IS_NOT_UNKNOWN({_, new -> new !== Type.UNKNOWN});
+
+        fun allowAssign(orig: Type, new: Type) = assignmentRule.invoke(orig, new)
+    }
+
     internal enum class BracketType constructor(val mLeft: String, val mRight: String) {
         NONE("", ""),
         ROUND("(", ")"),
@@ -161,6 +168,7 @@ object Lg {
         private val mMainMsgBuilder = StringBuilder(120)
         @JvmField
         var mLgType = Type.UNKNOWN//cache the LAST found one
+        private var mTypeAssignmentRule = TypeAssignmentRule.ASSIGN_IF_ORIG_IS_UNKNOWN
 
         internal enum class Settings constructor(internal val mInsertFirstMainMsgDelimiter: Boolean,
                                                  internal val mDelimiter: String,
@@ -188,6 +196,12 @@ object Lg {
             return this
         }
 
+        private fun setTypeWithRule(new: Type) {
+            if (mTypeAssignmentRule.allowAssign(mLgType, new)) {
+                mLgType = new
+            }
+        }
+
         /** Ignore mMethodTagSource of another */
         private fun parseAnotherParser(another: VarargParser): VarargParser {
             another.mMainMsgBuilder.takeIf { it.isNotEmpty() }?.let { parse(it) }
@@ -205,10 +219,10 @@ object Lg {
                         && obj.isNotEmpty()
                         && obj.first() is Throwable) {//List<Throwable>
                     this.parse(*obj.toTypedArray())
+                } else if (obj is TypeAssignmentRule) {
+                    mTypeAssignmentRule = obj
                 } else if (obj is Type) {
-                    if (obj !== Type.UNKNOWN) {
-                        mLgType = obj
-                    }
+                    setTypeWithRule(obj)
 
                     //process the data======================================================
                 } else if (obj is VarargParser) {
@@ -280,7 +294,7 @@ object Lg {
         }
 
         fun printLog(type: Type = Type.UNKNOWN) {
-            type.takeIf { it !== Type.UNKNOWN }?.let { mLgType = it }
+            setTypeWithRule(type)
 
             val nativeLogFunction = when (mLgType) {
                 Type.NONE -> return
@@ -310,7 +324,7 @@ object Lg {
 
         @JvmOverloads
         fun printStackTrace(type: Type = Type.UNKNOWN) {
-            type.takeIf { it !== Type.UNKNOWN }?.let { mLgType = it }
+            setTypeWithRule(type)
 
             val funName = "printStackTrace"
             if (mLgType === Type.UNKNOWN) {
