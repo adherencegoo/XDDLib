@@ -120,7 +120,7 @@ object Lg {
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     @JvmStatic
     @JvmOverloads
-    fun<T : Any?> become(varName: String = "", before: T, after: T): VarargParser {
+    fun<T : Any?> become(varName: String = "", before: T, after: T, hideIfEqual: Boolean = false): VarargParser {
         val change = if (before is Number && after is Number) {
             val compareResult = when (after) {
                 is Byte -> after.compareTo(before.toByte())
@@ -132,7 +132,7 @@ object Lg {
                 else -> 0
             }
 
-            val diff = when (after) {
+            val diff: Number = when (after) {
                 is Byte -> after.minus(before.toByte())
                 is Double -> after.minus(before.toDouble())
                 is Float -> after.minus(before.toFloat())
@@ -151,11 +151,13 @@ object Lg {
             BECOME
         }
 
-        return getFinalMessage(if (varName.isEmpty()) "" else "$varName:",
+        val equal = before == after
+        return getFinalMessage(if (equal && hideIfEqual) Type.NONE else Type.UNKNOWN,
+                if (varName.isEmpty()) "" else "$varName:",
                 "[",
                 before,
                 change, VarargParser.Control.KILL_DELIMITER,
-                if (before == after) "-".repeat(Objects.toString(before).length) else after,
+                if (equal) "-".repeat(before.toString().length) else after,
                 "]")
     }
 
