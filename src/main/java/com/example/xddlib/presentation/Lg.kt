@@ -375,7 +375,7 @@ object Lg {
     fun toFieldsString(any: Any?,
                        newLinePerField: Boolean = false,
                        fieldDescriptors: Map<String/*fieldName*/, FieldDescriptor> = emptyMap()): String {
-        val parser = getFinalMessage(Lg.VarargParser.Control.KILL_METHOD_TAG, toNoPackageSimpleString(any, true), ":{")
+        val parser = getFinalMessage(VarargParser.Control.KILL_METHOD_TAG, toNoPackageSimpleString(any, true), ":{")
 
         any?.javaClass?.declaredFields?.forEach {field ->
             if (newLinePerField) {

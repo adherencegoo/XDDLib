@@ -3,7 +3,6 @@ package com.example.xddlib
 import android.content.SharedPreferences
 import org.junit.Assert
 import java.io.InvalidClassException
-import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.cast
 
@@ -33,14 +32,14 @@ object GenericType {
                 })
     }
 
-    private val PRIMITIVE_BYTE = PrimitiveType(Byte::class, { Arrays.toString(it as ByteArray) }, { it.toByte() })
-    private val PRIMITIVE_CHAR = PrimitiveType(Char::class, { Arrays.toString(it as CharArray) }, { it[0] })
-    private val PRIMITIVE_SHORT = PrimitiveType(Short::class, { Arrays.toString(it as ShortArray) }, { it.toShort() })
-    private val PRIMITIVE_INT = PrimitiveType(Int::class, { Arrays.toString(it as IntArray) }, { it.toInt() })
-    private val PRIMITIVE_LONG = PrimitiveType(Long::class, { Arrays.toString(it as LongArray) }, { it.toLong() })
-    private val PRIMITIVE_FLOAT = PrimitiveType(Float::class, { Arrays.toString(it as FloatArray) }, { it.toFloat() })
-    private val PRIMITIVE_DOUBLE = PrimitiveType(Double::class, { Arrays.toString(it as DoubleArray) }, { it.toDouble() })
-    private val PRIMITIVE_BOOLEAN = PrimitiveType(Boolean::class, { Arrays.toString(it as BooleanArray) }, { it.toBoolean() })
+    private val PRIMITIVE_BYTE = PrimitiveType(Byte::class, { (it as ByteArray).contentToString() }, { it.toByte() })
+    private val PRIMITIVE_CHAR = PrimitiveType(Char::class, { (it as CharArray).contentToString() }, { it[0] })
+    private val PRIMITIVE_SHORT = PrimitiveType(Short::class, { (it as ShortArray).contentToString() }, { it.toShort() })
+    private val PRIMITIVE_INT = PrimitiveType(Int::class, { (it as IntArray).contentToString() }, { it.toInt() })
+    private val PRIMITIVE_LONG = PrimitiveType(Long::class, { (it as LongArray).contentToString() }, { it.toLong() })
+    private val PRIMITIVE_FLOAT = PrimitiveType(Float::class, { (it as FloatArray).contentToString() }, { it.toFloat() })
+    private val PRIMITIVE_DOUBLE = PrimitiveType(Double::class, { (it as DoubleArray).contentToString() }, { it.toDouble() })
+    private val PRIMITIVE_BOOLEAN = PrimitiveType(Boolean::class, { (it as BooleanArray).contentToString() }, { it.toBoolean() })
 
     private class PreferenceType<T : Any>(kClass: KClass<T>,
                                           internal val setter: (SharedPreferences.Editor, String, T) -> Unit,
