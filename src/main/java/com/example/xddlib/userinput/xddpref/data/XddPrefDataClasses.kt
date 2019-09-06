@@ -37,3 +37,9 @@ class XddPrefLgTypeData(context: Context,
                 else -> type1.ordinal.compareTo(type2.ordinal)
             }
         }).toSet())
+
+class XddPrefIntRangeData(context: Context,
+                          key: String,
+                          min: Int,
+                          max: Int,
+                          step: Int) : XddPrefPrimitiveRangeData<Int>(Int::class, context, key, min, max, step)

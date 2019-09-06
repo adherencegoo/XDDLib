@@ -5,6 +5,7 @@ import androidx.annotation.ColorInt
 import android.util.AttributeSet
 import android.widget.Button
 import android.widget.HorizontalScrollView
+import android.widget.LinearLayout
 import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
 import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
@@ -13,7 +14,7 @@ import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
  * Created by adher on 2017/7/20.
  */
 
-internal abstract class XddPrefAbstractElement(context: Context, attributeSet: AttributeSet?) : HorizontalScrollView(context, attributeSet) {
+internal abstract class XddPrefAbstractElement(context: Context, attributeSet: AttributeSet?) : LinearLayout(context, attributeSet) {
 
     lateinit var mPrefData: XddPrefAbstractData<*>
     private lateinit var mResetButton: Button

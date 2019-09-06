@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.example.xddlib.userinput.xddpref.ui.XddPrefToggleElement
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.example.xddlib.userinput.xddpref.ui.XddPrefToggleElement xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
 
-    <include layout="@layout/xdd_pref_dialog_abstract_element"/>
-
-    <ToggleButton
-        android:layout_height="wrap_content"
+    <HorizontalScrollView
         android:layout_width="match_parent"
-        android:layout_gravity="center"
-        android:id="@+id/toggleButton"
-        android:textAllCaps="false"/>
-    </LinearLayout>
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <include layout="@layout/xdd_pref_dialog_abstract_element" />
+
+            <ToggleButton
+                android:id="@+id/toggleButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAllCaps="false" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
 </com.example.xddlib.userinput.xddpref.ui.XddPrefToggleElement>
