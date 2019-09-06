@@ -57,7 +57,12 @@ object Lg {
         W(Log.WARN, Log::w),
         E(Log.ERROR, Log::e),
         NONE(0, null),
-        UNKNOWN(-1, null)
+        UNKNOWN(-1, null);
+
+        companion object {
+            private val stringMap = values().map { it.toString() to it }.toMap()
+            fun fromString(string: String): Type = stringMap[string] ?: error("Unknown string: $string")
+        }
     }
 
     enum class TypeAssignmentRule(private val assignmentRule: (Type, Type) -> Boolean) {

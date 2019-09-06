@@ -10,10 +10,10 @@ import kotlin.reflect.KClass
  * Created by adher on 2017/7/20.
  */
 
-open class XddPrefEnumData<T : Any>(klass: KClass<T>,
-                                    context: Context,
-                                    key: String,
-                                    internal val values: Set<T>) : XddPrefAbstractData<T>(klass, context, key, values.first()) {
+open class XddPrefPrimitiveEnumData<T : Any>(klass: KClass<T>,
+                                             context: Context,
+                                             key: String,
+                                             internal val values: Set<T>) : XddPrefAbstractData<T>(klass, context, key, values.first()) {
     // This still doesn't work in Java code
 //    constructor(klass: Class<T>,
 //                context: Context,

@@ -8,7 +8,7 @@ import android.widget.RadioGroup
 import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
 import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
-import com.example.xddlib.userinput.xddpref.data.XddPrefEnumData
+import com.example.xddlib.userinput.xddpref.data.XddPrefPrimitiveEnumData
 import org.junit.Assert
 
 /**
@@ -22,10 +22,10 @@ internal class XddPrefRadioElement(context: Context, attributeSet: AttributeSet?
         get() = (findViewById<View>(mRadioGroup.checkedRadioButtonId) as RadioButton).text
 
     override fun init(prefData: XddPrefAbstractData<*>) {
-        Assert.assertTrue(prefData is XddPrefEnumData)
+        Assert.assertTrue(prefData is XddPrefPrimitiveEnumData)
         super.init(prefData)
 
-        val enumData = prefData as XddPrefEnumData<*>
+        val enumData = prefData as XddPrefPrimitiveEnumData<*>
 
         mRadioGroup = findViewById(R.id.radioGroup)
         mRadioGroup.removeAllViews()

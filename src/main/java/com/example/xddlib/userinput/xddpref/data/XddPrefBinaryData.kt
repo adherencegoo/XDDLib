@@ -11,7 +11,7 @@ class XddPrefBinaryData @JvmOverloads constructor(context: Context,
                                                   trueDescription: String = key,
                                                   falseDescription: String = "Not $trueDescription",
                                                   defaultBoolean: Boolean = false)
-    : XddPrefEnumData<Boolean>(Boolean::class, context, key, setOf(defaultBoolean, !defaultBoolean)) {
+    : XddPrefPrimitiveEnumData<Boolean>(Boolean::class, context, key, setOf(defaultBoolean, !defaultBoolean)) {
     private val kFalseDescription: String = "(False) $falseDescription"
     private val kTrueDescription: String = "(True) $trueDescription"
 
