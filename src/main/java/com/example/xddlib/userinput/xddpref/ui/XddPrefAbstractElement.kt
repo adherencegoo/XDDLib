@@ -5,6 +5,7 @@ import androidx.annotation.ColorInt
 import android.util.AttributeSet
 import android.widget.Button
 import android.widget.HorizontalScrollView
+import androidx.databinding.ViewDataBinding
 import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
 import com.example.xddlib.userinput.xddpref.data.XddPrefAbstractData
@@ -26,10 +27,10 @@ internal abstract class XddPrefAbstractElement(context: Context, attributeSet: A
         }
     }
 
-    internal open fun init(prefData: XddPrefAbstractData<*>) {
+    internal open fun init(prefData: XddPrefAbstractData<*>, dataBinding: ViewDataBinding) {
         mPrefData = prefData
 
-        mResetButton = findViewById(R.id.key)
+        mResetButton = findViewById(R.id.commonElement)
         mResetButton.text = prefData.key
         mResetButton.setOnClickListener { resetToSharedValue() }
     }

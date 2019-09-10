@@ -2,8 +2,11 @@ package com.example.xddlib.userinput.xddpref.ui
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.ViewDataBinding
 
 import com.example.xddlib.R
 import com.example.xddlib.XddInternalUtils
@@ -25,11 +28,15 @@ class XddPrefContainer(context: Context, attributeSet: AttributeSet?) : LinearLa
 
     fun init(prefs: Map<String, XddPrefAbstractData<*>>): XddPrefContainer {
         for ((_, aPref) in prefs) {
-            if (aPref is XddPrefBinaryData) {
-                XddPrefToggleElement.inflate(this).init(aPref)
+            val layoutRes = if (aPref is XddPrefBinaryData) {
+                R.layout.xdd_pref_dialog_toggle_element
             } else {
-                XddPrefRadioElement.inflate(this).init(aPref)
+                R.layout.xdd_pref_dialog_radio_element
             }
+
+            val dataBinding: ViewDataBinding = DataBindingUtil.inflate(
+                    LayoutInflater.from(context), layoutRes, this, true)
+            (dataBinding.root as XddPrefAbstractElement).init(aPref, dataBinding)
         }
         return this
     }

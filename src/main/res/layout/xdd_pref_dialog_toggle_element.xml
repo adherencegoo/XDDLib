@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:bind="http://schemas.android.com/apk/res-auto">
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <include
+                android:id="@+id/commonElement"
+                layout="@layout/xdd_pref_dialog_base_element"
+                bind:viewModel="@{viewModel}"/>
+
+            <ToggleButton
+                android:id="@+id/toggleButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:onClick="@{viewModel::onToggleChanged}"
+                android:textAllCaps="false"
+                android:textColor="@{viewModel::getToggleTextColor}"
+                android:textOff="@{viewModel.xddPrefData$XDDLib_debug.getDescription(false)}"
+                android:textOn="@{viewModel.xddPrefData$XDDLib_debug.getDescription(true)}" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="com.example.xddlib.userinput.xddpref.viewmodel.ToggleElementVM" />
+    </data>
+</layout>
