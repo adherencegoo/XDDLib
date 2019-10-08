@@ -212,7 +212,10 @@ object Tm {
         val timestamp = System.currentTimeMillis()
 
         val parser = Lg.VarargParser(Lg.VarargParser.Settings.FinalMsg)
-                .parse(Lg.DEFAULT_INTERNAL_LG_TYPE, "timestamp:$timestamp", objects)
+                .parse(Lg.TypeAssignmentRule.ASSIGN_IF_NEW_IS_NOT_UNKNOWN,
+                        Lg.DEFAULT_INTERNAL_LG_TYPE,
+                        "timestamp:$timestamp",
+                        objects)
 
     try {
         for (i in 0 until count) {
