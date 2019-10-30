@@ -2,9 +2,8 @@ package com.example.xddlib
 
 import android.content.ContentValues
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
+import android.graphics.*
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Looper
@@ -167,5 +166,68 @@ object XDD {
                     @Suppress("UNCHECKED_CAST")
                     it.get(ownerClass) as T to it.name
                 }.toMap()
+    }
+
+    private val testPaint = Paint().apply {
+        color = Color.GREEN
+        strokeWidth = 3f
+        style = Paint.Style.STROKE
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun decorateCanvas(canvas: Canvas,
+                       bounds: Rect,
+                       boundsColor: Int = Color.GREEN,
+                       axisColor: Int = Color.RED) {
+        testPaint.color = boundsColor
+        canvas.drawRect(bounds, testPaint)
+        canvas.drawLine(bounds.left.toFloat(), bounds.top.toFloat(), bounds.right.toFloat(), bounds.bottom.toFloat(), testPaint)
+        canvas.drawLine(bounds.right.toFloat(), bounds.top.toFloat(), bounds.left.toFloat(), bounds.bottom.toFloat(), testPaint)
+
+        testPaint.color = axisColor
+        val centerX = bounds.width() / 2
+        val centerY = bounds.height() / 2
+        canvas.drawLine(centerX.toFloat(), centerY.toFloat(), centerX.toFloat(), (centerY + 100).toFloat(), testPaint)
+        canvas.drawLine(centerX.toFloat(), centerY.toFloat(), (centerX + 100).toFloat(), centerY.toFloat(), testPaint)
+    }
+
+    @JvmStatic
+    fun dumpDimension(left: Float, top: Float, width: Float, height: Float): String {
+        return "${width}x${height}, center:(${left + width / 2}, ${top + height / 2}), w/h:${width / height}"
+    }
+
+    @JvmStatic
+    fun dumpRect(rect: Rect?): String {
+        return rect?.let {
+            Lg.getFinalMessage(Lg.VarargParser.Control.KILL_METHOD_TAG, rect,
+                    dumpDimension(it.left.toFloat(), it.top.toFloat(), it.width().toFloat(), it.height().toFloat())).toString()
+        } ?: "null"
+    }
+
+    @JvmStatic
+    fun dumpRect(rect: RectF?): String {
+        return rect?.let {
+            Lg.getFinalMessage(Lg.VarargParser.Control.KILL_METHOD_TAG, rect,
+                    dumpDimension(it.left, it.top, it.width(), it.height())).toString()
+        } ?: "null"
+    }
+
+    @JvmStatic
+    fun dumpBitmap(bitmap: Bitmap?): String {
+        return bitmap?.let {
+            Lg.getFinalMessage(Lg.VarargParser.Control.KILL_METHOD_TAG, bitmap,
+                    dumpDimension(0f, 0f, it.width.toFloat(), it.height.toFloat())).toString()
+        } ?: "null"
+    }
+
+    @JvmStatic
+    fun dumpDrawable(drawable: Drawable?): String {
+        return drawable?.let {
+            Lg.getFinalMessage(Lg.VarargParser.Control.KILL_METHOD_TAG,
+                    drawable,
+                    "intrinsic", dumpDimension(0f, 0f, it.intrinsicWidth.toFloat(), it.intrinsicHeight.toFloat()),
+                    "minimum", dumpDimension(0f, 0f, it.minimumWidth.toFloat(), it.minimumHeight.toFloat())).toString()
+        } ?: "null"
     }
 }
