@@ -10,6 +10,8 @@ import androidx.annotation.RequiresApi
 import com.example.xddlib.BuildConfig
 import com.example.xddlib.GenericType
 import com.example.xddlib.XDD
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert
 import java.lang.reflect.Field
 import java.util.*
@@ -195,7 +197,8 @@ object Lg {
             internal fun perform(parser: VarargParser) = varargConsumer.invoke(parser)
         }
 
-        private fun reset(): VarargParser {
+        fun reset(): VarargParser {
+            mInsertMainMsgDelimiter = mSettings.mInsertFirstMainMsgDelimiter
             mMethodTagSource = null
             mMainMsgBuilder.setLength(0)
             mLgType = Type.UNKNOWN
@@ -342,6 +345,55 @@ object Lg {
             } else if (mLgType !== Type.NONE) {//avoid redundant process
                 parse(Exception(funName)).printLog()
             }
+        }
+    }
+
+    class JsonBuilder @JvmOverloads constructor(rootNameAsAny: Any? = null,
+                                                private val indentSpaces: Int = 4) {
+        private val varargParser = getFinalMessage(VarargParser.Control.KILL_METHOD_TAG)
+
+        private val rootName: String? = rootNameAsAny?.let {
+            varargParser.parse(rootNameAsAny).toString()
+        }
+
+        private val rootMap = JSONObject()
+        private val rootArray = JSONArray()
+
+        @JvmOverloads
+        fun put(key: Any? = null, rawValue: Any?): JsonBuilder {
+            val putValue = when (rawValue) {
+                is JSONObject, is JSONArray -> rawValue
+                is JsonBuilder -> rawValue.toResultJson()
+                else -> {
+                    varargParser.reset()
+                    varargParser.parse(rawValue).toString()
+                }
+            }
+
+            key?.let {
+                varargParser.reset()
+                rootMap.put(varargParser.parse(it).toString(), putValue)
+            } ?: kotlin.run {
+                rootArray.put(putValue)
+            }
+
+            return this
+        }
+
+        @Suppress("MemberVisibilityCanBePrivate")
+        fun toResultJson(): JSONObject {
+            if (rootArray.length() != 0) {
+                rootMap.put("NO_NAME_ARRAY", rootArray)
+            }
+
+            return rootName?.let {
+                JSONObject().put(it, rootMap)
+            } ?: rootMap
+        }
+
+        override fun toString(): String {
+            varargParser.reset()
+            return varargParser.parse(toResultJson().toString(indentSpaces)).toString()
         }
     }
 
