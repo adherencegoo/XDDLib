@@ -47,11 +47,6 @@ object Lg {
         fun describe(field: Field, any: Any): String
     }
 
-    private val defaultFieldDescriptor = object : FieldDescriptor {
-        @RequiresApi(Build.VERSION_CODES.KITKAT)
-        override fun describe(field: Field, any: Any): String = Objects.toString(field.get(any))
-    }
-
     enum class Type constructor(val mNativeType: Int, val mNativeFunction: ((String, String) -> Int)?) {
         V(Log.VERBOSE, Log::v),
         D(Log.DEBUG, Log::d),
@@ -435,8 +430,8 @@ object Lg {
             }
 
             field.isAccessible = true
-            val fieldDescriptor = fieldDescriptors.getOrDefault(field.name, defaultFieldDescriptor)
-            parser.parse(field.name, ":", fieldDescriptor.describe(field, any))
+            val fieldDescriptor = fieldDescriptors[field.name]
+            parser.parse(field.name, ":", fieldDescriptor?.describe(field, any) ?: field.get(any))
         }
 
         parser.parse("}")
